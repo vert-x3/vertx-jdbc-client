@@ -54,4 +54,21 @@ public class TimerEvictedConcurrentMapTest extends VertxTestBase {
 
     await();
   }
+
+  @Test
+  public void testGet() {
+    map.put("foo", "bar");
+
+    map.addEvictionListener((key, value) -> {
+      fail("Should not have been evicted");
+    });
+
+    waitFor(3);
+    vertx.setPeriodic(50, id -> {
+      assertEquals("bar", map.get("foo"));
+      complete();
+    });
+
+    await();
+  }
 }

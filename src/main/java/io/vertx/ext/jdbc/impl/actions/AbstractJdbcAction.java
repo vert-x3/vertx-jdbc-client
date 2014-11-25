@@ -99,14 +99,14 @@ public abstract class AbstractJdbcAction<T> {
 
 
   protected void handleSuccess(T result, Handler<AsyncResult<T>> resultHandler) {
-    resultHandler.handle(Future.completedFuture(result));
+    resultHandler.handle(Future.succeededFuture(result));
   }
 
   protected void handleError(Throwable t, Handler<AsyncResult<T>> resultHandler) {
     // Log the message at warn, so ppl can turn off. This is nice when you want a full
     // stacktrace which you lose over the bus
     log.warn("Exception occurred executing JDBC Service action " + name(), t);
-    resultHandler.handle(Future.completedFuture(t));
+    resultHandler.handle(Future.failedFuture(t));
   }
 
   private static void close(Connection conn) {

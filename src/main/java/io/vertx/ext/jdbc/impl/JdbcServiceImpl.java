@@ -132,6 +132,16 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
+  public void delete(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+    new JdbcUpdate(vertx, dataSource, sql, params).process(resultHandler);
+  }
+
+  @Override
+  public void deleteTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+    new JdbcUpdate(vertx, transactions, txId, sql, params).process(resultHandler);
+  }
+
+  @Override
   public void commit(String txId, Handler<AsyncResult<Void>> resultHandler) {
     new JdbcCommit(vertx, transactions, txId).process(resultHandler);
   }

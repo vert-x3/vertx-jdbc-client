@@ -65,6 +65,10 @@ public interface JdbcService {
 
   public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
 
+  public void delete(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
+
+  public void deleteTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
+
   public void commit(String txId, Handler<AsyncResult<Void>> resultHandler);
 
   public void rollback(String txId, Handler<AsyncResult<Void>> resultHandler);
