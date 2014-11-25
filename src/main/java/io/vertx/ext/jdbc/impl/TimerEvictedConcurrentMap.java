@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -30,25 +30,29 @@ import java.util.function.Consumer;
 public class TimerEvictedConcurrentMap<K, V> {
 
   private final Vertx vertx;
-  private final long defaultTimeout;
+  private final long timeout;
   private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
-  private final List<Consumer<K>> evictionListeners = new CopyOnWriteArrayList<>();
+  private final List<BiConsumer<K, V>> evictionListeners = new CopyOnWriteArrayList<>();
+  private final ConcurrentMap<K, Long> timers = new ConcurrentHashMap<>();
 
-  public TimerEvictedConcurrentMap(Vertx vertx) {
-    this(vertx, -1);
-  }
-
-  public TimerEvictedConcurrentMap(Vertx vertx, long defaultTimeout) {
+  public TimerEvictedConcurrentMap(Vertx vertx, long timeout) {
     this.vertx = vertx;
-    this.defaultTimeout = defaultTimeout;
+    this.timeout = timeout;
   }
 
-  public void addEvictionListener(Consumer<K> listener) {
+  public void addEvictionListener(BiConsumer<K, V> listener) {
     evictionListeners.add(listener);
   }
 
   public V get(K key) {
-    return map.get(key);
+    V value = map.get(key);
+    Long id = timers.remove(key);
+    if (id != null) {
+      vertx.cancelTimer(id);
+      startEviction(key, value);
+    }
+
+    return value;
   }
 
   public boolean containsKey(K key) {
@@ -56,35 +60,39 @@ public class TimerEvictedConcurrentMap<K, V> {
   }
 
   public V put(K key, V value) {
-    return put(key, value, defaultTimeout);
-  }
-
-  public V put(K key, V value, long timeout) {
     V v = map.put(key, value);
-    startEviction(key, timeout);
+    startEviction(key, value);
     return v;
   }
 
   public V putIfAbsent(K key, V value) {
-    return putIfAbsent(key, value, defaultTimeout);
-  }
-
-  public V putIfAbsent(K key, V value, long timeout) {
     V v = map.putIfAbsent(key, value);
-    if (v != null) {
-      startEviction(key, timeout);
+    if (v == null) {
+      startEviction(key, value);
     }
     return v;
   }
 
-  private void startEviction(final K key, final long timeout) {
+  public V remove(K key) {
+    V value = map.get(key);
+    Long id = timers.remove(key);
+    if (id != null) {
+      vertx.cancelTimer(id);
+    }
+
+    return value;
+  }
+
+  private void startEviction(final K key, final V value) {
     if (timeout > 0) {
-      vertx.setTimer(timeout, id -> {
+      Long timerId = vertx.setTimer(timeout, id -> {
         map.remove(key);
-        for (Consumer<K> listener : evictionListeners) {
-          listener.accept(key);
+        timers.remove(key);
+        for (BiConsumer<K, V> listener : evictionListeners) {
+          listener.accept(key, value);
         }
       });
+      timers.put(key, timerId);
     }
   }
 }

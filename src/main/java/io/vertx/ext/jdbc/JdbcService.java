@@ -22,6 +22,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
 import io.vertx.proxygen.ProxyHelper;
@@ -43,23 +44,30 @@ public interface JdbcService {
     return ProxyHelper.createProxy(JdbcService.class, vertx, address);
   }
 
-  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) throws RuntimeSqlException;
+  public void startTx(Handler<AsyncResult<String>> resultHandler);
 
-  public void executeWithTx(String transactionId, String sql, Handler<AsyncResult<Void>> resultHandler) throws RuntimeSqlException;
+  public void startTxWithIsolation(int level, Handler<AsyncResult<String>> resultHandler);
 
-  public void select(String table, Handler<AsyncResult<List<JsonObject>>> resultHandler);
+  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler);
 
-  public void selectTx(String transactionId, String table, Handler<AsyncResult<JsonObject>> resultHandler);
+  public void executeTx(String txId, String sql, Handler<AsyncResult<Void>> resultHandler);
 
-  /*
-  public void selectWithFields(String table, List<String> fields, Handler<AsyncResult<List<JsonObject>>> resultHandler);
+  public void select(String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler);
 
-  public void selectWithFieldsTx(String transactionId, String table, List<String> fields, Handler<AsyncResult<JsonObject>> resultHandler);
-  */
+  public void selectTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler);
 
-  public void commit(String transactionId);
+  public void insert(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
 
-  public void rollback(String transactionId);
+  public void insertTx(String txId, String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
+
+  //TODO: Insert and update do the same thing really, with insert returning generated keys. We could return JsonObject and just have an update
+  public void update(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
+
+  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
+
+  public void commit(String txId, Handler<AsyncResult<Void>> resultHandler);
+
+  public void rollback(String txId, Handler<AsyncResult<Void>> resultHandler);
 
   @ProxyIgnore
   public void start();

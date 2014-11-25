@@ -17,27 +17,27 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.ServiceHelper;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.ext.jdbc.JdbcService;
 import io.vertx.ext.jdbc.RuntimeSqlException;
+import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
+import io.vertx.ext.jdbc.impl.actions.JdbcExecute;
+import io.vertx.ext.jdbc.impl.actions.JdbcInsert;
+import io.vertx.ext.jdbc.impl.actions.JdbcRollback;
+import io.vertx.ext.jdbc.impl.actions.JdbcSelect;
+import io.vertx.ext.jdbc.impl.actions.JdbcStartTx;
+import io.vertx.ext.jdbc.impl.actions.JdbcUpdate;
+import io.vertx.ext.jdbc.spi.DataSourceProvider;
 
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
+import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -50,111 +50,94 @@ public class JdbcServiceImpl implements JdbcService {
   private final JsonObject config;
 
   //TODO: Connection pool, port mod-jdbc-persistor
-  private Driver driver;
-  private String url;
-  private TimerEvictedConcurrentMap<String, Connection> transactions;
+  private DataSourceProvider provider;
+  private DataSource dataSource;
+  private Transactions transactions;
 
   public JdbcServiceImpl(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
     this.config = config;
+    transactions = new Transactions(vertx, config.getInteger("txTimeout", 10000));
   }
 
   @Override
   public void start() {
-    String driverName = config.getString("driver");
-    //TODO: Does illegal arg exception make sense here ? I think we need a ConfigurationException or something for verticles/services
-    if (driverName == null) throw new IllegalArgumentException("'driver' is required to configure this service");
-
-    url = config.getString("url");
-    if (url == null) throw new IllegalArgumentException("'url' is required to configure this service");
-
+    provider = ServiceHelper.loadFactory(DataSourceProvider.class);
     try {
-      driver = DriverManager.getDriver(url);
-    } catch (Throwable t) {
-      throw new RuntimeException("Error initializing JDBC service", t);
+      dataSource = provider.getDataSource(config);
+    } catch (SQLException e) {
+      throw new RuntimeSqlException(e);
     }
   }
 
   @Override
   public void stop() {
-
-  }
-
-  @Override
-  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) throws RuntimeSqlException {
-    try {
-      Connection conn = driver.connect(url, new Properties());
-      Statement stmt = conn.createStatement();
-      stmt.execute(sql);
-      complete(resultHandler);
-    } catch (SQLException e) {
-      error(e, resultHandler);
-    }
-  }
-
-  @Override
-  public void executeWithTx(String transactionId, String sql, Handler<AsyncResult<Void>> resultHandler) throws RuntimeSqlException {
-
-  }
-
-  @Override
-  public void select(String table, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    doSelect(table, "*", resultHandler);
-  }
-
-  @Override
-  public void selectTx(String transactionId, String table, Handler<AsyncResult<JsonObject>> resultHandler) {
-  }
-
-  //@Override
-  public void selectWithFields(String table, List<String> fields, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-
-  }
-
-  //@Override
-  public void selectWithFieldsTx(String transactionId, String table, List<String> fields, Handler<AsyncResult<JsonObject>> resultHandler) {
-  }
-
-  @Override
-  public void commit(String transactionId) {
-
-  }
-
-  @Override
-  public void rollback(String transactionId) {
-
-  }
-
-  private void doSelect(String table, String select, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    try {
-      Connection conn = driver.connect(url, new Properties());
-      PreparedStatement ps = conn.prepareStatement("SELECT " + select + " FROM " + table);
-      ResultSet rs = ps.executeQuery();
-      List<JsonObject> list = new ArrayList<>();
-      while (rs.next()) {
-        JsonObject json = new JsonObject();
-        ResultSetMetaData metaData = rs.getMetaData();
-        int cols = metaData.getColumnCount();
-        for (int i = 1; i <= cols; i++) {
-          json.put(metaData.getColumnName(i), rs.getObject(i));
-        }
-        list.add(json);
+    if (provider != null) {
+      try {
+        provider.close(dataSource);
+      } catch (SQLException e) {
+        log.error("Exception occurred trying to close out the data source", e);
       }
-      complete(list, resultHandler);
-    } catch (SQLException e) {
-      error(e, resultHandler);
     }
   }
 
-  private void complete(Handler<AsyncResult<Void>> handler) {
-    complete(null, handler);
+  @Override
+  public void startTx(Handler<AsyncResult<String>> resultHandler) {
+    new JdbcStartTx(vertx, dataSource, transactions).process(resultHandler);
   }
 
-  private <T> void complete(T result, Handler<AsyncResult<T>> handler) {
-    handler.handle(Future.completedFuture(result));
+  @Override
+  public void startTxWithIsolation(int level, Handler<AsyncResult<String>> resultHandler) {
+    new JdbcStartTx(vertx, dataSource, transactions, level).process(resultHandler);
   }
 
-  private <T> void error(Throwable t, Handler<AsyncResult<T>> handler) {
-    handler.handle(Future.completedFuture(t));
+  @Override
+  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcExecute(vertx, dataSource, sql).process(resultHandler);
+  }
+
+  @Override
+  public void executeTx(String txId, String sql, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcExecute(vertx, transactions, txId, sql).process(resultHandler);
+  }
+
+  @Override
+  public void select(String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    new JdbcSelect(vertx, dataSource, sql, parameters).process(resultHandler);
+  }
+
+  @Override
+  public void selectTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    new JdbcSelect(vertx, transactions, txId, sql, parameters).process(resultHandler);
+  }
+
+  @Override
+  public void insert(String sql, JsonArray parameters, Handler<AsyncResult<JsonObject>> resultHandler) {
+    new JdbcInsert(vertx, dataSource, sql, parameters).process(resultHandler);
+  }
+
+  @Override
+  public void insertTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<JsonObject>> resultHandler) {
+    new JdbcInsert(vertx, transactions, txId, sql, parameters).process(resultHandler);
+  }
+
+  @Override
+  public void update(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+    new JdbcUpdate(vertx, dataSource, sql, params).process(resultHandler);
+  }
+
+  @Override
+  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+    new JdbcUpdate(vertx, transactions, txId, sql, params).process(resultHandler);
+  }
+
+  @Override
+  public void commit(String txId, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcCommit(vertx, transactions, txId).process(resultHandler);
+  }
+
+  @Override
+  public void rollback(String txId, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcRollback(vertx, transactions, txId).process(resultHandler);
   }
 }
