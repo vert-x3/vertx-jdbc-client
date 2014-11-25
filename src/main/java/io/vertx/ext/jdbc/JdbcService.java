@@ -52,22 +52,13 @@ public interface JdbcService {
 
   public void executeTx(String txId, String sql, Handler<AsyncResult<Void>> resultHandler);
 
-  public void select(String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler);
+  public void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler);
 
-  public void selectTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler);
+  public void queryTx(String txId, String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler);
 
-  public void insert(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
+  public void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
 
-  public void insertTx(String txId, String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
-
-  //TODO: Insert and update do the same thing really, with insert returning generated keys. We could return JsonObject and just have an update
-  public void update(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
-
-  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
-
-  public void delete(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
-
-  public void deleteTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler);
+  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
 
   public void commit(String txId, Handler<AsyncResult<Void>> resultHandler);
 

@@ -28,9 +28,8 @@ import io.vertx.ext.jdbc.JdbcService;
 import io.vertx.ext.jdbc.RuntimeSqlException;
 import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
 import io.vertx.ext.jdbc.impl.actions.JdbcExecute;
-import io.vertx.ext.jdbc.impl.actions.JdbcInsert;
+import io.vertx.ext.jdbc.impl.actions.JdbcQuery;
 import io.vertx.ext.jdbc.impl.actions.JdbcRollback;
-import io.vertx.ext.jdbc.impl.actions.JdbcSelect;
 import io.vertx.ext.jdbc.impl.actions.JdbcStartTx;
 import io.vertx.ext.jdbc.impl.actions.JdbcUpdate;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
@@ -102,42 +101,22 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void select(String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    new JdbcSelect(vertx, dataSource, sql, parameters).process(resultHandler);
+  public void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    new JdbcQuery(vertx, dataSource, sql, params).process(resultHandler);
   }
 
   @Override
-  public void selectTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    new JdbcSelect(vertx, transactions, txId, sql, parameters).process(resultHandler);
+  public void queryTx(String txId, String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    new JdbcQuery(vertx, transactions, txId, sql, params).process(resultHandler);
   }
 
   @Override
-  public void insert(String sql, JsonArray parameters, Handler<AsyncResult<JsonObject>> resultHandler) {
-    new JdbcInsert(vertx, dataSource, sql, parameters).process(resultHandler);
-  }
-
-  @Override
-  public void insertTx(String txId, String sql, JsonArray parameters, Handler<AsyncResult<JsonObject>> resultHandler) {
-    new JdbcInsert(vertx, transactions, txId, sql, parameters).process(resultHandler);
-  }
-
-  @Override
-  public void update(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+  public void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
     new JdbcUpdate(vertx, dataSource, sql, params).process(resultHandler);
   }
 
   @Override
-  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
-    new JdbcUpdate(vertx, transactions, txId, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void delete(String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
-    new JdbcUpdate(vertx, dataSource, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void deleteTx(String txId, String sql, JsonArray params, Handler<AsyncResult<Integer>> resultHandler) {
+  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
     new JdbcUpdate(vertx, transactions, txId, sql, params).process(resultHandler);
   }
 

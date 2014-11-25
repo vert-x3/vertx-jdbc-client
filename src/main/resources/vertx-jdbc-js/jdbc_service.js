@@ -81,10 +81,10 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
-  this.select = function(sql, parameters, resultHandler) {
+  this.query = function(sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.select(sql, utils.convJSArrayToJsonArray(parameters), function(ar) {
+      j_jdbcService.query(sql, utils.convJSArrayToJsonArray(params), function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convListSetJson(ar.result()), null);
       } else {
@@ -94,38 +94,12 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
-  this.selectTx = function(txId, sql, parameters, resultHandler) {
+  this.queryTx = function(txId, sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.selectTx(txId, sql, utils.convJSArrayToJsonArray(parameters), function(ar) {
+      j_jdbcService.queryTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convListSetJson(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.insert = function(sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.insert(sql, utils.convJSArrayToJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convJsonToJS(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.insertTx = function(txId, sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.insertTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convJsonToJS(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -138,7 +112,7 @@ var JdbcService = function(j_val) {
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
       j_jdbcService.update(sql, utils.convJSArrayToJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
+        resultHandler(utils.convJsonToJS(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -151,33 +125,7 @@ var JdbcService = function(j_val) {
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
       j_jdbcService.updateTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.delete = function(sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.delete(sql, utils.convJSArrayToJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.deleteTx = function(txId, sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.deleteTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
+        resultHandler(utils.convJsonToJS(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }

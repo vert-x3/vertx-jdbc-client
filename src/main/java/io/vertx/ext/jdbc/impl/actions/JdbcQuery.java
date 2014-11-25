@@ -30,13 +30,13 @@ import java.util.List;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcSelect extends AbstractJdbcStatement<List<JsonObject>> {
+public class JdbcQuery extends AbstractJdbcStatement<List<JsonObject>> {
 
-  public JdbcSelect(Vertx vertx, DataSource dataSource, String sql, JsonArray parameters) {
+  public JdbcQuery(Vertx vertx, DataSource dataSource, String sql, JsonArray parameters) {
     super(vertx, dataSource, sql, parameters);
   }
 
-  public JdbcSelect(Vertx vertx, Transactions transactions, String txId, String sql, JsonArray parameters) {
+  public JdbcQuery(Vertx vertx, Transactions transactions, String txId, String sql, JsonArray parameters) {
     super(vertx, transactions, txId, sql, parameters);
   }
 

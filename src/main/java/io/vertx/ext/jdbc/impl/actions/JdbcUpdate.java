@@ -18,16 +18,20 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.Transactions;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcUpdate extends AbstractJdbcUpdate<Integer> {
+public class JdbcUpdate extends AbstractJdbcStatement<JsonObject> {
 
   public JdbcUpdate(Vertx vertx, DataSource dataSource, String sql, JsonArray parameters) {
     super(vertx, dataSource, sql, parameters);
@@ -38,8 +42,26 @@ public class JdbcUpdate extends AbstractJdbcUpdate<Integer> {
   }
 
   @Override
-  protected Integer parseUpdate(PreparedStatement statement, int updated) throws SQLException {
-    return updated;
+  protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
+    return conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+  }
+
+  @Override
+  protected JsonObject executeStatement(PreparedStatement statement) throws SQLException {
+    int updated = statement.executeUpdate();
+
+    JsonObject result = new JsonObject();
+    result.put("updated", updated);
+
+    // Create JsonArray of keys
+    ResultSet rs = statement.getGeneratedKeys();
+    JsonArray keys = new JsonArray();
+    while (rs.next()) {
+      keys.add(convertSqlValue(rs.getObject(1)));
+    }
+    rs.close();
+
+    return result.put("keys", keys);
   }
 
   @Override

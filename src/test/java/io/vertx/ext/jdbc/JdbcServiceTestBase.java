@@ -78,7 +78,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testSelect() {
     String sql = "SELECT * FROM select_table";
-    service.select(sql, null, onSuccess(results -> {
+    service.query(sql, null, onSuccess(results -> {
       assertNotNull(results);
       assertEquals(2, results.size());
       JsonObject result = results.get(0);
@@ -94,7 +94,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testSelectWithParameters() {
     String sql = "SELECT * FROM select_table WHERE fname = ?";
-    service.select(sql, new JsonArray().add("john"), onSuccess(results -> {
+    service.query(sql, new JsonArray().add("john"), onSuccess(results -> {
       assertNotNull(results);
       assertEquals(1, results.size());
       JsonObject result = results.get(0);
@@ -113,10 +113,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     JsonArray params = new JsonArray().addNull().add("smith").add("john").add("2003-03-03");
     service.startTx(onSuccess(txId -> {
       assertNotNull(txId);
-      service.insertTx(txId, sql, params, onSuccess(result -> {
-        assertInsert(result, 1);
+      service.updateTx(txId, sql, params, onSuccess(result -> {
+        assertUpdate(result, 1);
         int id = result.getJsonArray("keys").getInteger(0);
-        service.selectTx(txId, "SELECT * FROM insert_table WHERE id = ?", new JsonArray().add(id), onSuccess(results -> {
+        service.queryTx(txId, "SELECT * FROM insert_table WHERE id = ?", new JsonArray().add(id), onSuccess(results -> {
           assertFalse(results.isEmpty());
           assertEquals("smith", results.get(0).getString("LNAME"));
           testComplete();
@@ -132,7 +132,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     // Suppress log output so this test doesn't look to fail
     setLogLevel(AbstractJdbcAction.class.getName(), Level.SEVERE);
     String sql = "SELECT FROM WHERE FOO BAR";
-    service.select(sql, null, onFailure(t -> {
+    service.query(sql, null, onFailure(t -> {
       assertNotNull(t);
       testComplete();
     }));
@@ -143,8 +143,8 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testInsert() {
     String sql = "INSERT INTO insert_table VALUES (null, 'doe', 'john', '2001-01-01');";
-    service.insert(sql, null, onSuccess(result -> {
-      assertInsert(result, 1);
+    service.update(sql, null, onSuccess(result -> {
+      assertUpdate(result, 1);
       testComplete();
     }));
 
@@ -155,10 +155,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testInsertWithParameters() {
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("doe").add("jane").add("2002-02-02");
-    service.insert(sql, params, onSuccess(iresult -> {
-      assertInsert(iresult, 1);
-      int id = iresult.getJsonArray("keys").getInteger(0);
-      service.select("SElECT * FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(results -> {
+    service.update(sql, params, onSuccess(result -> {
+      assertUpdate(result, 1);
+      int id = result.getJsonArray("keys").getInteger(0);
+      service.query("SElECT * FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(results -> {
         assertNotNull(results);
         assertEquals(1, results.size());
         assertEquals("2002-02-02", results.get(0).getString("DOB"));
@@ -173,9 +173,8 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testUpdate() {
     String sql = "UPDATE update_table SET fname='jane' WHERE id = 1";
     service.update(sql, null, onSuccess(updated -> {
-      assertNotNull(updated);
-      assertEquals(1, (int) updated);
-      service.select("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
+      assertUpdate(updated, 1);
+      service.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
         assertNotNull(results);
         assertEquals(1, results.size());
         assertEquals("jane", results.get(0).getString("FNAME"));
@@ -190,10 +189,9 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testUpdateWithParams() {
     String sql = "UPDATE update_table SET fname = ? WHERE id = ?";
     JsonArray params = new JsonArray().add("bob").add(1);
-    service.update(sql, params, onSuccess(updated -> {
-      assertNotNull(updated);
-      assertEquals(1, (int) updated);
-      service.select("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
+    service.update(sql, params, onSuccess(result -> {
+      assertUpdate(result, 1);
+      service.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
         assertNotNull(results);
         assertEquals(1, results.size());
         assertEquals("bob", results.get(0).getString("FNAME"));
@@ -207,9 +205,8 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testUpdateNoMatch() {
     String sql = "UPDATE update_table SET fname='jane' WHERE id = -231";
-    service.update(sql, null, onSuccess(updated -> {
-      assertNotNull(updated);
-      assertEquals(0, (int) updated);
+    service.update(sql, null, onSuccess(result -> {
+      assertUpdate(result, 0);
       testComplete();
     }));
 
@@ -219,9 +216,9 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testDelete() {
     String sql = "DELETE FROM delete_table WHERE id = 1;";
-    service.delete(sql, null, onSuccess(deleted -> {
-      assertNotNull(deleted);
-      assertEquals(1, (int) deleted);
+    service.update(sql, null, onSuccess(result -> {
+      assertNotNull(result);
+      assertEquals(1, (int) result.getInteger("updated"));
       testComplete();
     }));
 
@@ -232,9 +229,9 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testDeleteWithParams() {
     String sql = "DELETE FROM delete_table WHERE id = ?;";
     JsonArray params = new JsonArray().add(2);
-    service.delete(sql, params, onSuccess(deleted -> {
-      assertNotNull(deleted);
-      assertEquals(1, (int) deleted);
+    service.update(sql, params, onSuccess(result -> {
+      assertNotNull(result);
+      assertEquals(1, (int) result.getInteger("updated"));
       testComplete();
     }));
 
@@ -253,6 +250,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
   @Test
   public void testTxTimeout() throws Exception {
+    setLogLevel(AbstractJdbcAction.class.getName(), Level.SEVERE);
     service.startTx(onSuccess(txId -> {
       vertx.setTimer(1050, timerId -> {
         service.commit(txId, onFailure(t -> {
@@ -276,9 +274,9 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
       assertNotNull(txId);
       tx.set(txId);
       for (int i = 0; i < inserts; i++) {
-        service.insertTx(txId, sql, params, onSuccess(insert -> {
-          assertInsert(insert, 1);
-          int id = insert.getJsonArray("keys").getInteger(0);
+        service.updateTx(txId, sql, params, onSuccess(result -> {
+          assertUpdate(result, 1);
+          int id = result.getJsonArray("keys").getInteger(0);
           insertIds.add(id);
           latch.countDown();
         }));
@@ -300,7 +298,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
     if (commit) {
       service.commit(tx.get(), onSuccess(v -> {
-        service.select(selectSql.toString(), selectParams, onSuccess(results -> {
+        service.query(selectSql.toString(), selectParams, onSuccess(results -> {
           assertFalse(results.isEmpty());
           assertEquals(inserts, results.size());
           testComplete();
@@ -308,7 +306,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
       }));
     } else {
       service.rollback(tx.get(), onSuccess(v -> {
-        service.select(selectSql.toString(), selectParams, onSuccess(results -> {
+        service.query(selectSql.toString(), selectParams, onSuccess(results -> {
           assertTrue(results.isEmpty());
           testComplete();
         }));
@@ -318,15 +316,24 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     await();
   }
 
-  private void assertInsert(JsonObject result, int updated) {
-    assertEquals(updated, (int) result.getInteger("updated"));
-    JsonArray keys = result.getJsonArray("keys");
-    assertNotNull(keys);
-    assertEquals(updated, keys.size());
-    Set<Integer> numbers = new HashSet<>();
-    for (int i = 0; i < updated; i++) {
-      assertTrue(keys.getValue(i) instanceof Integer);
-      assertTrue(numbers.add(i));
+  private void assertUpdate(JsonObject result, int updated) {
+    assertUpdate(result, updated, false);
+  }
+
+  private void assertUpdate(JsonObject result, int updated, boolean generatedKeys) {
+    assertNotNull(result);
+    Integer u = result.getInteger("updated");
+    assertNotNull(u);
+    assertEquals(updated, (int) u);
+    if (generatedKeys) {
+      JsonArray keys = result.getJsonArray("keys");
+      assertNotNull(keys);
+      assertEquals(updated, keys.size());
+      Set<Integer> numbers = new HashSet<>();
+      for (int i = 0; i < updated; i++) {
+        assertTrue(keys.getValue(i) instanceof Integer);
+        assertTrue(numbers.add(i));
+      }
     }
   }
 
