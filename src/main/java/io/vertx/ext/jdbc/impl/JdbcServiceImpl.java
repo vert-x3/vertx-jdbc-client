@@ -57,6 +57,15 @@ public class JdbcServiceImpl implements JdbcService {
     this.vertx = vertx;
     this.config = config;
     transactions = new Transactions(vertx, config.getInteger("txTimeout", 10000));
+    transactions.addEvictionListener((txId, conn) -> {
+      log.error("Transaction " + txId + " timed out. Rolling back.");
+      try {
+        conn.rollback();
+        conn.close();
+      } catch (SQLException e) {
+        log.error("Exception trying to rollback timed out transaction " + txId, e);
+      }
+    });
   }
 
   @Override
