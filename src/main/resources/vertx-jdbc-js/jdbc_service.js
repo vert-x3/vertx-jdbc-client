@@ -84,9 +84,9 @@ var JdbcService = function(j_val) {
   this.query = function(sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.query(sql, utils.convJSArrayToJsonArray(params), function(ar) {
+      j_jdbcService.query(sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convListSetJson(ar.result()), null);
+        resultHandler(utils.convReturnListSetJson(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -97,9 +97,9 @@ var JdbcService = function(j_val) {
   this.queryTx = function(txId, sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.queryTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
+      j_jdbcService.queryTx(txId, sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convListSetJson(ar.result()), null);
+        resultHandler(utils.convReturnListSetJson(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -110,9 +110,9 @@ var JdbcService = function(j_val) {
   this.update = function(sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.update(sql, utils.convJSArrayToJsonArray(params), function(ar) {
+      j_jdbcService.update(sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convJsonToJS(ar.result()), null);
+        resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -123,9 +123,9 @@ var JdbcService = function(j_val) {
   this.updateTx = function(txId, sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.updateTx(txId, sql, utils.convJSArrayToJsonArray(params), function(ar) {
+      j_jdbcService.updateTx(txId, sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convJsonToJS(ar.result()), null);
+        resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -173,26 +173,23 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
-  this._vertxgen = true;
-
-  // Get a reference to the underlying Java delegate
-  this._jdel = function() {
-    return j_jdbcService;
-  }
-
+  // A reference to the underlying Java delegate
+  // NOTE! This is an internal API and must not be used in user code.
+  // If you rely on this property your code is likely to break if we change it / remove it without warning.
+  this._jdel = j_jdbcService;
 };
 
 JdbcService.create = function(vertx, config) {
   var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._vertxgen && typeof __args[1] === 'object') {
-    return new JdbcService(JJdbcService.create(vertx._jdel(), utils.convJSObjectToJsonObject(config)));
+  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
+    return new JdbcService(JJdbcService.create(vertx._jdel, utils.convParamJsonObject(config)));
   } else utils.invalidArgs();
 };
 
 JdbcService.createEventBusProxy = function(vertx, address) {
   var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._vertxgen && typeof __args[1] === 'string') {
-    return new JdbcService(JJdbcService.createEventBusProxy(vertx._jdel(), address));
+  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
+    return new JdbcService(JJdbcService.createEventBusProxy(vertx._jdel, address));
   } else utils.invalidArgs();
 };
 

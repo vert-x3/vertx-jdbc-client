@@ -25,7 +25,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
-import io.vertx.proxygen.ProxyHelper;
+import io.vertx.serviceproxy.ProxyHelper;
 
 import java.util.List;
 

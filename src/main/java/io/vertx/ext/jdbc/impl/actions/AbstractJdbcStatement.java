@@ -71,22 +71,8 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
     if (parameters == null || parameters.size() == 0) {
       return;
     }
-    Object test = parameters.getValue(0);
-    // Test if it's an array of array's (for batching)
-    if (test instanceof JsonArray) {
-      for (Object array : parameters) {
-        fillStatementFromParameters(statement, (JsonArray) array);
-        statement.addBatch();
-      }
-    } else {
-      fillStatementFromParameters(statement, parameters);
-    }
-  }
-
-  protected void fillStatementFromParameters(PreparedStatement statement, JsonArray values) throws SQLException {
-    int index = 0;
-    for (Object o : values) {
-      statement.setObject(++index, o);
+    for (int i = 0; i < parameters.size(); i++) {
+      statement.setObject(i+1, parameters.getValue(i));
     }
   }
 

@@ -17,7 +17,7 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.proxygen.ProxyHelper;
+import io.vertx.serviceproxy.ProxyHelper;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
