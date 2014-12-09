@@ -14,17 +14,27 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.impl;
+package io.vertx.ext.jdbc;
 
-import io.vertx.core.Vertx;
+import io.vertx.codegen.annotations.ProxyGen;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
-import java.sql.Connection;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class Transactions extends TimerEvictedConcurrentMap<String, Connection> {
-  public Transactions(Vertx vertx, long timeout) {
-    super(vertx, timeout);
-  }
+@VertxGen(concrete = false)
+@ProxyGen
+public interface JdbcActions {
+
+  void execute(String sql, Handler<AsyncResult<Void>> resultHandler);
+
+  void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler);
+
+  void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler);
 }

@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.impl.Transactions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -26,18 +25,19 @@ import java.sql.SQLException;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JdbcRollback extends AbstractJdbcAction<Void> {
-  private final Transactions transactions;
 
-  public JdbcRollback(Vertx vertx, Transactions transactions, String txId) {
-    super(vertx, transactions, txId);
-    this.transactions = transactions;
+  public JdbcRollback(Vertx vertx, Connection conn) {
+    super(vertx, conn);
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    conn.rollback();
-    transactions.remove(txId);
-    txId = null;
+    try {
+      conn.rollback();
+      conn.setAutoCommit(true);
+    } finally {
+      close(conn);
+    }
 
     return null;
   }

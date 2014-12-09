@@ -22,10 +22,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
-import io.vertx.ext.jdbc.RuntimeSqlException;
-import io.vertx.ext.jdbc.impl.Transactions;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,51 +36,21 @@ public abstract class AbstractJdbcAction<T> {
 
   protected final Vertx vertx;
   protected final Connection conn;
-  protected String txId;
 
-  public AbstractJdbcAction(Vertx vertx, DataSource dataSource) {
-    this(vertx, connection(dataSource));
-  }
-
-  public AbstractJdbcAction(Vertx vertx, Transactions transactions, String txId) {
-    this(vertx, transactions.get(txId), txId);
-  }
-
-  public AbstractJdbcAction(Vertx vertx, Connection conn) {
-    this(vertx, conn, null);
-  }
-
-  private AbstractJdbcAction(Vertx vertx, Connection conn, String txId) {
+  protected AbstractJdbcAction(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
-    this.txId = txId;
   }
 
   public void process(Handler<AsyncResult<T>> resultHandler) {
     T result = null;
     Throwable cause = null;
 
-    // If transaction and no active connection
-    if (txId != null && conn == null) {
-      handleError(new SQLException("No active connection for transaction " + txId), resultHandler);
-      return;
-    }
-
     // Execute
     try {
       result = execute(conn);
     } catch (Throwable t) {
       cause = t;
-      // If transaction, rollback
-      if (txId != null) {
-        rollback(conn, txId);
-        txId = null;
-      }
-    } finally {
-      // If not transaction, close (return to pool)
-      if (txId == null) {
-        close(conn);
-      }
     }
 
     if (cause == null) {
@@ -109,7 +76,7 @@ public abstract class AbstractJdbcAction<T> {
     resultHandler.handle(Future.failedFuture(t));
   }
 
-  private static void close(Connection conn) {
+  protected static void close(Connection conn) {
     if (conn != null) {
       try {
         conn.close();
@@ -126,24 +93,6 @@ public abstract class AbstractJdbcAction<T> {
       } catch (SQLException e) {
         // ignore
       }
-    }
-  }
-
-  private static void rollback(Connection conn, String txId) {
-    if (conn != null) {
-      try {
-        conn.rollback();
-      } catch (SQLException e) {
-        log.error("Exception attempting rollback for transaction " + txId);
-      }
-    }
-  }
-
-  protected static Connection connection(DataSource dataSource) {
-    try {
-      return dataSource.getConnection();
-    } catch (SQLException e) {
-      throw new RuntimeSqlException(e);
     }
   }
 }

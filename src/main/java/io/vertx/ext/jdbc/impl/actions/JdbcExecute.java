@@ -17,9 +17,7 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.impl.Transactions;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,13 +29,8 @@ public class JdbcExecute extends AbstractJdbcAction<Void> {
 
   private final String sql;
 
-  public JdbcExecute(Vertx vertx, DataSource dataSource, String sql) {
-    super(vertx, dataSource);
-    this.sql = sql;
-  }
-
-  public JdbcExecute(Vertx vertx, Transactions transactions, String txId, String sql) {
-    super(vertx, transactions, txId);
+  public JdbcExecute(Vertx vertx, Connection connection, String sql) {
+    super(vertx, connection);
     this.sql = sql;
   }
 

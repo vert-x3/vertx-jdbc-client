@@ -14,39 +14,33 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.ext.jdbc.impl;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.JdbcConnection;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcQuery extends AbstractJdbcStatement<List<JsonObject>> {
+class JdbcConnectionImpl extends JdbcActionsImpl implements JdbcConnection {
 
-  public JdbcQuery(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
-    super(vertx, connection, sql, parameters);
+  public JdbcConnectionImpl(Vertx vertx, Connection conn) {
+    super(vertx, conn);
   }
 
   @Override
-  protected List<JsonObject> executeStatement(PreparedStatement statement) throws SQLException {
-    ResultSet rs = statement.executeQuery();
-    List<JsonObject> results = asList(rs);
-
-    close(rs);
-
-    return results;
-  }
-
-  @Override
-  protected String name() {
-    return "executeQuery";
+  public void close(Handler<AsyncResult<Void>> handler) {
+    try {
+      conn.close();
+      handler.handle(Future.succeededFuture());
+    } catch (SQLException e) {
+      handler.handle(Future.failedFuture(e));
+    }
   }
 }

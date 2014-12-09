@@ -17,26 +17,21 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.ServiceHelper;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.ext.jdbc.JdbcConnection;
 import io.vertx.ext.jdbc.JdbcService;
+import io.vertx.ext.jdbc.JdbcTransaction;
 import io.vertx.ext.jdbc.RuntimeSqlException;
-import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
-import io.vertx.ext.jdbc.impl.actions.JdbcExecute;
-import io.vertx.ext.jdbc.impl.actions.JdbcQuery;
-import io.vertx.ext.jdbc.impl.actions.JdbcRollback;
-import io.vertx.ext.jdbc.impl.actions.JdbcStartTx;
-import io.vertx.ext.jdbc.impl.actions.JdbcUpdate;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -47,25 +42,16 @@ public class JdbcServiceImpl implements JdbcService {
 
   private final Vertx vertx;
   private final JsonObject config;
+  private final long txTimeout;
 
   //TODO: Connection pool, port mod-jdbc-persistor
   private DataSourceProvider provider;
   private DataSource dataSource;
-  private Transactions transactions;
 
   public JdbcServiceImpl(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
     this.config = config;
-    transactions = new Transactions(vertx, config.getInteger("txTimeout", 10000));
-    transactions.addEvictionListener((txId, conn) -> {
-      log.error("Transaction " + txId + " timed out. Rolling back.");
-      try {
-        conn.rollback();
-        conn.close();
-      } catch (SQLException e) {
-        log.error("Exception trying to rollback timed out transaction " + txId, e);
-      }
-    });
+    this.txTimeout = config.getInteger("txTimeout", 10000);
   }
 
   @Override
@@ -90,52 +76,32 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void startTx(Handler<AsyncResult<String>> resultHandler) {
-    new JdbcStartTx(vertx, dataSource, transactions).process(resultHandler);
+  public void transaction(Handler<AsyncResult<JdbcTransaction>> handler) {
+    try {
+      JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), txTimeout);
+      handler.handle(Future.succeededFuture(transaction));
+    } catch (Throwable t) {
+      handler.handle(Future.failedFuture(t));
+    }
   }
 
   @Override
-  public void startTxWithIsolation(int level, Handler<AsyncResult<String>> resultHandler) {
-    new JdbcStartTx(vertx, dataSource, transactions, level).process(resultHandler);
+  public void transactionIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler) {
+    try {
+      JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), isolationLevel, txTimeout);
+      handler.handle(Future.succeededFuture(transaction));
+    } catch (Throwable t) {
+      handler.handle(Future.failedFuture(t));
+    }
   }
 
   @Override
-  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcExecute(vertx, dataSource, sql).process(resultHandler);
-  }
-
-  @Override
-  public void executeTx(String txId, String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcExecute(vertx, transactions, txId, sql).process(resultHandler);
-  }
-
-  @Override
-  public void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    new JdbcQuery(vertx, dataSource, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void queryTx(String txId, String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    new JdbcQuery(vertx, transactions, txId, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
-    new JdbcUpdate(vertx, dataSource, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void updateTx(String txId, String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
-    new JdbcUpdate(vertx, transactions, txId, sql, params).process(resultHandler);
-  }
-
-  @Override
-  public void commit(String txId, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcCommit(vertx, transactions, txId).process(resultHandler);
-  }
-
-  @Override
-  public void rollback(String txId, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcRollback(vertx, transactions, txId).process(resultHandler);
+  public void connection(Handler<AsyncResult<JdbcConnection>> handler) {
+    try {
+      JdbcConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
+      handler.handle(Future.succeededFuture(conn));
+    } catch (Throwable t) {
+      handler.handle(Future.failedFuture(t));
+    }
   }
 }

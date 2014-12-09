@@ -15,6 +15,8 @@
  */
 
 var utils = require('vertx-js/util/utils');
+var JdbcTransaction = require('vertx-jdbc-js/jdbc_transaction');
+var JdbcConnection = require('vertx-jdbc-js/jdbc_connection');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
@@ -29,131 +31,40 @@ var JdbcService = function(j_val) {
   var j_jdbcService = j_val;
   var that = this;
 
-  this.startTx = function(resultHandler) {
+  this.transaction = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.startTx(function(ar) {
+      j_jdbcService.transaction(function(ar) {
       if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
+        handler(new JdbcTransaction(ar.result()), null);
       } else {
-        resultHandler(null, ar.cause());
+        handler(null, ar.cause());
       }
     });
     } else utils.invalidArgs();
   };
 
-  this.startTxWithIsolation = function(level, resultHandler) {
+  this.transactionIsolation = function(isolationLevel, handler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
-      j_jdbcService.startTxWithIsolation(level, function(ar) {
+      j_jdbcService.transactionIsolation(isolationLevel, function(ar) {
       if (ar.succeeded()) {
-        resultHandler(ar.result(), null);
+        handler(new JdbcTransaction(ar.result()), null);
       } else {
-        resultHandler(null, ar.cause());
+        handler(null, ar.cause());
       }
     });
     } else utils.invalidArgs();
   };
 
-  this.execute = function(sql, resultHandler) {
+  this.connection = function(handler) {
     var __args = arguments;
-    if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_jdbcService.execute(sql, function(ar) {
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_jdbcService.connection(function(ar) {
       if (ar.succeeded()) {
-        resultHandler(null, null);
+        handler(new JdbcConnection(ar.result()), null);
       } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.executeTx = function(txId, sql, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
-      j_jdbcService.executeTx(txId, sql, function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(null, null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.query = function(sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.query(sql, utils.convParamJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convReturnListSetJson(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.queryTx = function(txId, sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.queryTx(txId, sql, utils.convParamJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convReturnListSetJson(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.update = function(sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
-      j_jdbcService.update(sql, utils.convParamJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convReturnJson(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.updateTx = function(txId, sql, params, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && __args[2] instanceof Array && typeof __args[3] === 'function') {
-      j_jdbcService.updateTx(txId, sql, utils.convParamJsonArray(params), function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(utils.convReturnJson(ar.result()), null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.commit = function(txId, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_jdbcService.commit(txId, function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(null, null);
-      } else {
-        resultHandler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  this.rollback = function(txId, resultHandler) {
-    var __args = arguments;
-    if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_jdbcService.rollback(txId, function(ar) {
-      if (ar.succeeded()) {
-        resultHandler(null, null);
-      } else {
-        resultHandler(null, ar.cause());
+        handler(null, ar.cause());
       }
     });
     } else utils.invalidArgs();

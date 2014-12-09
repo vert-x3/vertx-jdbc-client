@@ -16,40 +16,19 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.codegen.annotations.ProxyClose;
 import io.vertx.codegen.annotations.ProxyGen;
-import io.vertx.codegen.annotations.ProxyIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
-import io.vertx.serviceproxy.ProxyHelper;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @VertxGen
 @ProxyGen
-public interface JdbcService {
+public interface JdbcConnection extends JdbcActions {
 
-  static JdbcService create(Vertx vertx, JsonObject config) {
-    return new JdbcServiceImpl(vertx, config);
-  }
-
-  static JdbcService createEventBusProxy(Vertx vertx, String address) {
-    return ProxyHelper.createProxy(JdbcService.class, vertx, address);
-  }
-
-  void transaction(Handler<AsyncResult<JdbcTransaction>> handler);
-
-  void transactionIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler);
-
-  void connection(Handler<AsyncResult<JdbcConnection>> handler);
-
-  @ProxyIgnore
-  public void start();
-
-  @ProxyIgnore
-  public void stop();
+  @ProxyClose
+  void close(Handler<AsyncResult<Void>> handler);
 }

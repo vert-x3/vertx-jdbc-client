@@ -19,9 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.impl.Transactions;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -40,14 +38,8 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
   private final String sql;
   private final JsonArray parameters;
 
-  protected AbstractJdbcStatement(Vertx vertx, DataSource dataSource, String sql, JsonArray parameters) {
-    super(vertx, dataSource);
-    this.sql = sql;
-    this.parameters = parameters;
-  }
-
-  protected AbstractJdbcStatement(Vertx vertx, Transactions transactions, String txId, String sql, JsonArray parameters) {
-    super(vertx, transactions, txId);
+  protected AbstractJdbcStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
+    super(vertx, connection);
     this.sql = sql;
     this.parameters = parameters;
   }
@@ -72,7 +64,7 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
       return;
     }
     for (int i = 0; i < parameters.size(); i++) {
-      statement.setObject(i+1, parameters.getValue(i));
+      statement.setObject(i + 1, parameters.getValue(i));
     }
   }
 

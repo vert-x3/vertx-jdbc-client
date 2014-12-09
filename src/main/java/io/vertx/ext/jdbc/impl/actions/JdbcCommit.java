@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.impl.Transactions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,18 +26,18 @@ import java.sql.SQLException;
  */
 public class JdbcCommit extends AbstractJdbcAction<Void> {
 
-  private Transactions transactions;
-
-  public JdbcCommit(Vertx vertx, Transactions transactions, String txId) {
-    super(vertx, transactions, txId);
-    this.transactions = transactions;
+  public JdbcCommit(Vertx vertx, Connection conn) {
+    super(vertx, conn);
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    conn.commit();
-    transactions.remove(txId);
-    txId = null;
+    try {
+      conn.commit();
+      conn.setAutoCommit(true);
+    } finally {
+      close(conn);
+    }
 
     return null;
   }
