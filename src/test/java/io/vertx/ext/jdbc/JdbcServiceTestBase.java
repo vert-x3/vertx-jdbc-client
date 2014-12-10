@@ -19,7 +19,6 @@ package io.vertx.ext.jdbc;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJdbcAction;
-import io.vertx.serviceproxy.ProxyHelper;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -112,7 +111,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testSelectTx() {
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("smith").add("john").add("2003-03-03");
-    service.transaction(onSuccess(transaction -> {
+    service.beginTransaction(onSuccess(transaction -> {
       assertNotNull(transaction);
       transaction.update(sql, params, onSuccess(result -> {
         assertUpdate(result, 1);
@@ -256,7 +255,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testTxTimeout() throws Exception {
     setLogLevel(AbstractJdbcAction.class.getName(), Level.SEVERE);
-    service.transaction(onSuccess(transaction -> {
+    service.beginTransaction(onSuccess(transaction -> {
       vertx.setTimer(1050, timerId -> {
         transaction.commit(onFailure(t -> {
           assertNotNull(t);
@@ -275,7 +274,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
     CountDownLatch latch = new CountDownLatch(inserts);
     AtomicReference<JdbcTransaction> tx = new AtomicReference<>();
-    service.transaction(onSuccess(transaction -> {
+    service.beginTransaction(onSuccess(transaction -> {
       assertNotNull(transaction);
       tx.set(transaction);
       for (int i = 0; i < inserts; i++) {
@@ -304,7 +303,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     JdbcTransaction transaction = tx.get();
     if (commit) {
       transaction.commit(onSuccess(v -> {
-        service.connection(onSuccess(conn -> {
+        service.getConnection(onSuccess(conn -> {
           conn.query(selectSql.toString(), selectParams, onSuccess(results -> {
             assertFalse(results.isEmpty());
             assertEquals(inserts, results.size());
@@ -314,7 +313,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
       }));
     } else {
       transaction.rollback(onSuccess(v -> {
-        service.connection(onSuccess(conn -> {
+        service.getConnection(onSuccess(conn -> {
           conn.query(selectSql.toString(), selectParams, onSuccess(results -> {
             assertTrue(results.isEmpty());
             testComplete();
@@ -350,7 +349,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   private JdbcConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<JdbcConnection> ref = new AtomicReference<>();
-    service.connection(onSuccess(conn -> {
+    service.getConnection(onSuccess(conn -> {
       ref.set(conn);
       latch.countDown();
     }));

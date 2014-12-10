@@ -76,7 +76,7 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void transaction(Handler<AsyncResult<JdbcTransaction>> handler) {
+  public void beginTransaction(Handler<AsyncResult<JdbcTransaction>> handler) {
     try {
       JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), txTimeout);
       handler.handle(Future.succeededFuture(transaction));
@@ -86,7 +86,7 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void transactionIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler) {
+  public void beginTransactionWithIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler) {
     try {
       JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), isolationLevel, txTimeout);
       handler.handle(Future.succeededFuture(transaction));
@@ -96,7 +96,7 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void connection(Handler<AsyncResult<JdbcConnection>> handler) {
+  public void getConnection(Handler<AsyncResult<JdbcConnection>> handler) {
     try {
       JdbcConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
       handler.handle(Future.succeededFuture(conn));

@@ -41,11 +41,11 @@ public interface JdbcService {
     return ProxyHelper.createProxy(JdbcService.class, vertx, address);
   }
 
-  void transaction(Handler<AsyncResult<JdbcTransaction>> handler);
+  void getConnection(Handler<AsyncResult<JdbcConnection>> handler);
 
-  void transactionIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler);
+  void beginTransaction(Handler<AsyncResult<JdbcTransaction>> handler);
 
-  void connection(Handler<AsyncResult<JdbcConnection>> handler);
+  void beginTransactionWithIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler);
 
   @ProxyIgnore
   public void start();

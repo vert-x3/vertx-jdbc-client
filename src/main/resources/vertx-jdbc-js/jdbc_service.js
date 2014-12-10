@@ -31,10 +31,10 @@ var JdbcService = function(j_val) {
   var j_jdbcService = j_val;
   var that = this;
 
-  this.transaction = function(handler) {
+  this.beginTransaction = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.transaction(function(ar) {
+      j_jdbcService.beginTransaction(function(ar) {
       if (ar.succeeded()) {
         handler(new JdbcTransaction(ar.result()), null);
       } else {
@@ -44,10 +44,10 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
-  this.transactionIsolation = function(isolationLevel, handler) {
+  this.beginTransactionWithIsolation = function(isolationLevel, handler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
-      j_jdbcService.transactionIsolation(isolationLevel, function(ar) {
+      j_jdbcService.beginTransactionWithIsolation(isolationLevel, function(ar) {
       if (ar.succeeded()) {
         handler(new JdbcTransaction(ar.result()), null);
       } else {
@@ -57,10 +57,10 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
-  this.connection = function(handler) {
+  this.getConnection = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.connection(function(ar) {
+      j_jdbcService.getConnection(function(ar) {
       if (ar.succeeded()) {
         handler(new JdbcConnection(ar.result()), null);
       } else {
