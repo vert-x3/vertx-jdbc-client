@@ -23,12 +23,20 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
 /**
+ * Represents the <code>JdbcConnection</code> which is obtained from the <code>JdbcService</code>.
+ *
+ * @see io.vertx.ext.jdbc.JdbcActions
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @VertxGen
 @ProxyGen
 public interface JdbcConnection extends JdbcActions {
 
+  /**
+   * Closes the connection. Important to always close the connection when you are done so it's returned to the pool.
+   *
+   * @param handler the handler called when this operation completes.
+   */
   @ProxyClose
   void close(Handler<AsyncResult<Void>> handler);
 }

@@ -1,0 +1,33 @@
+= Vert.x JDBC Service
+
+The link:apidocs/io/vertx/ext/jdbc/JdbcService.html[`JDBC Service`] is responsible for providing an interface for Vert.x applications that need to interact with
+a database using a JDBC driver.
+
+== Getting Started
+
+Since the JDBC service is a service proxy, there are several ways to get started, but the easiest is to just deploy the service
+verticle:
+[source,{lang}]
+----
+Vertx vertx = Vertx.vertx();
+vertx.deployVerticle("service:io.vertx:vertx-jdbc");
+----
+
+and get the service liks so:
+[source,{lang}]
+----
+JdbcService service = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+----
+
+You can also specify configuration options during the deployment.
+[source,{lang}]
+----
+Vertx vertx = Vertx.vertx();
+vertx.deployVerticle("service:io.vertx:vertx-jdbc",
+  new DeploymentOptions().setConfig(new JsonObject().put("url", "jdbc:postgresql://localhost/vertx?user=postgres")));
+----
+
+This example configures the JDBC service to use a postgres JDBC url in oder to connect to a postgresql database. As long
+as the postgresql JDBC driver is on the classpath, the service will use that for it's JDBC connections.
+
+//TODO: complete docs

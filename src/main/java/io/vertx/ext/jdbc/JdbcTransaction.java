@@ -29,9 +29,19 @@ import io.vertx.core.Handler;
 @ProxyGen
 public interface JdbcTransaction extends JdbcActions {
 
+  /**
+   * Commits the given transaction.
+   *
+   * @param handler the handler called when this operation completes.
+   */
   @ProxyClose
   void commit(Handler<AsyncResult<Void>> handler);
 
+  /**
+   * Rolls back the given transaction.
+   *
+   * @param handler the handler called when this operation completes.
+   */
   @ProxyClose
   void rollback(Handler<AsyncResult<Void>> handler);
 }

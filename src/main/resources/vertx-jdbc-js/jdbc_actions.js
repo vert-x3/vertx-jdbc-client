@@ -14,6 +14,7 @@
  * under the License.
  */
 
+/** @module vertx-jdbc-js/jdbc_actions */
 var utils = require('vertx-js/util/utils');
 
 var io = Packages.io;
@@ -21,14 +22,22 @@ var JsonObject = io.vertx.core.json.JsonObject;
 var JJdbcActions = io.vertx.ext.jdbc.JdbcActions;
 
 /**
+ The SQL operations that are supported for the JDBC service.
 
-  @class
+ @class
 */
 var JdbcActions = function(j_val) {
 
   var j_jdbcActions = j_val;
   var that = this;
 
+  /**
+   Executes the given SQL statement
+
+   @public
+   @param sql {string} 
+   @param resultHandler {function} 
+   */
   this.execute = function(sql, resultHandler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
@@ -42,6 +51,14 @@ var JdbcActions = function(j_val) {
     } else utils.invalidArgs();
   };
 
+  /**
+   Executes the given SQL <code>SELECT</code> statement which returns the results of the query.
+
+   @public
+   @param sql {string} 
+   @param params {todo} 
+   @param resultHandler {function} 
+   */
   this.query = function(sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
@@ -55,6 +72,15 @@ var JdbcActions = function(j_val) {
     } else utils.invalidArgs();
   };
 
+  /**
+   Executes the given SQL statement which may be an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code>
+   statement.
+
+   @public
+   @param sql {string} 
+   @param params {todo} 
+   @param resultHandler {function} 
+   */
   this.update = function(sql, params, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {

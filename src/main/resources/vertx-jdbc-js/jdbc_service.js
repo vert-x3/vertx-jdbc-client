@@ -14,6 +14,7 @@
  * under the License.
  */
 
+/** @module vertx-jdbc-js/jdbc_service */
 var utils = require('vertx-js/util/utils');
 var JdbcTransaction = require('vertx-jdbc-js/jdbc_transaction');
 var JdbcConnection = require('vertx-jdbc-js/jdbc_connection');
@@ -23,40 +24,23 @@ var JsonObject = io.vertx.core.json.JsonObject;
 var JJdbcService = io.vertx.ext.jdbc.JdbcService;
 
 /**
+ The JDBC Service is responsible for obtaining either a <code>JdbcConnection</code> or <code>JdbcTransaction</code>
+ which can be used to pass SQL statements to a JDBC driver.
 
-  @class
+ @class
 */
 var JdbcService = function(j_val) {
 
   var j_jdbcService = j_val;
   var that = this;
 
-  this.beginTransaction = function(handler) {
-    var __args = arguments;
-    if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.beginTransaction(function(ar) {
-      if (ar.succeeded()) {
-        handler(new JdbcTransaction(ar.result()), null);
-      } else {
-        handler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
+  /**
+   Returns a connection that can be used to perform SQL operations on. It's important to remember
+   to close the connection when you are done, so it is returned to the pool.
 
-  this.beginTransactionWithIsolation = function(isolationLevel, handler) {
-    var __args = arguments;
-    if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
-      j_jdbcService.beginTransactionWithIsolation(isolationLevel, function(ar) {
-      if (ar.succeeded()) {
-        handler(new JdbcTransaction(ar.result()), null);
-      } else {
-        handler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
+   @public
+   @param handler {function} 
+   */
   this.getConnection = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
@@ -70,6 +54,52 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
+  /**
+   Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
+   <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
+   @public
+   @param handler {function} 
+   */
+  this.beginTransaction = function(handler) {
+    var __args = arguments;
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_jdbcService.beginTransaction(function(ar) {
+      if (ar.succeeded()) {
+        handler(new JdbcTransaction(ar.result()), null);
+      } else {
+        handler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
+
+  /**
+   Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
+   <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
+   @public
+   @param isolationLevel {number} 
+   @param handler {function} 
+   */
+  this.beginTransactionWithIsolation = function(isolationLevel, handler) {
+    var __args = arguments;
+    if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
+      j_jdbcService.beginTransactionWithIsolation(isolationLevel, function(ar) {
+      if (ar.succeeded()) {
+        handler(new JdbcTransaction(ar.result()), null);
+      } else {
+        handler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
+
+  /**
+   Normally invoked by the <code>JdbcServiceVerticle</code> to start the service when deployed.
+   This is usually not called by the user.
+
+   @public
+
+   */
   this.start = function() {
     var __args = arguments;
     if (__args.length === 0) {
@@ -77,6 +107,13 @@ var JdbcService = function(j_val) {
     } else utils.invalidArgs();
   };
 
+  /**
+   Normally invoked by the <code>JdbcServiceVerticle</code> to stop the service when the verticle is stopped/undeployed.
+   This is usually not called by the user.
+
+   @public
+
+   */
   this.stop = function() {
     var __args = arguments;
     if (__args.length === 0) {
@@ -90,6 +127,13 @@ var JdbcService = function(j_val) {
   this._jdel = j_jdbcService;
 };
 
+/**
+
+ @memberof module:vertx-jdbc-js/jdbc_service
+ @param vertx {Vertx} 
+ @param config {Object} 
+ @return {JdbcService}
+ */
 JdbcService.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
@@ -97,6 +141,13 @@ JdbcService.create = function(vertx, config) {
   } else utils.invalidArgs();
 };
 
+/**
+
+ @memberof module:vertx-jdbc-js/jdbc_service
+ @param vertx {Vertx} 
+ @param address {string} 
+ @return {JdbcService}
+ */
 JdbcService.createEventBusProxy = function(vertx, address) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
