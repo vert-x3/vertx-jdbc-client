@@ -80,13 +80,12 @@ connection.query("SELECT * FROM people WHERE lname = ?", params, query -> {
 
 ## Transactions
 
-Transactions are supported using the `JdbcConnection` object and setting autoCommit to false.
+Transactions are supported using the `JdbcConnection` object and setting `autoCommit` to false.
 
 For example
 
 ```java
-JdbcConnection conn = connAr.result();
-conn.setAutoCommit(false, autoCommit -> {
+connection.setAutoCommit(false, autoCommit -> {
   if (autoCommit.succeeded()) {
     // Do something in transaction
   } else {
