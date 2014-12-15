@@ -23,7 +23,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.docgen.Document;
 import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
 import io.vertx.serviceproxy.ProxyHelper;
 
@@ -52,28 +51,6 @@ public interface JdbcService {
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
   void getConnection(Handler<AsyncResult<JdbcConnection>> handler);
-
-  /**
-   * Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
-   * <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
-   * {@link io.vertx.ext.jdbc.JdbcTransaction#commit(io.vertx.core.Handler)} or
-   * {@link io.vertx.ext.jdbc.JdbcTransaction#rollback(io.vertx.core.Handler)} is called.
-   *
-   * @param handler the handler which is called when the <code>JdbcTransaction</code> object is ready for use.
-   */
-  void beginTransaction(Handler<AsyncResult<JdbcTransaction>> handler);
-
-  /**
-   * Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
-   * <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
-   * {@link io.vertx.ext.jdbc.JdbcTransaction#commit(io.vertx.core.Handler)} or
-   * {@link io.vertx.ext.jdbc.JdbcTransaction#rollback(io.vertx.core.Handler)} is called.
-   *
-   * @param isolationLevel the isolation level for the transaction.
-   * @param handler the handler which is called when the <code>JdbcTransaction</code> object is ready for use.
-   * @see java.sql.Connection#setTransactionIsolation(int)
-   */
-  void beginTransactionWithIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler);
 
   /**
    * Normally invoked by the <code>JdbcServiceVerticle</code> to start the service when deployed.

@@ -24,7 +24,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>service-proxy</artifactId>
+      <artifactId>vertx-service-proxy</artifactId>
       <version>${service.proxy.version}</version>
     </dependency>
     <dependency>

@@ -17,30 +17,67 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JdbcConnection;
+import io.vertx.ext.jdbc.impl.actions.JdbcAutoCommit;
+import io.vertx.ext.jdbc.impl.actions.JdbcClose;
+import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
+import io.vertx.ext.jdbc.impl.actions.JdbcExecute;
+import io.vertx.ext.jdbc.impl.actions.JdbcQuery;
+import io.vertx.ext.jdbc.impl.actions.JdbcRollback;
+import io.vertx.ext.jdbc.impl.actions.JdbcUpdate;
 
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class JdbcConnectionImpl extends JdbcActionsImpl implements JdbcConnection {
+class JdbcConnectionImpl implements JdbcConnection {
+
+  private final Vertx vertx;
+  private final Connection conn;
 
   public JdbcConnectionImpl(Vertx vertx, Connection conn) {
-    super(vertx, conn);
+    this.vertx = vertx;
+    this.conn = conn;
+  }
+
+  @Override
+  public void setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcAutoCommit(vertx, conn, autoCommit).process(resultHandler);
+  }
+
+  @Override
+  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
+    new JdbcExecute(vertx, conn, sql).process(resultHandler);
+  }
+
+  @Override
+  public void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
+    new JdbcQuery(vertx, conn, sql, params).process(resultHandler);
+  }
+
+  @Override
+  public void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
+    new JdbcUpdate(vertx, conn, sql, params).process(resultHandler);
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    try {
-      conn.close();
-      handler.handle(Future.succeededFuture());
-    } catch (SQLException e) {
-      handler.handle(Future.failedFuture(e));
-    }
+    new JdbcClose(vertx, conn).process(handler);
+  }
+
+  @Override
+  public void commit(Handler<AsyncResult<Void>> handler) {
+    new JdbcCommit(vertx, conn).process(handler);
+  }
+
+  @Override
+  public void rollback(Handler<AsyncResult<Void>> handler) {
+    new JdbcRollback(vertx, conn).process(handler);
   }
 }

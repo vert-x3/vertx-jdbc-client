@@ -16,7 +16,6 @@
 
 /** @module vertx-jdbc-js/jdbc_connection */
 var utils = require('vertx-js/util/utils');
-var JdbcActions = require('vertx-jdbc-js/jdbc_actions');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
@@ -31,7 +30,26 @@ var JdbcConnection = function(j_val) {
 
   var j_jdbcConnection = j_val;
   var that = this;
-  JdbcActions.call(this, j_val);
+
+  /**
+   Sets the auto commit flag for this connection. True by default. Set to false if you want
+
+   @public
+   @param autoCommit {boolean} 
+   @param resultHandler {function} 
+   */
+  this.setAutoCommit = function(autoCommit, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 2 && typeof __args[0] ==='boolean' && typeof __args[1] === 'function') {
+      j_jdbcConnection.setAutoCommit(autoCommit, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(null, null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
 
   /**
    Executes the given SQL statement
@@ -106,6 +124,44 @@ var JdbcConnection = function(j_val) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
       j_jdbcConnection.close(function(ar) {
+      if (ar.succeeded()) {
+        handler(null, null);
+      } else {
+        handler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
+
+  /**
+   Commits all changes made since the previous commit/rollback.
+
+   @public
+   @param handler {function} 
+   */
+  this.commit = function(handler) {
+    var __args = arguments;
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_jdbcConnection.commit(function(ar) {
+      if (ar.succeeded()) {
+        handler(null, null);
+      } else {
+        handler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
+
+  /**
+   Rolls back all changes made since the previous commit/rollback.
+
+   @public
+   @param handler {function} 
+   */
+  this.rollback = function(handler) {
+    var __args = arguments;
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_jdbcConnection.rollback(function(ar) {
       if (ar.succeeded()) {
         handler(null, null);
       } else {

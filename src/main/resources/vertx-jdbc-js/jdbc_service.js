@@ -16,7 +16,6 @@
 
 /** @module vertx-jdbc-js/jdbc_service */
 var utils = require('vertx-js/util/utils');
-var JdbcTransaction = require('vertx-jdbc-js/jdbc_transaction');
 var JdbcConnection = require('vertx-jdbc-js/jdbc_connection');
 
 var io = Packages.io;
@@ -47,45 +46,6 @@ var JdbcService = function(j_val) {
       j_jdbcService.getConnection(function(ar) {
       if (ar.succeeded()) {
         handler(new JdbcConnection(ar.result()), null);
-      } else {
-        handler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  /**
-   Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
-   <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
-   @public
-   @param handler {function} 
-   */
-  this.beginTransaction = function(handler) {
-    var __args = arguments;
-    if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.beginTransaction(function(ar) {
-      if (ar.succeeded()) {
-        handler(new JdbcTransaction(ar.result()), null);
-      } else {
-        handler(null, ar.cause());
-      }
-    });
-    } else utils.invalidArgs();
-  };
-
-  /**
-   Begins a transaction that can be used to perform SQL operations on. Each SQL operation performed on the
-   <code>JdbcTransaction</code> object will be within that same transaction, and will not complete until
-   @public
-   @param isolationLevel {number} 
-   @param handler {function} 
-   */
-  this.beginTransactionWithIsolation = function(isolationLevel, handler) {
-    var __args = arguments;
-    if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
-      j_jdbcService.beginTransactionWithIsolation(isolationLevel, function(ar) {
-      if (ar.succeeded()) {
-        handler(new JdbcTransaction(ar.result()), null);
       } else {
         handler(null, ar.cause());
       }

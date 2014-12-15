@@ -14,34 +14,33 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc;
+package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.codegen.annotations.ProxyClose;
-import io.vertx.codegen.annotations.ProxyGen;
-import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@VertxGen
-@ProxyGen
-public interface JdbcTransaction extends JdbcActions {
+public class JdbcAutoCommit extends AbstractJdbcAction<Void> {
+  private boolean autoCommit;
 
-  /**
-   * Commits the given transaction.
-   *
-   * @param handler the handler called when this operation completes.
-   */
-  @ProxyClose
-  void commit(Handler<AsyncResult<Void>> handler);
+  public JdbcAutoCommit(Vertx vertx, Connection conn, boolean autoCommit) {
+    super(vertx, conn);
+    this.autoCommit = autoCommit;
+  }
 
-  /**
-   * Rolls back the given transaction.
-   *
-   * @param handler the handler called when this operation completes.
-   */
-  @ProxyClose
-  void rollback(Handler<AsyncResult<Void>> handler);
+  @Override
+  protected Void execute(Connection conn) throws SQLException {
+    conn.setAutoCommit(autoCommit);
+
+    return null;
+  }
+
+  @Override
+  protected String name() {
+    return "setAutoCommit";
+  }
 }

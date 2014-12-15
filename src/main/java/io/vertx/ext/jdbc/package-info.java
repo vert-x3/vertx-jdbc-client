@@ -28,7 +28,7 @@
  * {@link examples.io.vertx.ext.jdbc.Examples#deployJdbcService()}
  * ----
  *
- * and get the service liks so:
+ * and get the service like so:
  * [source,{lang}]
  * ----
  * {@link examples.io.vertx.ext.jdbc.Examples#eventBusProxy()}

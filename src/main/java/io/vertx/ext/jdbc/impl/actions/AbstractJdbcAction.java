@@ -76,7 +76,7 @@ public abstract class AbstractJdbcAction<T> {
     resultHandler.handle(Future.failedFuture(t));
   }
 
-  protected static void close(Connection conn) {
+  protected static void safeClose(Connection conn) {
     if (conn != null) {
       try {
         conn.close();
@@ -86,7 +86,7 @@ public abstract class AbstractJdbcAction<T> {
     }
   }
 
-  protected static void close(ResultSet rs) {
+  protected static void safeClose(ResultSet rs) {
     if (rs != null) {
       try {
         rs.close();

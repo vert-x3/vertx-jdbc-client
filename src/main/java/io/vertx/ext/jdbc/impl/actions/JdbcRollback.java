@@ -36,7 +36,7 @@ public class JdbcRollback extends AbstractJdbcAction<Void> {
       conn.rollback();
       conn.setAutoCommit(true);
     } finally {
-      close(conn);
+      safeClose(conn);
     }
 
     return null;

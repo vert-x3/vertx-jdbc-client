@@ -26,7 +26,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.ext.jdbc.JdbcConnection;
 import io.vertx.ext.jdbc.JdbcService;
-import io.vertx.ext.jdbc.JdbcTransaction;
 import io.vertx.ext.jdbc.RuntimeSqlException;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 
@@ -72,26 +71,6 @@ public class JdbcServiceImpl implements JdbcService {
       } catch (SQLException e) {
         log.error("Exception occurred trying to close out the data source", e);
       }
-    }
-  }
-
-  @Override
-  public void beginTransaction(Handler<AsyncResult<JdbcTransaction>> handler) {
-    try {
-      JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), txTimeout);
-      handler.handle(Future.succeededFuture(transaction));
-    } catch (Throwable t) {
-      handler.handle(Future.failedFuture(t));
-    }
-  }
-
-  @Override
-  public void beginTransactionWithIsolation(int isolationLevel, Handler<AsyncResult<JdbcTransaction>> handler) {
-    try {
-      JdbcTransactionImpl transaction = new JdbcTransactionImpl(vertx, dataSource.getConnection(), isolationLevel, txTimeout);
-      handler.handle(Future.succeededFuture(transaction));
-    } catch (Throwable t) {
-      handler.handle(Future.failedFuture(t));
     }
   }
 

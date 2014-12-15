@@ -15,7 +15,7 @@ vertx.deployVerticle("service:io.vertx:vertx-jdbc");
 
 ----
 
-and get the service liks so:
+and get the service like so:
 [source,{lang}]
 ----
 import io.vertx.groovy.ext.jdbc.JdbcService
@@ -33,6 +33,6 @@ vertx.deployVerticle("service:io.vertx:vertx-jdbc", [config:[url:"jdbc:postgresq
 ----
 
 This example configures the JDBC service to use a postgres JDBC url in oder to connect to a postgresql database. As long
-as the postgresql JDBC driver is on the classpath, the service will use that for it's JDBC connections.
+as the postgresql JDBC driver is on the classpath, the service will be able to connect and interact with the postgresql database.
 
 //TODO: complete docs

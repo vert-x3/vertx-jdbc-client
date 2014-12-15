@@ -13,7 +13,7 @@ Vertx vertx = Vertx.vertx();
 vertx.deployVerticle("service:io.vertx:vertx-jdbc");
 ----
 
-and get the service liks so:
+and get the service like so:
 [source,{lang}]
 ----
 JdbcService service = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
@@ -28,6 +28,6 @@ vertx.deployVerticle("service:io.vertx:vertx-jdbc",
 ----
 
 This example configures the JDBC service to use a postgres JDBC url in oder to connect to a postgresql database. As long
-as the postgresql JDBC driver is on the classpath, the service will use that for it's JDBC connections.
+as the postgresql JDBC driver is on the classpath, the service will be able to connect and interact with the postgresql database.
 
 //TODO: complete docs

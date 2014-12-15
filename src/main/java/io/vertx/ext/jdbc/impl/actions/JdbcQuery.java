@@ -40,7 +40,7 @@ public class JdbcQuery extends AbstractJdbcStatement<List<JsonObject>> {
     ResultSet rs = statement.executeQuery();
     List<JsonObject> results = asList(rs);
 
-    close(rs);
+    safeClose(rs);
 
     return results;
   }

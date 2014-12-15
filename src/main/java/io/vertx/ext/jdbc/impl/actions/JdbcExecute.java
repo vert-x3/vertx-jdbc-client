@@ -42,7 +42,7 @@ public class JdbcExecute extends AbstractJdbcAction<Void> {
       // the connection pool doesn't.
       if (isResultSet) {
         while (stmt.getMoreResults()) {
-          close(stmt.getResultSet());
+          safeClose(stmt.getResultSet());
         }
       }
       return null;
