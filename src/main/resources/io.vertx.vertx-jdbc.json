@@ -1,0 +1,10 @@
+{
+  "main": "io.vertx.ext.jdbc.JdbcServiceVerticle",
+  "options": {
+    "worker": true,
+    "config": {
+      "address": "vertx.jdbc",
+      "url": "jdbc:hsqldb:mem:test?shutdown=true"
+    }
+  }
+}
