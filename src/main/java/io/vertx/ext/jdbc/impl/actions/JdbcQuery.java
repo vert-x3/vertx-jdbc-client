@@ -29,19 +29,17 @@ import java.util.List;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcQuery extends AbstractJdbcStatement<List<JsonObject>> {
+public class JdbcQuery extends AbstractJdbcStatement<io.vertx.ext.jdbc.ResultSet> {
 
   public JdbcQuery(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection, sql, parameters);
   }
 
   @Override
-  protected List<JsonObject> executeStatement(PreparedStatement statement) throws SQLException {
+  protected io.vertx.ext.jdbc.ResultSet executeStatement(PreparedStatement statement) throws SQLException {
     ResultSet rs = statement.executeQuery();
-    List<JsonObject> results = asList(rs);
-
+    io.vertx.ext.jdbc.ResultSet results = asList(rs);
     safeClose(rs);
-
     return results;
   }
 

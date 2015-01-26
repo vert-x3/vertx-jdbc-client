@@ -37,35 +37,25 @@ connection.execute(sql, execute -> {
 
 ### Update
 
-Updates the database `INSERT`, `UPDATE`, `DELETE`, passing the sql and parameters (optional). The result is a JsonObject
+Updates the database `INSERT`, `UPDATE`, `DELETE`, passing the sql and parameters (optional). The result is an `UpdateResult` object
 telling you how many rows were updated and the generated keys (if any) if it was an insert.
 
 ```java
 
 connection.update("INSERT INTO people VALUES (null, 'john', 'doe', '2000-01-01');", null, insert -> {
   if (insert.succeeded()) {
-    JsonObject result = insert.result();
-    System.out.println("Updated: " + result.getInteger("updated"));
-    System.out.println("Generated keys: " + result.getJsonArray("keys"));
+    UpdateResult result = insert.result();
+    System.out.println("Updated: " + result.getUpdated());
+    System.out.println("Generated keys: " + result.getKeys());
   } else {
     insert.cause().printStackTrace();
   }
 });
 
-Update Result:
-
-```javascript
-{
-  "updated" : 1     // number of rows effected by the update
-  "keys"    : [1]   // array of generated keys
-}
-```
-
 
 ### Query
 
-Queries the database (`SELECT`), passing the sql and parameters (optional). The result is a List of JsonObject's
-representing the ResultSet of the query.
+Queries the database (`SELECT`), passing the sql and parameters (optional). The result is a `ResultSet` object
 
 ```java
 JsonArray params = new JsonArray().add("doe");
@@ -113,3 +103,7 @@ connection.rollback(rollback -> {
   System.out.println("Rollback succeeded ? " + rollback.succeeded());
 });
 ```
+
+## Configuring the service
+
+TODO (or see docs)

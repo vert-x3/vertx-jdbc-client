@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.ProxyIgnore;
 import io.vertx.codegen.annotations.VertxGen;
@@ -25,6 +26,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
 import io.vertx.serviceproxy.ProxyHelper;
+
+import javax.sql.DataSource;
 
 /**
  * The JDBC Service is responsible for obtaining either a <code>JdbcConnection</code> or <code>JdbcTransaction</code>
@@ -36,8 +39,13 @@ import io.vertx.serviceproxy.ProxyHelper;
 @ProxyGen
 public interface JdbcService {
 
+  @GenIgnore
+  static JdbcService create(Vertx vertx, JsonObject config, DataSource dataSource) {
+    return new JdbcServiceImpl(vertx, config, dataSource);
+  }
+
   static JdbcService create(Vertx vertx, JsonObject config) {
-    return new JdbcServiceImpl(vertx, config);
+    return new JdbcServiceImpl(vertx, config, null);
   }
 
   static JdbcService createEventBusProxy(Vertx vertx, String address) {

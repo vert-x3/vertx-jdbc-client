@@ -33,7 +33,6 @@ public class JdbcClose extends AbstractJdbcAction<Void> {
   @Override
   protected Void execute(Connection conn) throws SQLException {
     conn.close();
-
     return null;
   }
 
