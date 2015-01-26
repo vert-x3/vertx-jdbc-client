@@ -22,6 +22,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JdbcConnection;
+import io.vertx.ext.jdbc.ResultSet;
+import io.vertx.ext.jdbc.UpdateResult;
 import io.vertx.ext.jdbc.impl.actions.JdbcAutoCommit;
 import io.vertx.ext.jdbc.impl.actions.JdbcClose;
 import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
@@ -48,36 +50,36 @@ class JdbcConnectionImpl implements JdbcConnection {
 
   @Override
   public void setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcAutoCommit(vertx, conn, autoCommit).process(resultHandler);
+    new JdbcAutoCommit(vertx, conn, autoCommit).execute(resultHandler);
   }
 
   @Override
   public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcExecute(vertx, conn, sql).process(resultHandler);
+    new JdbcExecute(vertx, conn, sql).execute(resultHandler);
   }
 
   @Override
-  public void query(String sql, JsonArray params, Handler<AsyncResult<List<JsonObject>>> resultHandler) {
-    new JdbcQuery(vertx, conn, sql, params).process(resultHandler);
+  public void query(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
+    new JdbcQuery(vertx, conn, sql, params).execute(resultHandler);
   }
 
   @Override
-  public void update(String sql, JsonArray params, Handler<AsyncResult<JsonObject>> resultHandler) {
-    new JdbcUpdate(vertx, conn, sql, params).process(resultHandler);
+  public void update(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    new JdbcUpdate(vertx, conn, sql, params).execute(resultHandler);
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    new JdbcClose(vertx, conn).process(handler);
+    new JdbcClose(vertx, conn).execute(handler);
   }
 
   @Override
   public void commit(Handler<AsyncResult<Void>> handler) {
-    new JdbcCommit(vertx, conn).process(handler);
+    new JdbcCommit(vertx, conn).execute(handler);
   }
 
   @Override
   public void rollback(Handler<AsyncResult<Void>> handler) {
-    new JdbcRollback(vertx, conn).process(handler);
+    new JdbcRollback(vertx, conn).execute(handler);
   }
 }

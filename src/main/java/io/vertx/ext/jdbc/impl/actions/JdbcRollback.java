@@ -32,13 +32,7 @@ public class JdbcRollback extends AbstractJdbcAction<Void> {
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    try {
-      conn.rollback();
-      conn.setAutoCommit(true);
-    } finally {
-      safeClose(conn);
-    }
-
+    conn.rollback();
     return null;
   }
 

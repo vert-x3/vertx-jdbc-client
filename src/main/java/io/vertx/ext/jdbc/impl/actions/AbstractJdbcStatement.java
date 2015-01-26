@@ -68,19 +68,26 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
     }
   }
 
-  protected List<JsonObject> asList(ResultSet rs) throws SQLException {
-    List<JsonObject> list = new ArrayList<>();
-    while (rs.next()) {
-      JsonObject json = new JsonObject();
-      ResultSetMetaData metaData = rs.getMetaData();
-      int cols = metaData.getColumnCount();
-      for (int i = 1; i <= cols; i++) {
-        json.put(metaData.getColumnName(i), convertSqlValue(rs.getObject(i)));
-      }
-      list.add(json);
+  protected io.vertx.ext.jdbc.ResultSet asList(ResultSet rs) throws SQLException {
+
+    List<String> columnNames = new ArrayList<>();
+    ResultSetMetaData metaData = rs.getMetaData();
+    int cols = metaData.getColumnCount();
+    for (int i = 1; i <= cols; i++) {
+      columnNames.add(metaData.getColumnName(i));
     }
 
-    return list;
+    List<JsonArray> results = new ArrayList<>();
+
+    while (rs.next()) {
+      JsonArray result = new JsonArray();
+      for (int i = 1; i <= cols; i++) {
+        result.add(convertSqlValue(rs.getObject(i)));
+      }
+      results.add(result);
+    }
+
+    return new io.vertx.ext.jdbc.ResultSet(columnNames, results);
   }
 
   protected Object convertSqlValue(Object value) {

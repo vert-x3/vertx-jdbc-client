@@ -32,13 +32,7 @@ public class JdbcCommit extends AbstractJdbcAction<Void> {
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    try {
-      conn.commit();
-      conn.setAutoCommit(true);
-    } finally {
-      safeClose(conn);
-    }
-
+    conn.commit();
     return null;
   }
 

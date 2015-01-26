@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.UpdateResult;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,7 +30,7 @@ import java.sql.Statement;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcUpdate extends AbstractJdbcStatement<JsonObject> {
+public class JdbcUpdate extends AbstractJdbcStatement<UpdateResult> {
 
   public JdbcUpdate(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection, sql, parameters);
@@ -41,12 +42,10 @@ public class JdbcUpdate extends AbstractJdbcStatement<JsonObject> {
   }
 
   @Override
-  protected JsonObject executeStatement(PreparedStatement statement) throws SQLException {
+  protected UpdateResult executeStatement(PreparedStatement statement) throws SQLException {
     int updated = statement.executeUpdate();
-
     JsonObject result = new JsonObject();
     result.put("updated", updated);
-
     // Create JsonArray of keys
     ResultSet rs = statement.getGeneratedKeys();
     JsonArray keys = new JsonArray();
@@ -54,8 +53,7 @@ public class JdbcUpdate extends AbstractJdbcStatement<JsonObject> {
       keys.add(convertSqlValue(rs.getObject(1)));
     }
     rs.close();
-
-    return result.put("keys", keys);
+    return new UpdateResult(updated, keys);
   }
 
   @Override

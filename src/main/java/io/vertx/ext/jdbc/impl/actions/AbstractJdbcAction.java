@@ -30,7 +30,7 @@ import java.sql.SQLException;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class AbstractJdbcAction<T> {
+public abstract class AbstractJdbcAction<T> implements Handler<Future<T>> {
 
   private static final Logger log = LoggerFactory.getLogger(AbstractJdbcAction.class);
 
@@ -42,39 +42,23 @@ public abstract class AbstractJdbcAction<T> {
     this.conn = conn;
   }
 
-  public void process(Handler<AsyncResult<T>> resultHandler) {
-    T result = null;
-    Throwable cause = null;
-
-    // Execute
+  @Override
+  public void handle(Future<T> future) {
     try {
-      result = execute(conn);
-    } catch (Throwable t) {
-      cause = t;
+      T result = execute(conn);
+      future.complete(result);
+    } catch (SQLException e) {
+      future.fail(e);
     }
+  }
 
-    if (cause == null) {
-      handleSuccess(result, resultHandler);
-    } else {
-      handleError(cause, resultHandler);
-    }
+  public void execute(Handler<AsyncResult<T>> resultHandler) {
+    vertx.executeBlocking(this, resultHandler);
   }
 
   protected abstract T execute(Connection conn) throws SQLException;
 
   protected abstract String name();
-
-
-  protected void handleSuccess(T result, Handler<AsyncResult<T>> resultHandler) {
-    resultHandler.handle(Future.succeededFuture(result));
-  }
-
-  protected void handleError(Throwable t, Handler<AsyncResult<T>> resultHandler) {
-    // Log the message at warn, so ppl can turn off. This is nice when you want a full
-    // stacktrace which you lose over the bus
-    log.warn("Exception occurred executing JDBC Service action " + name(), t);
-    resultHandler.handle(Future.failedFuture(t));
-  }
 
   protected static void safeClose(Connection conn) {
     if (conn != null) {

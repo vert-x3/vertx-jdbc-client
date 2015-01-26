@@ -41,46 +41,64 @@ public class JdbcServiceImpl implements JdbcService {
 
   private final Vertx vertx;
   private final JsonObject config;
-  private final long txTimeout;
 
-  //TODO: Connection pool, port mod-jdbc-persistor
   private DataSourceProvider provider;
   private DataSource dataSource;
 
-  public JdbcServiceImpl(Vertx vertx, JsonObject config) {
+  public JdbcServiceImpl(Vertx vertx, JsonObject config, DataSource dataSource) {
     this.vertx = vertx;
     this.config = config;
-    this.txTimeout = config.getInteger("txTimeout", 10000);
+    //this.txTimeout = config.getInteger("txTimeout", 10000);
+    this.dataSource = dataSource;
   }
 
   @Override
   public void start() {
-    provider = ServiceHelper.loadFactory(DataSourceProvider.class);
-    try {
-      dataSource = provider.getDataSource(config);
-    } catch (SQLException e) {
-      throw new RuntimeSqlException(e);
+    if (dataSource == null) {
+      String providerClass = config.getString("provider_class");
+      if (providerClass == null) {
+        // Default to C3P0
+        providerClass = "io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider";
+      }
+      try {
+        Class clazz = getClassLoader().loadClass(providerClass);
+        provider = (DataSourceProvider)clazz.newInstance();
+        dataSource = provider.getDataSource(config);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
   @Override
   public void stop() {
     if (provider != null) {
-      try {
-        provider.close(dataSource);
-      } catch (SQLException e) {
-        log.error("Exception occurred trying to close out the data source", e);
-      }
+      vertx.executeBlocking(future -> {
+        try {
+          provider.close(dataSource);
+          future.complete();
+        } catch (SQLException e) {
+          future.fail(e);
+        }
+      }, null);
     }
   }
 
   @Override
   public void getConnection(Handler<AsyncResult<JdbcConnection>> handler) {
-    try {
-      JdbcConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
-      handler.handle(Future.succeededFuture(conn));
-    } catch (Throwable t) {
-      handler.handle(Future.failedFuture(t));
-    }
+    vertx.executeBlocking(future -> {
+      try {
+        JdbcConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
+        future.complete(conn);
+      } catch (SQLException e) {
+        future.fail(e);
+      }
+    }, handler::handle);
+
+  }
+
+  private ClassLoader getClassLoader() {
+    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+    return tccl == null ? getClass().getClassLoader(): tccl;
   }
 }

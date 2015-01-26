@@ -84,7 +84,7 @@ var JdbcConnection = function(j_val) {
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
       j_jdbcConnection.query(sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convReturnListSetJson(ar.result()), null);
+        resultHandler(utils.convReturnJson(ar.result().toJson()), null);
       } else {
         resultHandler(null, ar.cause());
       }
@@ -106,7 +106,7 @@ var JdbcConnection = function(j_val) {
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'object' && __args[1] instanceof Array && typeof __args[2] === 'function') {
       j_jdbcConnection.update(sql, utils.convParamJsonArray(params), function(ar) {
       if (ar.succeeded()) {
-        resultHandler(utils.convReturnJson(ar.result()), null);
+        resultHandler(utils.convReturnJson(ar.result().toJson()), null);
       } else {
         resultHandler(null, ar.cause());
       }

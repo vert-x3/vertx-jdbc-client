@@ -70,21 +70,27 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
   protected static JsonObject config() {
     return new JsonObject()
-      .put("driver", "org.hsqldb.jdbcDriver")
       .put("url", "jdbc:hsqldb:mem:test?shutdown=true")
-      .put("txTimeout", 1000);
+      .put("driver_class", "org.hsqldb.jdbcDriver");
   }
 
   @Test
   public void testSelect() {
-    String sql = "SELECT * FROM select_table";
-    connection().query(sql, null, onSuccess(results -> {
-      assertNotNull(results);
-      assertEquals(2, results.size());
-      JsonObject result = results.get(0);
-      assertEquals(1, (int) result.getInteger("ID"));
-      assertEquals("doe", result.getString("LNAME"));
-      assertEquals("john", result.getString("FNAME"));
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().query(sql, null, onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(2, resultSet.getResults().size());
+      assertEquals("ID", resultSet.getColumnNames().get(0));
+      assertEquals("FNAME", resultSet.getColumnNames().get(1));
+      assertEquals("LNAME", resultSet.getColumnNames().get(2));
+      JsonArray result0 = resultSet.getResults().get(0);
+      assertEquals(1, (int)result0.getInteger(0));
+      assertEquals("john", result0.getString(1));
+      assertEquals("doe", result0.getString(2));
+      JsonArray result1 = resultSet.getResults().get(1);
+      assertEquals(2, (int)result1.getInteger(0));
+      assertEquals("jane", result1.getString(1));
+      assertEquals("doe", result1.getString(2));
       testComplete();
     }));
 
@@ -93,14 +99,18 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
   @Test
   public void testSelectWithParameters() {
-    String sql = "SELECT * FROM select_table WHERE fname = ?";
-    connection().query(sql, new JsonArray().add("john"), onSuccess(results -> {
-      assertNotNull(results);
-      assertEquals(1, results.size());
-      JsonObject result = results.get(0);
-      assertEquals(1, (int) result.getInteger("ID"));
-      assertEquals("doe", result.getString("LNAME"));
-      assertEquals("john", result.getString("FNAME"));
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?";
+
+    connection().query(sql, new JsonArray().add("john"), onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertEquals("ID", resultSet.getColumnNames().get(0));
+      assertEquals("FNAME", resultSet.getColumnNames().get(1));
+      assertEquals("LNAME", resultSet.getColumnNames().get(2));
+      JsonArray result0 = resultSet.getResults().get(0);
+      assertEquals(1, (int)result0.getInteger(0));
+      assertEquals("john", result0.getString(1));
+      assertEquals("doe", result0.getString(2));
       testComplete();
     }));
 
@@ -114,12 +124,15 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     service.getConnection(onSuccess(conn -> {
       assertNotNull(conn);
       conn.setAutoCommit(false, onSuccess(v -> {
-        conn.update(sql, params, onSuccess(result -> {
-          assertUpdate(result, 1);
-          int id = result.getJsonArray("keys").getInteger(0);
-          conn.query("SELECT * FROM insert_table WHERE id = ?", new JsonArray().add(id), onSuccess(results -> {
-            assertFalse(results.isEmpty());
-            assertEquals("smith", results.get(0).getString("LNAME"));
+
+        conn.update(sql, params, onSuccess((UpdateResult updateResult) -> {
+          assertUpdate(updateResult, 1);
+          int id = updateResult.getKeys().getInteger(0);
+          // Explicit typing of resultset is not really necessary but without it IntelliJ reports
+          // syntax error :(
+          conn.query("SELECT LNAME FROM insert_table WHERE id = ?", new JsonArray().add(id), onSuccess((ResultSet resultSet) -> {
+            assertFalse(resultSet.getResults().isEmpty());
+            assertEquals("smith", resultSet.getResults().get(0).getString(0));
             testComplete();
           }));
         }));
@@ -160,11 +173,11 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     JsonArray params = new JsonArray().addNull().add("doe").add("jane").add("2002-02-02");
     conn.update(sql, params, onSuccess(result -> {
       assertUpdate(result, 1);
-      int id = result.getJsonArray("keys").getInteger(0);
-      conn.query("SElECT * FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(results -> {
-        assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals("2002-02-02", results.get(0).getString("DOB"));
+      int id = result.getKeys().getInteger(0);
+      conn.query("SElECT DOB FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertEquals(1, resultSet.getResults().size());
+        assertEquals("2002-02-02", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));
@@ -178,10 +191,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     String sql = "UPDATE update_table SET fname='jane' WHERE id = 1";
     conn.update(sql, null, onSuccess(updated -> {
       assertUpdate(updated, 1);
-      conn.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
-        assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals("jane", results.get(0).getString("FNAME"));
+      conn.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertEquals(1, resultSet.getResults().size());
+        assertEquals("jane", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));
@@ -196,10 +209,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     JsonArray params = new JsonArray().add("bob").add(1);
     conn.update(sql, params, onSuccess(result -> {
       assertUpdate(result, 1);
-      conn.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(results -> {
-        assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals("bob", results.get(0).getString("FNAME"));
+      conn.query("SELECT fname FROM update_table WHERE id = 1", null, onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertEquals(1, resultSet.getResults().size());
+        assertEquals("bob", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));
@@ -224,7 +237,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     String sql = "DELETE FROM delete_table WHERE id = 1;";
     connection().update(sql, null, onSuccess(result -> {
       assertNotNull(result);
-      assertEquals(1, (int) result.getInteger("updated"));
+      assertEquals(1, result.getUpdated());
       testComplete();
     }));
 
@@ -237,7 +250,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     JsonArray params = new JsonArray().add(2);
     connection().update(sql, params, onSuccess(result -> {
       assertNotNull(result);
-      assertEquals(1, (int) result.getInteger("updated"));
+      assertEquals(1, result.getUpdated());
       testComplete();
     }));
 
@@ -294,9 +307,11 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
       connRef.set(conn);
       conn.setAutoCommit(false, onSuccess(v -> {
         for (int i = 0; i < inserts; i++) {
-          conn.update(sql, params, onSuccess(result -> {
+          // Explicit typing of UpdateResult is not really necessary but without it IntelliJ reports
+          // syntax error :(
+          conn.update(sql, params, onSuccess((UpdateResult result) -> {
             assertUpdate(result, 1);
-            int id = result.getJsonArray("keys").getInteger(0);
+            int id = result.getKeys().getInteger(0);
             insertIds.add(id);
             latch.countDown();
           }));
@@ -321,9 +336,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     if (commit) {
       conn.commit(onSuccess(v -> {
         service.getConnection(onSuccess(newconn -> {
-          newconn.query(selectSql.toString(), selectParams, onSuccess(results -> {
-            assertFalse(results.isEmpty());
-            assertEquals(inserts, results.size());
+          // Explicit typing of resultset is not really necessary but without it IntelliJ reports
+          // syntax error :(
+          newconn.query(selectSql.toString(), selectParams, onSuccess((ResultSet resultSet) -> {
+            assertEquals(inserts, resultSet.getResults().size());
             testComplete();
           }));
         }));
@@ -331,8 +347,10 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     } else {
       conn.rollback(onSuccess(v -> {
         service.getConnection(onSuccess(newconn -> {
-          newconn.query(selectSql.toString(), selectParams, onSuccess(results -> {
-            assertTrue(results.isEmpty());
+          // Explicit typing of resultset is not really necessary but without it IntelliJ reports
+          // syntax error :(
+          newconn.query(selectSql.toString(), selectParams, onSuccess((ResultSet resultSet) -> {
+            assertTrue(resultSet.getResults().isEmpty());
             testComplete();
           }));
         }));
@@ -342,17 +360,15 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     await();
   }
 
-  private void assertUpdate(JsonObject result, int updated) {
+  private void assertUpdate(UpdateResult result, int updated) {
     assertUpdate(result, updated, false);
   }
 
-  private void assertUpdate(JsonObject result, int updated, boolean generatedKeys) {
+  private void assertUpdate(UpdateResult result, int updated, boolean generatedKeys) {
     assertNotNull(result);
-    Integer u = result.getInteger("updated");
-    assertNotNull(u);
-    assertEquals(updated, (int) u);
+    assertEquals(updated, result.getUpdated());
     if (generatedKeys) {
-      JsonArray keys = result.getJsonArray("keys");
+      JsonArray keys = result.getKeys();
       assertNotNull(keys);
       assertEquals(updated, keys.size());
       Set<Integer> numbers = new HashSet<>();
