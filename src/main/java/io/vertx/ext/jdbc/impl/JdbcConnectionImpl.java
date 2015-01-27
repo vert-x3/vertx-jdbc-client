@@ -49,23 +49,27 @@ class JdbcConnectionImpl implements JdbcConnection {
   }
 
   @Override
-  public void setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
+  public JdbcConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
     new JdbcAutoCommit(vertx, conn, autoCommit).execute(resultHandler);
+    return this;
   }
 
   @Override
-  public void execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
+  public JdbcConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
     new JdbcExecute(vertx, conn, sql).execute(resultHandler);
+    return this;
   }
 
   @Override
-  public void query(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
+  public JdbcConnection query(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
     new JdbcQuery(vertx, conn, sql, params).execute(resultHandler);
+    return this;
   }
 
   @Override
-  public void update(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
+  public JdbcConnection update(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
     new JdbcUpdate(vertx, conn, sql, params).execute(resultHandler);
+    return this;
   }
 
   @Override
@@ -74,12 +78,14 @@ class JdbcConnectionImpl implements JdbcConnection {
   }
 
   @Override
-  public void commit(Handler<AsyncResult<Void>> handler) {
+  public JdbcConnection commit(Handler<AsyncResult<Void>> handler) {
     new JdbcCommit(vertx, conn).execute(handler);
+    return this;
   }
 
   @Override
-  public void rollback(Handler<AsyncResult<Void>> handler) {
+  public JdbcConnection rollback(Handler<AsyncResult<Void>> handler) {
     new JdbcRollback(vertx, conn).execute(handler);
+    return this;
   }
 }
