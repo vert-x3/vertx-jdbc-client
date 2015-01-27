@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.ProxyClose;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
@@ -42,7 +43,8 @@ public interface JdbcConnection {
    * @param resultHandler
    * @see java.sql.Connection#setAutoCommit(boolean)
    */
-  void setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler);
+  @Fluent
+  JdbcConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Executes the given SQL statement
@@ -51,7 +53,8 @@ public interface JdbcConnection {
    * @param resultHandler the handler which is called once this operation completes.
    * @see java.sql.Statement#execute(String)
    */
-  void execute(String sql, Handler<AsyncResult<Void>> resultHandler);
+  @Fluent
+  JdbcConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Executes the given SQL <code>SELECT</code> statement which returns the results of the query.
@@ -65,7 +68,8 @@ public interface JdbcConnection {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  void query(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler);
+  @Fluent
+  JdbcConnection query(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler);
 
   /**
    * Executes the given SQL statement which may be an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code>
@@ -79,7 +83,8 @@ public interface JdbcConnection {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  void update(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler);
+  @Fluent
+  JdbcConnection update(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler);
 
   /**
    * Closes the connection. Important to always close the connection when you are done so it's returned to the pool.
@@ -94,12 +99,14 @@ public interface JdbcConnection {
    *
    * @param handler the handler called when this operation completes.
    */
-  void commit(Handler<AsyncResult<Void>> handler);
+  @Fluent
+  JdbcConnection commit(Handler<AsyncResult<Void>> handler);
 
   /**
    * Rolls back all changes made since the previous commit/rollback.
    *
    * @param handler the handler called when this operation completes.
    */
-  void rollback(Handler<AsyncResult<Void>> handler);
+  @Fluent
+  JdbcConnection rollback(Handler<AsyncResult<Void>> handler);
 }

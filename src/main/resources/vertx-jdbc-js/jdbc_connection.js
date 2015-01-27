@@ -37,6 +37,7 @@ var JdbcConnection = function(j_val) {
    @public
    @param autoCommit {boolean} 
    @param resultHandler {function} 
+   @return {JdbcConnection}
    */
   this.setAutoCommit = function(autoCommit, resultHandler) {
     var __args = arguments;
@@ -48,6 +49,7 @@ var JdbcConnection = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
@@ -57,6 +59,7 @@ var JdbcConnection = function(j_val) {
    @public
    @param sql {string} 
    @param resultHandler {function} 
+   @return {JdbcConnection}
    */
   this.execute = function(sql, resultHandler) {
     var __args = arguments;
@@ -68,6 +71,7 @@ var JdbcConnection = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
@@ -78,6 +82,7 @@ var JdbcConnection = function(j_val) {
    @param sql {string} 
    @param params {todo} 
    @param resultHandler {function} 
+   @return {JdbcConnection}
    */
   this.query = function(sql, params, resultHandler) {
     var __args = arguments;
@@ -89,6 +94,7 @@ var JdbcConnection = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
@@ -100,6 +106,7 @@ var JdbcConnection = function(j_val) {
    @param sql {string} 
    @param params {todo} 
    @param resultHandler {function} 
+   @return {JdbcConnection}
    */
   this.update = function(sql, params, resultHandler) {
     var __args = arguments;
@@ -111,6 +118,7 @@ var JdbcConnection = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
@@ -138,6 +146,7 @@ var JdbcConnection = function(j_val) {
 
    @public
    @param handler {function} 
+   @return {JdbcConnection}
    */
   this.commit = function(handler) {
     var __args = arguments;
@@ -149,6 +158,7 @@ var JdbcConnection = function(j_val) {
         handler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
@@ -157,6 +167,7 @@ var JdbcConnection = function(j_val) {
 
    @public
    @param handler {function} 
+   @return {JdbcConnection}
    */
   this.rollback = function(handler) {
     var __args = arguments;
@@ -168,6 +179,7 @@ var JdbcConnection = function(j_val) {
         handler(null, ar.cause());
       }
     });
+      return that;
     } else utils.invalidArgs();
   };
 
