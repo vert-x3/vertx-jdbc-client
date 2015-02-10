@@ -16,7 +16,7 @@
 
 /** @module vertx-jdbc-js/jdbc_service */
 var utils = require('vertx-js/util/utils');
-var JdbcConnection = require('vertx-jdbc-js/jdbc_connection');
+var SqlConnection = require('vertx-sql-js/sql_connection');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
@@ -38,14 +38,14 @@ var JdbcService = function(j_val) {
    to close the connection when you are done, so it is returned to the pool.
 
    @public
-   @param handler {function} 
+   @param handler {function} the handler which is called when the <code>JdbcConnection</code> object is ready for use. 
    */
   this.getConnection = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
       j_jdbcService.getConnection(function(ar) {
       if (ar.succeeded()) {
-        handler(new JdbcConnection(ar.result()), null);
+        handler(new SqlConnection(ar.result()), null);
       } else {
         handler(null, ar.cause());
       }

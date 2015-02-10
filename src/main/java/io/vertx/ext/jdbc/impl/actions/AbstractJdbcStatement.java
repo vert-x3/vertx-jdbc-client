@@ -68,7 +68,7 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
     }
   }
 
-  protected io.vertx.ext.jdbc.ResultSet asList(ResultSet rs) throws SQLException {
+  protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
     ResultSetMetaData metaData = rs.getMetaData();
@@ -87,7 +87,7 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
       results.add(result);
     }
 
-    return new io.vertx.ext.jdbc.ResultSet(columnNames, results);
+    return new io.vertx.ext.sql.ResultSet(columnNames, results);
   }
 
   protected Object convertSqlValue(Object value) {

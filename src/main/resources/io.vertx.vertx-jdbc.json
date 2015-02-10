@@ -2,10 +2,7 @@
   "main": "io.vertx.ext.jdbc.JdbcServiceVerticle",
   "options": {
     "config": {
-      "address": "vertx.jdbc",
-      "provider_class": "io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider",
-      "url": "jdbc:hsqldb:mem:test?shutdown=true",
-      "driver_class": "org.hsqldb.jdbcDriver"
+      "address": "vertx.jdbc"
     }
   }
 }

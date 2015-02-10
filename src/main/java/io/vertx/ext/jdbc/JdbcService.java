@@ -25,6 +25,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JdbcServiceImpl;
+import io.vertx.ext.sql.SqlConnection;
 import io.vertx.serviceproxy.ProxyHelper;
 
 import javax.sql.DataSource;
@@ -58,7 +59,7 @@ public interface JdbcService {
    *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
-  void getConnection(Handler<AsyncResult<JdbcConnection>> handler);
+  void getConnection(Handler<AsyncResult<SqlConnection>> handler);
 
   /**
    * Normally invoked by the <code>JdbcServiceVerticle</code> to start the service when deployed.

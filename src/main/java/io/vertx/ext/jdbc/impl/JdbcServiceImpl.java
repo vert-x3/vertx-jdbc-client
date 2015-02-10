@@ -24,10 +24,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
-import io.vertx.ext.jdbc.JdbcConnection;
 import io.vertx.ext.jdbc.JdbcService;
-import io.vertx.ext.jdbc.RuntimeSqlException;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.sql.SqlConnection;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -85,10 +84,10 @@ public class JdbcServiceImpl implements JdbcService {
   }
 
   @Override
-  public void getConnection(Handler<AsyncResult<JdbcConnection>> handler) {
+  public void getConnection(Handler<AsyncResult<SqlConnection>> handler) {
     vertx.executeBlocking(future -> {
       try {
-        JdbcConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
+        SqlConnection conn = new JdbcConnectionImpl(vertx, dataSource.getConnection());
         future.complete(conn);
       } catch (SQLException e) {
         future.fail(e);

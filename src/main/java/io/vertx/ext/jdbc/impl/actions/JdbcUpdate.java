@@ -19,7 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.UpdateResult;
+import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
