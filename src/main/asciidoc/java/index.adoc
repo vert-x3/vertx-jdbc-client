@@ -1,33 +1,147 @@
-= Vert.x JDBC Service
+= Vert.x JDBC service
 
-The `link:apidocs/io/vertx/ext/jdbc/JdbcService.html[JDBC Service]` is responsible for providing an interface for Vert.x applications that need to interact with
-a database using a JDBC driver.
+This service allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
+application.
 
-== Getting Started
+== Setting up the service
 
-Since the JDBC service is a service proxy, there are several ways to get started, but the easiest is to just deploy the service
-verticle:
-[source,{lang}]
-----
-Vertx vertx = Vertx.vertx();
-vertx.deployVerticle("service:io.vertx:vertx-jdbc");
-----
+As with other services you can use the service either by deploying it as a verticle somewhere on your network and
+interacting with it over the event bus, either directly by sending messages, or using a service proxy, e.g.
 
-and get the service like so:
-[source,{lang}]
-----
-JdbcService service = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
-----
+Somewhere you deploy it:
 
-You can also specify configuration options during the deployment.
-[source,{lang}]
+[source,java]
 ----
-Vertx vertx = Vertx.vertx();
-vertx.deployVerticle("service:io.vertx:vertx-jdbc",
-  new DeploymentOptions().setConfig(new JsonObject().put("url", "jdbc:postgresql://localhost/vertx?user=postgres")));
+JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
+DeploymentOptions options = new DeploymentOptions().setConfig(config);
+
+vertx.deployVerticle("io.vertx:jdbc-service", options, res -> {
+  if (res.succeeded()) {
+    // Deployed ok
+  } else {
+    // Failed to deploy
+  }
+});
 ----
 
-This example configures the JDBC service to use a postgres JDBC url in oder to connect to a postgresql database. As long
-as the postgresql JDBC driver is on the classpath, the service will be able to connect and interact with the postgresql database.
+Now you can either send messages to it directly over the event bus, or you can create a proxy to the service
+from wherever you are and just use that:
 
-//TODO: complete docs
+[source,java]
+----
+JdbcService proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+
+// Now do stuff with it:
+
+proxy.getConnection(res -> {
+  if (res.succeeded()) {
+
+    SqlConnection connection = res.result();
+
+    connection.query("SELECT * FROM some_table", res2 -> {
+      if (res2.succeeded()) {
+
+        ResultSet rs = res2.result();
+        // Do something with results
+      }
+    });
+  } else {
+    // Failed to get connection - deal with it
+  }
+});
+----
+
+Alternatively you can create an instance of the service directly and just use that locally:
+
+[source,java]
+----
+JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
+
+JdbcService jdbcService = JdbcService.create(vertx, config);
+
+jdbcService.start();
+----
+
+If you create an instance this way you should make sure you start it with `link:apidocs/io/vertx/ext/jdbc/JdbcService.html#start--[start]`
+before you use it.
+
+You can also create a local instance specifying a Java datasource:
+
+[source,java]
+----
+JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
+
+JdbcService jdbcService = JdbcService.create(vertx, config, myDataSource);
+
+jdbcService.start();
+----
+
+However you do it, once you've got your service you can start using it.
+
+== Getting a connection
+
+Use `link:apidocs/io/vertx/ext/jdbc/JdbcService.html#getConnection-io.vertx.core.Handler-[getConnection]` to get a connection.
+
+This will return the connection in the handler when one is ready from the pool.
+
+[source,java]
+----
+service.getConnection(res -> {
+  if (res.succeeded()) {
+
+    SqlConnection connection = res.result();
+
+    // Got a connection
+
+  } else {
+    // Failed to get connection - deal with it
+  }
+});
+----
+
+Once you've finished with the connection make sure you close it afterwards.
+
+The connection is an instance of `link:apidocs/io/vertx/ext/sql/SqlConnection.html[SqlConnection]` which is a common interface used by
+more than Vert.x sql service.
+
+You can learn how to use it in the http://foobar[common sql interface] documentation.
+
+== Configuration
+
+Configuration is passed to the service when creating or deploying it.
+
+The following configuration properties generally apply:
+
+`address`:: The address this service should register on the event bus. Defaults to `vertx.jdbc`.
+`provider_class`:: The class name of the class actually used to manage the database connections. By default this is
+`io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider`but if you want to use a different provider you can override
+this property and provide your implementation.
+
+Assuming the C3P0 implementation is being used (the default), the following extra configuration properties apply:
+
+`url`:: the JDBC connection URL for the database
+`driver_class`:: the class of the JDBC driver
+`user`:: the username for the database
+`password`:: the password for the database
+`max_pool_size`:: the maximum number of connections to pool - default is `15`
+`initial_pool_size`:: the number of connections to initialise the pool with - default is `3`
+`min_pool_size`:: the minimum number of connections to pool
+`max_statements`:: the maximum number of prepared statements to cache - default is `0`.
+`max_statements_per_connection`:: the maximum number of prepared statements to cache per connection - default is `0`.
+`max_idle_time`:: number of seconds after which an idle connection will be closed - default is `0` (never expire).
+
+If you want to configure any other C3P0 properties, you can add a file `c3p0.properties` to the classpath.
+
+Here's an example of configuring a service:
+
+[source,java]
+----
+JsonObject config = new JsonObject()
+  .put("url", "jdbc:hsqldb:mem:test?shutdown=true")
+  .put("driver_class", "org.hsqldb.jdbcDriver")
+  .put("max_pool_size", 30);
+
+JdbcService service = JdbcService.create(vertx, config);
+
+service.start();
+----
