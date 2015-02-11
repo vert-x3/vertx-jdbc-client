@@ -12,17 +12,20 @@ Somewhere you deploy it:
 
 [source,java]
 ----
+
+// Deploy service - can be anywhere on your network
 def config = [
   host:"mymysqldb.mycompany"
-];
+]
 def options = [
   config:config
-];
+]
+
 vertx.deployVerticle("io.vertx:jdbc-service", options, { res ->
   if (res.succeeded()) {
   } else {
-  };
-});
+  }
+})
 
 ----
 
@@ -32,18 +35,26 @@ from wherever you are and just use that:
 [source,java]
 ----
 import io.vertx.groovy.ext.jdbc.JdbcService
-def proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+
+def proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc")
+
+// Now do stuff with it:
+
 proxy.getConnection({ res ->
   if (res.succeeded()) {
-    def connection = res.result();
+
+    def connection = res.result()
+
     connection.query("SELECT * FROM some_table", { res2 ->
       if (res2.succeeded()) {
-        def rs = res2.result();
-      };
-    });
+
+        def rs = res2.result()
+        // Do something with results
+      }
+    })
   } else {
-  };
-});
+  }
+})
 
 ----
 
@@ -52,11 +63,15 @@ Alternatively you can create an instance of the service directly and just use th
 [source,java]
 ----
 import io.vertx.groovy.ext.jdbc.JdbcService
+
 def config = [
   host:"mymysqldb.mycompany"
-];
-def jdbcService = JdbcService.create(vertx, config);
-jdbcService.start();
+]
+
+def jdbcService = JdbcService.create(vertx, config)
+
+jdbcService.start()
+
 
 ----
 
@@ -68,11 +83,15 @@ You can also create a local instance specifying a Java datasource:
 [source,java]
 ----
 import io.vertx.groovy.ext.jdbc.JdbcService
+
 def config = [
   host:"mymysqldb.mycompany"
-];
-def jdbcService = JdbcService.create(vertx, config, myDataSource);
-jdbcService.start();
+]
+
+def jdbcService = JdbcService.create(vertx, config, myDataSource)
+
+jdbcService.start()
+
 
 ----
 
@@ -86,12 +105,20 @@ This will return the connection in the handler when one is ready from the pool.
 
 [source,java]
 ----
+
+// Now do stuff with it:
+
 service.getConnection({ res ->
   if (res.succeeded()) {
-    def connection = res.result();
+
+    def connection = res.result()
+
+    // Got a connection
+
   } else {
-  };
-});
+  }
+})
+
 
 ----
 
@@ -133,12 +160,15 @@ Here's an example of configuring a service:
 [source,java]
 ----
 import io.vertx.groovy.ext.jdbc.JdbcService
+
 def config = [
   url:"jdbc:hsqldb:mem:test?shutdown=true",
   driver_class:"org.hsqldb.jdbcDriver",
   max_pool_size:30
-];
-def service = JdbcService.create(vertx, config);
-service.start();
+]
+
+def service = JdbcService.create(vertx, config)
+
+service.start()
 
 ----

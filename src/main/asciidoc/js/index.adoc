@@ -12,12 +12,15 @@ Somewhere you deploy it:
 
 [source,java]
 ----
+
+// Deploy service - can be anywhere on your network
 var config = {
   "host" : "mymysqldb.mycompany"
 };
 var options = {
   "config" : config
 };
+
 vertx.deployVerticle("io.vertx:jdbc-service", options, function (res, res_err) {
   if ((res != null)) {
   } else {
@@ -32,13 +35,21 @@ from wherever you are and just use that:
 [source,java]
 ----
 var JdbcService = require("vertx-jdbc-js/jdbc_service");
+
 var proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+
+// Now do stuff with it:
+
 proxy.getConnection(function (res, res_err) {
   if ((res != null)) {
+
     var connection = res;
+
     connection.query("SELECT * FROM some_table", function (res2, res2_err) {
       if ((res2 != null)) {
+
         var rs = res2;
+        // Do something with results
       };
     });
   } else {
@@ -52,11 +63,15 @@ Alternatively you can create an instance of the service directly and just use th
 [source,java]
 ----
 var JdbcService = require("vertx-jdbc-js/jdbc_service");
+
 var config = {
   "host" : "mymysqldb.mycompany"
 };
+
 var jdbcService = JdbcService.create(vertx, config);
+
 jdbcService.start();
+
 
 ----
 
@@ -68,11 +83,15 @@ You can also create a local instance specifying a Java datasource:
 [source,java]
 ----
 var JdbcService = require("vertx-jdbc-js/jdbc_service");
+
 var config = {
   "host" : "mymysqldb.mycompany"
 };
+
 var jdbcService = JdbcService.create(vertx, config, myDataSource);
+
 jdbcService.start();
+
 
 ----
 
@@ -86,12 +105,20 @@ This will return the connection in the handler when one is ready from the pool.
 
 [source,java]
 ----
+
+// Now do stuff with it:
+
 service.getConnection(function (res, res_err) {
   if ((res != null)) {
+
     var connection = res;
+
+    // Got a connection
+
   } else {
   };
 });
+
 
 ----
 
@@ -133,12 +160,15 @@ Here's an example of configuring a service:
 [source,java]
 ----
 var JdbcService = require("vertx-jdbc-js/jdbc_service");
+
 var config = {
   "url" : "jdbc:hsqldb:mem:test?shutdown=true",
   "driver_class" : "org.hsqldb.jdbcDriver",
   "max_pool_size" : 30
 };
+
 var service = JdbcService.create(vertx, config);
+
 service.start();
 
 ----
