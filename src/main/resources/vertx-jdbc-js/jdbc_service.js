@@ -23,8 +23,7 @@ var JsonObject = io.vertx.core.json.JsonObject;
 var JJdbcService = io.vertx.ext.jdbc.JdbcService;
 
 /**
- The JDBC Service is responsible for obtaining either a <code>JdbcConnection</code> or <code>JdbcTransaction</code>
- which can be used to pass SQL statements to a JDBC driver.
+ A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
 
  @class
 */
@@ -54,8 +53,7 @@ var JdbcService = function(j_val) {
   };
 
   /**
-   Normally invoked by the <code>JdbcServiceVerticle</code> to start the service when deployed.
-   This is usually not called by the user.
+   Start the service
 
    @public
 
@@ -68,8 +66,7 @@ var JdbcService = function(j_val) {
   };
 
   /**
-   Normally invoked by the <code>JdbcServiceVerticle</code> to stop the service when the verticle is stopped/undeployed.
-   This is usually not called by the user.
+   Stop the service
 
    @public
 
@@ -88,11 +85,12 @@ var JdbcService = function(j_val) {
 };
 
 /**
+ Create a service locally
 
  @memberof module:vertx-jdbc-js/jdbc_service
- @param vertx {Vertx} 
- @param config {Object} 
- @return {JdbcService}
+ @param vertx {Vertx} the Vert.x instance 
+ @param config {Object} the configuration 
+ @return {JdbcService} the service
  */
 JdbcService.create = function(vertx, config) {
   var __args = arguments;
@@ -102,11 +100,13 @@ JdbcService.create = function(vertx, config) {
 };
 
 /**
+ Create an event bus proxy to a service which lives somewhere on the network and is listening on the specified
+ event bus address
 
  @memberof module:vertx-jdbc-js/jdbc_service
- @param vertx {Vertx} 
- @param address {string} 
- @return {JdbcService}
+ @param vertx {Vertx} the Vert.x instance 
+ @param address {string} the address on the event bus where the service is listening 
+ @return {JdbcService} 
  */
 JdbcService.createEventBusProxy = function(vertx, address) {
   var __args = arguments;

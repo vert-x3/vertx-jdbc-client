@@ -31,8 +31,7 @@ import io.vertx.serviceproxy.ProxyHelper;
 import javax.sql.DataSource;
 
 /**
- * The JDBC Service is responsible for obtaining either a <code>JdbcConnection</code> or <code>JdbcTransaction</code>
- * which can be used to pass SQL statements to a JDBC driver.
+ * A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
  *
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
@@ -40,17 +39,41 @@ import javax.sql.DataSource;
 @ProxyGen
 public interface JdbcService {
 
-  @GenIgnore
-  static JdbcService create(Vertx vertx, JsonObject config, DataSource dataSource) {
-    return new JdbcServiceImpl(vertx, config, dataSource);
-  }
 
+  /**
+   * Create a service locally
+   *
+   * @param vertx  the Vert.x instance
+   * @param config  the configuration
+   * @return the service
+   */
   static JdbcService create(Vertx vertx, JsonObject config) {
     return new JdbcServiceImpl(vertx, config, null);
   }
 
+  /**
+   * Create an event bus proxy to a service which lives somewhere on the network and is listening on the specified
+   * event bus address
+   *
+   * @param vertx  the Vert.x instance
+   * @param address  the address on the event bus where the service is listening
+   * @return
+   */
   static JdbcService createEventBusProxy(Vertx vertx, String address) {
     return ProxyHelper.createProxy(JdbcService.class, vertx, address);
+  }
+
+  /**
+   * Create a service using a pre-existing datasource
+   *
+   * @param vertx  the Vert.x instance
+   * @param config  the configuration
+   * @param dataSource  the datasource
+   * @return the service
+   */
+  @GenIgnore
+  static JdbcService create(Vertx vertx, JsonObject config, DataSource dataSource) {
+    return new JdbcServiceImpl(vertx, config, dataSource);
   }
 
   /**
@@ -62,15 +85,13 @@ public interface JdbcService {
   void getConnection(Handler<AsyncResult<SqlConnection>> handler);
 
   /**
-   * Normally invoked by the <code>JdbcServiceVerticle</code> to start the service when deployed.
-   * This is usually not called by the user.
+   * Start the service
    */
   @ProxyIgnore
   public void start();
 
   /**
-   * Normally invoked by the <code>JdbcServiceVerticle</code> to stop the service when the verticle is stopped/undeployed.
-   * This is usually not called by the user.
+   * Stop the service
    */
   @ProxyIgnore
   public void stop();

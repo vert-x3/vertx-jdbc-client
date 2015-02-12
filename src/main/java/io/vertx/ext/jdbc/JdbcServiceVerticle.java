@@ -20,6 +20,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.serviceproxy.ProxyHelper;
 
 /**
+ * A verticle that starts an instance of a JDBC service
+ *
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JdbcServiceVerticle extends AbstractVerticle {
