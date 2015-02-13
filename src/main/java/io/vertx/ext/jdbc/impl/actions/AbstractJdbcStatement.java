@@ -18,16 +18,8 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +74,12 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
     while (rs.next()) {
       JsonArray result = new JsonArray();
       for (int i = 1; i <= cols; i++) {
-        result.add(convertSqlValue(rs.getObject(i)));
+        Object res = convertSqlValue(rs.getObject(i));
+        if (res != null) {
+          result.add(res);
+        } else {
+          result.addNull();
+        }
       }
       results.add(result);
     }
