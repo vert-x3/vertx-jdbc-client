@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-ext-parent</artifactId>
-    <version>5</version>
+    <version>6</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -43,7 +43,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-sql-common</artifactId>
-      <version>${stack.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
