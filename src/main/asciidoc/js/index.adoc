@@ -22,8 +22,10 @@ var options = {
 };
 
 vertx.deployVerticle("io.vertx:jdbc-service", options, function (res, res_err) {
-  if ((res != null)) {
+  if (res_err == null) {
+    // Deployed ok
   } else {
+    // Failed to deploy
   };
 });
 
@@ -41,18 +43,19 @@ var proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
 // Now do stuff with it:
 
 proxy.getConnection(function (res, res_err) {
-  if ((res != null)) {
+  if (res_err == null) {
 
     var connection = res;
 
     connection.query("SELECT * FROM some_table", function (res2, res2_err) {
-      if ((res2 != null)) {
+      if (res2_err == null) {
 
         var rs = res2;
         // Do something with results
       };
     });
   } else {
+    // Failed to get connection - deal with it
   };
 });
 
@@ -109,13 +112,14 @@ This will return the connection in the handler when one is ready from the pool.
 // Now do stuff with it:
 
 service.getConnection(function (res, res_err) {
-  if ((res != null)) {
+  if (res_err == null) {
 
     var connection = res;
 
     // Got a connection
 
   } else {
+    // Failed to get connection - deal with it
   };
 });
 

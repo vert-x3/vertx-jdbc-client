@@ -23,7 +23,9 @@ def options = [
 
 vertx.deployVerticle("io.vertx:jdbc-service", options, { res ->
   if (res.succeeded()) {
+    // Deployed ok
   } else {
+    // Failed to deploy
   }
 })
 
@@ -53,6 +55,7 @@ proxy.getConnection({ res ->
       }
     })
   } else {
+    // Failed to get connection - deal with it
   }
 })
 
@@ -116,6 +119,7 @@ service.getConnection({ res ->
     // Got a connection
 
   } else {
+    // Failed to get connection - deal with it
   }
 })
 
