@@ -62,7 +62,7 @@ JdbcService jdbcService = JdbcService.create(vertx, config);
 jdbcService.start();
 ----
 
-If you create an instance this way you should make sure you start it with `link:apidocs/io/vertx/ext/jdbc/JdbcService.html#start--[start]`
+If you create an instance this way you should make sure you start it with `link:../../apidocs/io/vertx/ext/jdbc/JdbcService.html#start--[start]`
 before you use it.
 
 You can also create a local instance specifying a Java datasource:
@@ -80,7 +80,7 @@ However you do it, once you've got your service you can start using it.
 
 == Getting a connection
 
-Use `link:apidocs/io/vertx/ext/jdbc/JdbcService.html#getConnection-io.vertx.core.Handler-[getConnection]` to get a connection.
+Use `link:../../apidocs/io/vertx/ext/jdbc/JdbcService.html#getConnection-io.vertx.core.Handler-[getConnection]` to get a connection.
 
 This will return the connection in the handler when one is ready from the pool.
 
@@ -101,7 +101,7 @@ service.getConnection(res -> {
 
 Once you've finished with the connection make sure you close it afterwards.
 
-The connection is an instance of `link:apidocs/io/vertx/ext/sql/SqlConnection.html[SqlConnection]` which is a common interface used by
+The connection is an instance of `link:../../apidocs/io/vertx/ext/sql/SqlConnection.html[SqlConnection]` which is a common interface used by
 more than Vert.x sql service.
 
 You can learn how to use it in the http://foobar[common sql interface] documentation.

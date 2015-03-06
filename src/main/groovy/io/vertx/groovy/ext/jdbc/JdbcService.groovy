@@ -24,9 +24,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 /**
  * A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
- *
- * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
- */
+*/
 @CompileStatic
 public class JdbcService {
   final def io.vertx.ext.jdbc.JdbcService delegate;
@@ -38,9 +36,8 @@ public class JdbcService {
   }
   /**
    * Create a service locally
-   *
-   * @param vertx  the Vert.x instance
-   * @param config  the configuration
+   * @param vertx the Vert.x instance
+   * @param config the configuration
    * @return the service
    */
   public static JdbcService create(Vertx vertx, Map<String, Object> config) {
@@ -50,10 +47,9 @@ public class JdbcService {
   /**
    * Create an event bus proxy to a service which lives somewhere on the network and is listening on the specified
    * event bus address
-   *
-   * @param vertx  the Vert.x instance
-   * @param address  the address on the event bus where the service is listening
-   * @return
+   * @param vertx the Vert.x instance
+   * @param address the address on the event bus where the service is listening
+   * @return 
    */
   public static JdbcService createEventBusProxy(Vertx vertx, String address) {
     def ret= JdbcService.FACTORY.apply(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
@@ -62,7 +58,6 @@ public class JdbcService {
   /**
    * Returns a connection that can be used to perform SQL operations on. It's important to remember
    * to close the connection when you are done, so it is returned to the pool.
-   *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
   public void getConnection(Handler<AsyncResult<SqlConnection>> handler) {
