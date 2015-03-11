@@ -52,7 +52,7 @@ public class JdbcService {
    * @param config  the configuration
    * @return the service
    */
-  public static JdbcService create(Vertx vertx, JsonObject config) {
+  public static JdbcService create(Vertx vertx, JsonObject config) { 
     JdbcService ret= JdbcService.newInstance(io.vertx.ext.jdbc.JdbcService.create((io.vertx.core.Vertx) vertx.getDelegate(), config));
     return ret;
   }
@@ -65,7 +65,7 @@ public class JdbcService {
    * @param address  the address on the event bus where the service is listening
    * @return
    */
-  public static JdbcService createEventBusProxy(Vertx vertx, String address) {
+  public static JdbcService createEventBusProxy(Vertx vertx, String address) { 
     JdbcService ret= JdbcService.newInstance(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx) vertx.getDelegate(), address));
     return ret;
   }
@@ -76,7 +76,7 @@ public class JdbcService {
    *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
-  public void getConnection(Handler<AsyncResult<SqlConnection>> handler) {
+  public void getConnection(Handler<AsyncResult<SqlConnection>> handler) { 
     this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SqlConnection>>() {
       public void handle(AsyncResult<io.vertx.ext.sql.SqlConnection> event) {
         AsyncResult<SqlConnection> f;
@@ -90,7 +90,13 @@ public class JdbcService {
     });
   }
 
-  public Observable<SqlConnection> getConnectionObservable() {
+  /**
+   * Returns a connection that can be used to perform SQL operations on. It's important to remember
+   * to close the connection when you are done, so it is returned to the pool.
+   *
+   * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
+   */
+  public Observable<SqlConnection> getConnectionObservable() { 
     io.vertx.rx.java.ObservableFuture<SqlConnection> handler = io.vertx.rx.java.RxHelper.observableFuture();
     getConnection(handler.toHandler());
     return handler;
@@ -99,14 +105,14 @@ public class JdbcService {
   /**
    * Start the service
    */
-  public void start() {
+  public void start() { 
     this.delegate.start();
   }
 
   /**
    * Stop the service
    */
-  public void stop() {
+  public void stop() { 
     this.delegate.stop();
   }
 
