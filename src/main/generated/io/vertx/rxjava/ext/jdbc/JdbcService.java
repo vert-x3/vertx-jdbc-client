@@ -28,9 +28,8 @@ import io.vertx.core.Handler;
 /**
  * A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
  *
- * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
- *
- * NOTE: This class has been automatically generated from the original non RX-ified interface using Vert.x codegen.
+ * <p/>
+ * NOTE: This class has been automatically generated from the {@link io.vertx.ext.jdbc.JdbcService original} non RX-ified interface using Vert.x codegen.
  */
 
 public class JdbcService {
@@ -47,9 +46,8 @@ public class JdbcService {
 
   /**
    * Create a service locally
-   *
-   * @param vertx  the Vert.x instance
-   * @param config  the configuration
+   * @param vertx the Vert.x instance
+   * @param config the configuration
    * @return the service
    */
   public static JdbcService create(Vertx vertx, JsonObject config) { 
@@ -60,10 +58,9 @@ public class JdbcService {
   /**
    * Create an event bus proxy to a service which lives somewhere on the network and is listening on the specified
    * event bus address
-   *
-   * @param vertx  the Vert.x instance
-   * @param address  the address on the event bus where the service is listening
-   * @return
+   * @param vertx the Vert.x instance
+   * @param address the address on the event bus where the service is listening
+   * @return 
    */
   public static JdbcService createEventBusProxy(Vertx vertx, String address) { 
     JdbcService ret= JdbcService.newInstance(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx) vertx.getDelegate(), address));
@@ -73,7 +70,6 @@ public class JdbcService {
   /**
    * Returns a connection that can be used to perform SQL operations on. It's important to remember
    * to close the connection when you are done, so it is returned to the pool.
-   *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
   public void getConnection(Handler<AsyncResult<SqlConnection>> handler) { 
@@ -93,8 +89,7 @@ public class JdbcService {
   /**
    * Returns a connection that can be used to perform SQL operations on. It's important to remember
    * to close the connection when you are done, so it is returned to the pool.
-   *
-   * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
+   * @return 
    */
   public Observable<SqlConnection> getConnectionObservable() { 
     io.vertx.rx.java.ObservableFuture<SqlConnection> handler = io.vertx.rx.java.RxHelper.observableFuture();
