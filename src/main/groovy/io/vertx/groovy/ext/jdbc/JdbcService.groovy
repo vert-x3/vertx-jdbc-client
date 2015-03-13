@@ -41,7 +41,7 @@ public class JdbcService {
    * @return the service
    */
   public static JdbcService create(Vertx vertx, Map<String, Object> config) {
-    def ret= JdbcService.FACTORY.apply(io.vertx.ext.jdbc.JdbcService.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
+    def ret= new io.vertx.groovy.ext.jdbc.JdbcService(io.vertx.ext.jdbc.JdbcService.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
     return ret;
   }
   /**
@@ -52,7 +52,7 @@ public class JdbcService {
    * @return 
    */
   public static JdbcService createEventBusProxy(Vertx vertx, String address) {
-    def ret= JdbcService.FACTORY.apply(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
+    def ret= new io.vertx.groovy.ext.jdbc.JdbcService(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
     return ret;
   }
   /**
@@ -85,8 +85,4 @@ public class JdbcService {
   public void stop() {
     this.delegate.stop();
   }
-
-  static final java.util.function.Function<io.vertx.ext.jdbc.JdbcService, JdbcService> FACTORY = io.vertx.lang.groovy.Factories.createFactory() {
-    io.vertx.ext.jdbc.JdbcService arg -> new JdbcService(arg);
-  };
 }
