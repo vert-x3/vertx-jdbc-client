@@ -21,7 +21,7 @@ public class Examples {
     JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
     DeploymentOptions options = new DeploymentOptions().setConfig(config);
 
-    vertx.deployVerticle("io.vertx:jdbc-service", options, res -> {
+    vertx.deployVerticle("service:io.vertx:jdbc-service", options, res -> {
       if (res.succeeded()) {
         // Deployed ok
       } else {
