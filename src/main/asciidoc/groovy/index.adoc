@@ -21,7 +21,7 @@ def options = [
   config:config
 ]
 
-vertx.deployVerticle("service:io.vertx:jdbc-service", options, { res ->
+vertx.deployVerticle("service:io.vertx:vertx-jdbc-service", options, { res ->
   if (res.succeeded()) {
     // Deployed ok
   } else {

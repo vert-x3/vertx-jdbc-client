@@ -29,7 +29,7 @@ public class JdbcServiceVerticleTest extends JdbcServiceTestBase {
   public void setUp() throws Exception {
     super.setUp();
     CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle("service:io.vertx:jdbc-service", new DeploymentOptions().setConfig(config()), onSuccess(id -> {
+    vertx.deployVerticle("service:io.vertx:vertx-jdbc-service", new DeploymentOptions().setConfig(config()), onSuccess(id -> {
       service = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
       latch.countDown();
     }));
