@@ -121,6 +121,30 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   }
 
   @Test
+  public void testSelectWithLabels() {
+    String sql = "SELECT ID as \"IdLabel\", FNAME as \"first_name\", LNAME as \"LAST.NAME\" FROM select_table WHERE fname = ?";
+
+    connection().queryWithParams(sql, new JsonArray().add("john"), onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertEquals("IdLabel", resultSet.getColumnNames().get(0));
+      assertEquals("first_name", resultSet.getColumnNames().get(1));
+      assertEquals("LAST.NAME", resultSet.getColumnNames().get(2));
+      JsonArray result0 = resultSet.getResults().get(0);
+      assertEquals(1, (int) result0.getInteger(0));
+      assertEquals("john", result0.getString(1));
+      assertEquals("doe", result0.getString(2));
+      JsonObject row0 = resultSet.getRows().get(0);
+      assertEquals(1, (int) row0.getInteger("IdLabel"));
+      assertEquals("john", row0.getString("first_name"));
+      assertEquals("doe", row0.getString("LAST.NAME"));
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
   public void testSelectTx() {
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("smith").add("john").add("2003-03-03");
