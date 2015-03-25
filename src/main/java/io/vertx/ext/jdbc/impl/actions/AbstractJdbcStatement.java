@@ -66,7 +66,7 @@ public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
-      columnNames.add(metaData.getColumnName(i));
+      columnNames.add(metaData.getColumnLabel(i));
     }
 
     List<JsonArray> results = new ArrayList<>();
