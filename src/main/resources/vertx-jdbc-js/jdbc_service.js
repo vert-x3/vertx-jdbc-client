@@ -42,7 +42,7 @@ var JdbcService = function(j_val) {
   this.getConnection = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService.getConnection(function(ar) {
+      j_jdbcService["getConnection(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         handler(new SqlConnection(ar.result()), null);
       } else {
@@ -61,7 +61,7 @@ var JdbcService = function(j_val) {
   this.start = function() {
     var __args = arguments;
     if (__args.length === 0) {
-      j_jdbcService.start();
+      j_jdbcService["start()"]();
     } else utils.invalidArgs();
   };
 
@@ -74,7 +74,7 @@ var JdbcService = function(j_val) {
   this.stop = function() {
     var __args = arguments;
     if (__args.length === 0) {
-      j_jdbcService.stop();
+      j_jdbcService["stop()"]();
     } else utils.invalidArgs();
   };
 
@@ -95,7 +95,7 @@ var JdbcService = function(j_val) {
 JdbcService.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new JdbcService(JJdbcService.create(vertx._jdel, utils.convParamJsonObject(config)));
+    return new JdbcService(JJdbcService["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
   } else utils.invalidArgs();
 };
 
@@ -111,7 +111,7 @@ JdbcService.create = function(vertx, config) {
 JdbcService.createEventBusProxy = function(vertx, address) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
-    return new JdbcService(JJdbcService.createEventBusProxy(vertx._jdel, address));
+    return new JdbcService(JJdbcService["createEventBusProxy(io.vertx.core.Vertx,java.lang.String)"](vertx._jdel, address));
   } else utils.invalidArgs();
 };
 

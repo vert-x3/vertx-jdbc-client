@@ -17,9 +17,7 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.ServiceHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -40,14 +38,12 @@ public class JdbcServiceImpl implements JdbcService {
 
   private final Vertx vertx;
   private final JsonObject config;
-
   private DataSourceProvider provider;
   private DataSource dataSource;
 
   public JdbcServiceImpl(Vertx vertx, JsonObject config, DataSource dataSource) {
     this.vertx = vertx;
     this.config = config;
-    //this.txTimeout = config.getInteger("txTimeout", 10000);
     this.dataSource = dataSource;
   }
 

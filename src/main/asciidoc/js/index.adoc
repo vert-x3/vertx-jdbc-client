@@ -21,7 +21,7 @@ var options = {
   "config" : config
 };
 
-vertx.deployVerticle("service:io.vertx:vertx-jdbc-service", options, function (res, res_err) {
+vertx.deployVerticle("service:io.vertx.jdbc-service", options, function (res, res_err) {
   if (res_err == null) {
     // Deployed ok
   } else {
