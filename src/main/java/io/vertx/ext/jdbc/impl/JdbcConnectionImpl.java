@@ -20,20 +20,12 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.impl.actions.JdbcAutoCommit;
-import io.vertx.ext.jdbc.impl.actions.JdbcClose;
-import io.vertx.ext.jdbc.impl.actions.JdbcCommit;
-import io.vertx.ext.jdbc.impl.actions.JdbcExecute;
-import io.vertx.ext.jdbc.impl.actions.JdbcQuery;
-import io.vertx.ext.jdbc.impl.actions.JdbcRollback;
-import io.vertx.ext.jdbc.impl.actions.JdbcUpdate;
+import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SqlConnection;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
-import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
