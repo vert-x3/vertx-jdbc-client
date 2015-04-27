@@ -1,9 +1,8 @@
 package examples;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JdbcService;
+import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SqlConnection;
 
@@ -15,28 +14,36 @@ import javax.sql.DataSource;
  */
 public class Examples {
 
-  public void example1(Vertx vertx) {
+  public void exampleCreateDefault(Vertx vertx, JsonObject config) {
 
-    // Deploy service - can be anywhere on your network
-    JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-    DeploymentOptions options = new DeploymentOptions().setConfig(config);
+    JDBCClient client = JDBCClient.createShared(vertx, config);
 
-    vertx.deployVerticle("service:io.vertx.jdbc-service", options, res -> {
-      if (res.succeeded()) {
-        // Deployed ok
-      } else {
-        // Failed to deploy
-      }
-    });
   }
 
-  public void example2(Vertx vertx) {
+  public void exampleCreateDataSourceName(Vertx vertx, JsonObject config) {
 
-    JdbcService proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+
+    JDBCClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
+
+  }
+
+  public void exampleCreateWithDataSource(Vertx vertx, DataSource dataSource) {
+
+    JDBCClient client = JDBCClient.create(vertx, dataSource);
+
+  }
+
+  public void exampleCreateNonShared(Vertx vertx, JsonObject config) {
+
+    JDBCClient client = JDBCClient.createNonShared(vertx, config);
+
+  }
+
+  public void example4(JDBCClient client) {
 
     // Now do stuff with it:
 
-    proxy.getConnection(res -> {
+    client.getConnection(res -> {
       if (res.succeeded()) {
 
         SqlConnection connection = res.result();
@@ -52,43 +59,6 @@ public class Examples {
         // Failed to get connection - deal with it
       }
     });
-  }
-
-  public void example3(Vertx vertx) {
-
-    JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-
-    JdbcService jdbcService = JdbcService.create(vertx, config);
-
-    jdbcService.start();
-
-  }
-
-  public void example3_1(Vertx vertx, DataSource myDataSource) {
-
-    JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-
-    JdbcService jdbcService = JdbcService.create(vertx, config, myDataSource);
-
-    jdbcService.start();
-
-  }
-
-  public void example4(JdbcService service) {
-
-    // Now do stuff with it:
-
-    service.getConnection(res -> {
-      if (res.succeeded()) {
-
-        SqlConnection connection = res.result();
-
-        // Got a connection
-
-      } else {
-        // Failed to get connection - deal with it
-      }
-    });
 
   }
 
@@ -99,8 +69,7 @@ public class Examples {
       .put("driver_class", "org.hsqldb.jdbcDriver")
       .put("max_pool_size", 30);
 
-    JdbcService service = JdbcService.create(vertx, config);
+    JDBCClient client = JDBCClient.createShared(vertx, config);
 
-    service.start();
   }
 }

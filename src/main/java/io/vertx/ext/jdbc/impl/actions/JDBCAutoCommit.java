@@ -24,20 +24,22 @@ import java.sql.SQLException;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcRollback extends AbstractJdbcAction<Void> {
+public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
+  private boolean autoCommit;
 
-  public JdbcRollback(Vertx vertx, Connection conn) {
+  public JDBCAutoCommit(Vertx vertx, Connection conn, boolean autoCommit) {
     super(vertx, conn);
+    this.autoCommit = autoCommit;
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    conn.rollback();
+    conn.setAutoCommit(autoCommit);
     return null;
   }
 
   @Override
   protected String name() {
-    return "rollback";
+    return "setAutoCommit";
   }
 }

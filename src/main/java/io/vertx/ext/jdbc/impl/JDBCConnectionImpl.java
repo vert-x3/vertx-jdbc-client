@@ -30,66 +30,66 @@ import java.sql.Connection;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class JdbcConnectionImpl implements SqlConnection {
+class JDBCConnectionImpl implements SqlConnection {
 
   private final Vertx vertx;
   private final Connection conn;
 
-  public JdbcConnectionImpl(Vertx vertx, Connection conn) {
+  public JDBCConnectionImpl(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
   }
 
   @Override
   public SqlConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcAutoCommit(vertx, conn, autoCommit).execute(resultHandler);
+    new JDBCAutoCommit(vertx, conn, autoCommit).execute(resultHandler);
     return this;
   }
 
   @Override
   public SqlConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JdbcExecute(vertx, conn, sql).execute(resultHandler);
+    new JDBCExecute(vertx, conn, sql).execute(resultHandler);
     return this;
   }
 
   @Override
   public SqlConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JdbcQuery(vertx, conn, sql, null).execute(resultHandler);
+    new JDBCQuery(vertx, conn, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SqlConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JdbcQuery(vertx, conn, sql, params).execute(resultHandler);
+    new JDBCQuery(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SqlConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JdbcUpdate(vertx, conn, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SqlConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JdbcUpdate(vertx, conn, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    new JdbcClose(vertx, conn).execute(handler);
+    new JDBCClose(vertx, conn).execute(handler);
   }
 
   @Override
   public SqlConnection commit(Handler<AsyncResult<Void>> handler) {
-    new JdbcCommit(vertx, conn).execute(handler);
+    new JDBCCommit(vertx, conn).execute(handler);
     return this;
   }
 
   @Override
   public SqlConnection rollback(Handler<AsyncResult<Void>> handler) {
-    new JdbcRollback(vertx, conn).execute(handler);
+    new JDBCRollback(vertx, conn).execute(handler);
     return this;
   }
 }

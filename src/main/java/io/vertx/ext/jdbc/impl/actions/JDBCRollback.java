@@ -14,25 +14,30 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc;
+package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
 
-import java.util.concurrent.CountDownLatch;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcServiceVerticleTest extends JdbcServiceTestBase {
+public class JDBCRollback extends AbstractJDBCAction<Void> {
+
+  public JDBCRollback(Vertx vertx, Connection conn) {
+    super(vertx, conn);
+  }
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle("service:io.vertx.jdbc-service", new DeploymentOptions().setConfig(config()), onSuccess(id -> {
-      service = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
-      latch.countDown();
-    }));
-    awaitLatch(latch);
+  protected Void execute(Connection conn) throws SQLException {
+    conn.rollback();
+    return null;
+  }
+
+  @Override
+  protected String name() {
+    return "rollback";
   }
 }

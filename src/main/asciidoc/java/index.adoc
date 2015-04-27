@@ -1,39 +1,97 @@
-= Vert.x JDBC service
+= Vert.x JDBC client
 
-This service allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
+This client allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
 application.
 
-== Setting up the service
+The client API is represented with the interface `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html[JDBCClient]`.
 
-As with other services you can use the service either by deploying it as a verticle somewhere on your network and
-interacting with it over the event bus, either directly by sending messages, or using a service proxy, e.g.
+== Creating a the client
 
-Somewhere you deploy it:
+There are several ways to create a client. Let's go through them all.
 
-[source,java]
-----
-JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-DeploymentOptions options = new DeploymentOptions().setConfig(config);
+=== Using default shared data source
 
-vertx.deployVerticle("service:io.vertx.jdbc-service", options, res -> {
-  if (res.succeeded()) {
-    // Deployed ok
-  } else {
-    // Failed to deploy
-  }
-});
-----
-
-Now you can either send messages to it directly over the event bus, or you can create a proxy to the service
-from wherever you are and just use that:
+The simplest way to create a JDBC client is as follows:
 
 [source,java]
 ----
-JdbcService proxy = JdbcService.createEventBusProxy(vertx, "vertx.jdbc");
+JDBCClient client = JDBCClient.createShared(vertx, config);
+----
 
-// Now do stuff with it:
+If more than one JDBC client is created in this way with the same Vert.x instance, they will share the same data source.
 
-proxy.getConnection(res -> {
+The first call to `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createShared]`
+will actually create the data source, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+
+=== Specifying a data source name
+
+You can create a client specifying a data source name as follows
+
+[source,java]
+----
+JDBCClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
+----
+
+If different clients are created using the same Vert.x instance and specifying the same data source name, they will
+share the same data source.
+
+The first call to `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createShared]`
+will actually create the data source, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+
+Use this way of creating if you wish different groups of clients to have different data sources, e.g. they're
+interacting with different databases.
+
+=== Creating a client with a non shared data source
+
+In most cases you will want to share a data source between different client instances. E.g. you have a verticle that
+creates a client instance, and when you scale the verticle by deploying more instances of it, you want each instance
+to use the same underlying data source.
+
+In that case you use one of the `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-java.lang.String-[JDBCClient.createShared]` methods as described above.
+
+However, it's possible you want to create a client instance that doesn't share its data source with any other client.
+
+In that case you can use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createNonShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createNonShared]`.
+
+[source,java]
+----
+JDBCClient client = JDBCClient.createNonShared(vertx, config);
+----
+
+This is equivalent to calling `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-java.lang.String-[JDBCClient.createShared]`
+with a unique data source name each time.
+
+=== Specifying a data source
+
+If you already have a pre-existing data source, you can also create the client directly specifying that:
+
+[source,java]
+----
+JDBCClient client = JDBCClient.create(vertx, dataSource);
+----
+
+== Closing the client
+
+It's fine to keep hold of the client for a long time (e.g. the lifetime of your verticle), but once you're
+done with it you should close it.
+
+Clients that share a data source with other client instances are reference counted. Once the last one that references
+the same data source is closed, the data source will be closed.
+
+== Getting a connection
+
+Once you've created a client you use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
+a connection.
+
+This will return the connection in the handler when one is ready from the pool.
+
+[source,java]
+----
+client.getConnection(res -> {
   if (res.succeeded()) {
 
     SqlConnection connection = res.result();
@@ -51,56 +109,6 @@ proxy.getConnection(res -> {
 });
 ----
 
-Alternatively you can create an instance of the service directly and just use that locally:
-
-[source,java]
-----
-JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-
-JdbcService jdbcService = JdbcService.create(vertx, config);
-
-jdbcService.start();
-----
-
-If you create an instance this way you should make sure you start it with `link:../../apidocs/io/vertx/ext/jdbc/JdbcService.html#start--[start]`
-before you use it.
-
-You can also create a local instance specifying a Java datasource:
-
-[source,java]
-----
-JsonObject config = new JsonObject().put("host", "mymysqldb.mycompany");
-
-JdbcService jdbcService = JdbcService.create(vertx, config, myDataSource);
-
-jdbcService.start();
-----
-
-However you do it, once you've got your service you can start using it.
-
-== Getting a connection
-
-Use `link:../../apidocs/io/vertx/ext/jdbc/JdbcService.html#getConnection-io.vertx.core.Handler-[getConnection]` to get a connection.
-
-This will return the connection in the handler when one is ready from the pool.
-
-[source,java]
-----
-service.getConnection(res -> {
-  if (res.succeeded()) {
-
-    SqlConnection connection = res.result();
-
-    // Got a connection
-
-  } else {
-    // Failed to get connection - deal with it
-  }
-});
-----
-
-Once you've finished with the connection make sure you close it afterwards.
-
 The connection is an instance of `link:../../apidocs/io/vertx/ext/sql/SqlConnection.html[SqlConnection]` which is a common interface used by
 more than Vert.x sql service.
 
@@ -108,11 +116,10 @@ You can learn how to use it in the http://foobar[common sql interface] documenta
 
 == Configuration
 
-Configuration is passed to the service when creating or deploying it.
+Configuration is passed to the client when creating or deploying it.
 
 The following configuration properties generally apply:
 
-`address`:: The address this service should register on the event bus. Defaults to `vertx.jdbc`.
 `provider_class`:: The class name of the class actually used to manage the database connections. By default this is
 `io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider`but if you want to use a different provider you can override
 this property and provide your implementation.
@@ -141,7 +148,5 @@ JsonObject config = new JsonObject()
   .put("driver_class", "org.hsqldb.jdbcDriver")
   .put("max_pool_size", 30);
 
-JdbcService service = JdbcService.create(vertx, config);
-
-service.start();
+JDBCClient client = JDBCClient.createShared(vertx, config);
 ----

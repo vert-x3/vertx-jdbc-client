@@ -14,22 +14,22 @@
  * under the License.
  */
 
-/** @module vertx-jdbc-js/jdbc_service */
+/** @module vertx-jdbc-js/jdbc_client */
 var utils = require('vertx-js/util/utils');
 var SqlConnection = require('vertx-sql-js/sql_connection');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JJdbcService = io.vertx.ext.jdbc.JdbcService;
+var JJDBCClient = io.vertx.ext.jdbc.JDBCClient;
 
 /**
- A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
+ An asynchronous client interface for interacting with a JDBC compliant database
 
  @class
 */
-var JdbcService = function(j_val) {
+var JDBCClient = function(j_val) {
 
-  var j_jdbcService = j_val;
+  var j_jDBCClient = j_val;
   var that = this;
 
   /**
@@ -38,82 +38,73 @@ var JdbcService = function(j_val) {
 
    @public
    @param handler {function} the handler which is called when the <code>JdbcConnection</code> object is ready for use. 
+   @return {JDBCClient}
    */
   this.getConnection = function(handler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_jdbcService["getConnection(io.vertx.core.Handler)"](function(ar) {
+      return new JDBCClient(j_jDBCClient["getConnection(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         handler(new SqlConnection(ar.result()), null);
       } else {
         handler(null, ar.cause());
       }
-    });
+    }));
     } else utils.invalidArgs();
   };
 
   /**
-   Start the service
+   Close the client
 
    @public
 
    */
-  this.start = function() {
+  this.close = function() {
     var __args = arguments;
     if (__args.length === 0) {
-      j_jdbcService["start()"]();
-    } else utils.invalidArgs();
-  };
-
-  /**
-   Stop the service
-
-   @public
-
-   */
-  this.stop = function() {
-    var __args = arguments;
-    if (__args.length === 0) {
-      j_jdbcService["stop()"]();
+      j_jDBCClient["close()"]();
     } else utils.invalidArgs();
   };
 
   // A reference to the underlying Java delegate
   // NOTE! This is an internal API and must not be used in user code.
   // If you rely on this property your code is likely to break if we change it / remove it without warning.
-  this._jdel = j_jdbcService;
+  this._jdel = j_jDBCClient;
 };
 
 /**
- Create a service locally
+ Create a JDBC client which maintains its own data source.
 
- @memberof module:vertx-jdbc-js/jdbc_service
+ @memberof module:vertx-jdbc-js/jdbc_client
  @param vertx {Vertx} the Vert.x instance 
  @param config {Object} the configuration 
- @return {JdbcService} the service
+ @return {JDBCClient} the client
  */
-JdbcService.create = function(vertx, config) {
+JDBCClient.createNonShared = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new JdbcService(JJdbcService["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
+    return new JDBCClient(JJDBCClient["createNonShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
   } else utils.invalidArgs();
 };
 
 /**
- Create an event bus proxy to a service which lives somewhere on the network and is listening on the specified
- event bus address
+ Create a JDBC client which shares its data source with any other JDBC clients created with the same
+ data source name
 
- @memberof module:vertx-jdbc-js/jdbc_service
+ @memberof module:vertx-jdbc-js/jdbc_client
  @param vertx {Vertx} the Vert.x instance 
- @param address {string} the address on the event bus where the service is listening 
- @return {JdbcService} 
+ @param config {Object} the configuration 
+ @param dataSourceName {string} the data source name 
+ @return {JDBCClient} the client
  */
-JdbcService.createEventBusProxy = function(vertx, address) {
+JDBCClient.createShared = function() {
   var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
-    return new JdbcService(JJdbcService["createEventBusProxy(io.vertx.core.Vertx,java.lang.String)"](vertx._jdel, address));
+  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
+    return new JDBCClient(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](__args[0]._jdel, utils.convParamJsonObject(__args[1])));
+  }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object' && typeof __args[2] === 'string') {
+    return new JDBCClient(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject,java.lang.String)"](__args[0]._jdel, utils.convParamJsonObject(__args[1]), __args[2]));
   } else utils.invalidArgs();
 };
 
 // We export the Constructor function
-module.exports = JdbcService;
+module.exports = JDBCClient;

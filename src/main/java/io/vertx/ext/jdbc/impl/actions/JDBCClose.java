@@ -14,26 +14,30 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc;
+package io.vertx.ext.jdbc.impl.actions;
 
-import org.junit.After;
-import org.junit.Before;
+import io.vertx.core.Vertx;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcServiceTest extends JdbcServiceTestBase {
+public class JDBCClose extends AbstractJDBCAction<Void> {
 
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    service = JdbcService.create(vertx, config());
-    service.start();
+  public JDBCClose(Vertx vertx, Connection conn) {
+    super(vertx, conn);
   }
 
-  @After
-  public void after() throws Exception {
-    service.stop();
-    super.after();
+  @Override
+  protected Void execute(Connection conn) throws SQLException {
+    conn.close();
+    return null;
+  }
+
+  @Override
+  protected String name() {
+    return "close";
   }
 }

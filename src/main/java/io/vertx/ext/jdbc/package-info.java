@@ -14,53 +14,94 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 /**
- * = Vert.x JDBC service
+ * = Vert.x JDBC client
  *
- * This service allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
+ * This client allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
  * application.
  *
- * == Setting up the service
+ * The client API is represented with the interface {@link io.vertx.ext.jdbc.JDBCClient}.
  *
- * As with other services you can use the service either by deploying it as a verticle somewhere on your network and
- * interacting with it over the event bus, either directly by sending messages, or using a service proxy, e.g.
+ * == Creating a the client
  *
- * Somewhere you deploy it:
+ * There are several ways to create a client. Let's go through them all.
  *
- * [source,java]
- * ----
- * {@link examples.Examples#example1}
- * ----
+ * === Using default shared data source
  *
- * Now you can either send messages to it directly over the event bus, or you can create a proxy to the service
- * from wherever you are and just use that:
+ * The simplest way to create a JDBC client is as follows:
  *
  * [source,java]
  * ----
- * {@link examples.Examples#example2}
+ * {@link examples.Examples#exampleCreateDefault}
  * ----
  *
- * Alternatively you can create an instance of the service directly and just use that locally:
+ * If more than one JDBC client is created in this way with the same Vert.x instance, they will share the same data source.
+ *
+ * The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
+ * will actually create the data source, and the specified config will be used.
+ *
+ * Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+ *
+ * === Specifying a data source name
+ *
+ * You can create a client specifying a data source name as follows
  *
  * [source,java]
  * ----
- * {@link examples.Examples#example3}
+ * {@link examples.Examples#exampleCreateDataSourceName}
  * ----
  *
- * If you create an instance this way you should make sure you start it with {@link io.vertx.ext.jdbc.JdbcService#start}
- * before you use it.
+ * If different clients are created using the same Vert.x instance and specifying the same data source name, they will
+ * share the same data source.
  *
- * You can also create a local instance specifying a Java datasource:
+ * The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
+ * will actually create the data source, and the specified config will be used.
+ *
+ * Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+ *
+ * Use this way of creating if you wish different groups of clients to have different data sources, e.g. they're
+ * interacting with different databases.
+ *
+ * === Creating a client with a non shared data source
+ *
+ * In most cases you will want to share a data source between different client instances. E.g. you have a verticle that
+ * creates a client instance, and when you scale the verticle by deploying more instances of it, you want each instance
+ * to use the same underlying data source.
+ *
+ * In that case you use one of the {@link io.vertx.ext.jdbc.JDBCClient#createShared} methods as described above.
+ *
+ * However, it's possible you want to create a client instance that doesn't share its data source with any other client.
+ *
+ * In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#createNonShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
  *
  * [source,java]
  * ----
- * {@link examples.Examples#example3_1}
+ * {@link examples.Examples#exampleCreateNonShared}
  * ----
  *
- * However you do it, once you've got your service you can start using it.
+ * This is equivalent to calling {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject, java.lang.String)}
+ * with a unique data source name each time.
+ *
+ * === Specifying a data source
+ *
+ * If you already have a pre-existing data source, you can also create the client directly specifying that:
+ *
+ * [source,java]
+ * ----
+ * {@link examples.Examples#exampleCreateWithDataSource}
+ * ----
+ *
+ * == Closing the client
+ *
+ * It's fine to keep hold of the client for a long time (e.g. the lifetime of your verticle), but once you're
+ * done with it you should close it.
+ *
+ * Clients that share a data source with other client instances are reference counted. Once the last one that references
+ * the same data source is closed, the data source will be closed.
  *
  * == Getting a connection
  *
- * Use {@link io.vertx.ext.jdbc.JdbcService#getConnection(io.vertx.core.Handler)} to get a connection.
+ * Once you've created a client you use {@link io.vertx.ext.jdbc.JDBCClient#getConnection(io.vertx.core.Handler)} to get
+ * a connection.
  *
  * This will return the connection in the handler when one is ready from the pool.
  *
@@ -69,8 +110,6 @@
  * {@link examples.Examples#example4}
  * ----
  *
- * Once you've finished with the connection make sure you close it afterwards.
- *
  * The connection is an instance of {@link io.vertx.ext.sql.SqlConnection} which is a common interface used by
  * more than Vert.x sql service.
  *
@@ -78,11 +117,10 @@
  *
  * == Configuration
  *
- * Configuration is passed to the service when creating or deploying it.
+ * Configuration is passed to the client when creating or deploying it.
  *
  * The following configuration properties generally apply:
  *
- * `address`:: The address this service should register on the event bus. Defaults to `vertx.jdbc`.
  * `provider_class`:: The class name of the class actually used to manage the database connections. By default this is
  * `io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider`but if you want to use a different provider you can override
  * this property and provide your implementation.
