@@ -30,14 +30,14 @@ import java.sql.SQLException;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class AbstractJdbcAction<T> implements Handler<Future<T>> {
+public abstract class AbstractJDBCAction<T> implements Handler<Future<T>> {
 
-  private static final Logger log = LoggerFactory.getLogger(AbstractJdbcAction.class);
+  private static final Logger log = LoggerFactory.getLogger(AbstractJDBCAction.class);
 
   protected final Vertx vertx;
   protected final Connection conn;
 
-  protected AbstractJdbcAction(Vertx vertx, Connection conn) {
+  protected AbstractJDBCAction(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
   }

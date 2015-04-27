@@ -17,40 +17,32 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcExecute extends AbstractJdbcAction<Void> {
+public class JDBCQuery extends AbstractJDBCStatement<io.vertx.ext.sql.ResultSet> {
 
-  private final String sql;
-
-  public JdbcExecute(Vertx vertx, Connection connection, String sql) {
-    super(vertx, connection);
-    this.sql = sql;
+  public JDBCQuery(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
+    super(vertx, connection, sql, parameters);
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
-    try (Statement stmt = conn.createStatement()) {
-      boolean isResultSet = stmt.execute(sql);
-      // If the execute statement happens to return a result set, we should close it in case
-      // the connection pool doesn't.
-      if (isResultSet) {
-        while (stmt.getMoreResults()) {
-          safeClose(stmt.getResultSet());
-        }
-      }
-      return null;
-    }
+  protected io.vertx.ext.sql.ResultSet executeStatement(PreparedStatement statement) throws SQLException {
+    ResultSet rs = statement.executeQuery();
+    io.vertx.ext.sql.ResultSet results = asList(rs);
+    safeClose(rs);
+    return results;
   }
 
   @Override
   protected String name() {
-    return "execute";
+    return "executeQuery";
   }
 }

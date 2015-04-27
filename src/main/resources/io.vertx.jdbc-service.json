@@ -1,8 +1,0 @@
-{
-  "main": "io.vertx.ext.jdbc.JdbcServiceVerticle",
-  "options": {
-    "config": {
-      "address": "vertx.jdbc"
-    }
-  }
-}

@@ -26,11 +26,11 @@ import java.util.List;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class AbstractJdbcStatement<T> extends AbstractJdbcAction<T> {
+public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   private final String sql;
   private final JsonArray parameters;
 
-  protected AbstractJdbcStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
+  protected AbstractJDBCStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection);
     this.sql = sql;
     this.parameters = parameters;

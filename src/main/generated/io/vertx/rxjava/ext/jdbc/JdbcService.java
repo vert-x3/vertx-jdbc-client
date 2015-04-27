@@ -16,7 +16,7 @@
 
 package io.vertx.rxjava.ext.jdbc;
 
-import java.util.Map;
+import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.lang.rxjava.InternalHelper;
 import rx.Observable;
 import io.vertx.rxjava.ext.sql.SqlConnection;
@@ -29,14 +29,14 @@ import io.vertx.core.Handler;
  * A JDBC service allows you to interact with a JDBC compatible database using an asynchronous API.
  *
  * <p/>
- * NOTE: This class has been automatically generated from the {@link io.vertx.ext.jdbc.JdbcService original} non RX-ified interface using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link io.vertx.ext.jdbc.JDBCClient original} non RX-ified interface using Vert.x codegen.
  */
 
 public class JdbcService {
 
-  final io.vertx.ext.jdbc.JdbcService delegate;
+  final JDBCClient delegate;
 
-  public JdbcService(io.vertx.ext.jdbc.JdbcService delegate) {
+  public JdbcService(JDBCClient delegate) {
     this.delegate = delegate;
   }
 
@@ -51,7 +51,7 @@ public class JdbcService {
    * @return the service
    */
   public static JdbcService create(Vertx vertx, JsonObject config) { 
-    JdbcService ret= JdbcService.newInstance(io.vertx.ext.jdbc.JdbcService.create((io.vertx.core.Vertx) vertx.getDelegate(), config));
+    JdbcService ret= JdbcService.newInstance(JDBCClient.createNonShared((io.vertx.core.Vertx) vertx.getDelegate(), config));
     return ret;
   }
 
@@ -63,7 +63,7 @@ public class JdbcService {
    * @return 
    */
   public static JdbcService createEventBusProxy(Vertx vertx, String address) { 
-    JdbcService ret= JdbcService.newInstance(io.vertx.ext.jdbc.JdbcService.createEventBusProxy((io.vertx.core.Vertx) vertx.getDelegate(), address));
+    JdbcService ret= JdbcService.newInstance(JDBCClient.createEventBusProxy((io.vertx.core.Vertx) vertx.getDelegate(), address));
     return ret;
   }
 
@@ -112,7 +112,7 @@ public class JdbcService {
   }
 
 
-  public static JdbcService newInstance(io.vertx.ext.jdbc.JdbcService arg) {
+  public static JdbcService newInstance(JDBCClient arg) {
     return new JdbcService(arg);
   }
 }

@@ -16,24 +16,17 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.ext.jdbc.JdbcService;
 import io.vertx.core.Vertx;
 import io.vertx.core.Handler;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.util.ArrayList;import java.util.HashSet;import java.util.List;import java.util.Map;import java.util.Set;import java.util.UUID;
 import io.vertx.serviceproxy.ProxyHelper;
 import io.vertx.serviceproxy.ProxyHandler;
 import io.vertx.ext.sql.SqlConnection;
-import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.JdbcService;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 
 /*
   Generated Proxy code - DO NOT EDIT
@@ -42,10 +35,10 @@ import io.vertx.core.Handler;
 public class JdbcServiceVertxProxyHandler extends ProxyHandler {
 
   private final Vertx vertx;
-  private final JdbcService service;
+  private final JDBCClient service;
   private final String address;
 
-  public JdbcServiceVertxProxyHandler(Vertx vertx, JdbcService service, String address) {
+  public JdbcServiceVertxProxyHandler(Vertx vertx, JDBCClient service, String address) {
     this.vertx = vertx;
     this.service = service;
     this.address = address;

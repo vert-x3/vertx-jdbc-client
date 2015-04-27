@@ -14,32 +14,25 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.ext.jdbc;
 
-import io.vertx.core.Vertx;
-
-import java.sql.Connection;
-import java.sql.SQLException;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcAutoCommit extends AbstractJdbcAction<Void> {
-  private boolean autoCommit;
+public class JDBCClientTest extends JDBCClientTestBase {
 
-  public JdbcAutoCommit(Vertx vertx, Connection conn, boolean autoCommit) {
-    super(vertx, conn);
-    this.autoCommit = autoCommit;
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    client = JDBCClient.createNonShared(vertx, config());
   }
 
-  @Override
-  protected Void execute(Connection conn) throws SQLException {
-    conn.setAutoCommit(autoCommit);
-    return null;
-  }
-
-  @Override
-  protected String name() {
-    return "setAutoCommit";
+  @After
+  public void after() throws Exception {
+    client.close();
+    super.after();
   }
 }

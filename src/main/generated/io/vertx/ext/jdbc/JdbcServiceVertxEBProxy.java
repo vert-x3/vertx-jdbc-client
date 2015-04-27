@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.ext.jdbc.JdbcService;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.Future;
@@ -24,9 +23,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.util.ArrayList;import java.util.HashSet;import java.util.List;import java.util.Map;import java.util.Set;import io.vertx.serviceproxy.ProxyHelper;
 import io.vertx.ext.sql.SqlConnection;
-import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.JdbcService;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
@@ -34,7 +30,7 @@ import io.vertx.core.Handler;
   Generated Proxy code - DO NOT EDIT
   @author Roger the Robot
 */
-public class JdbcServiceVertxEBProxy implements JdbcService {
+public class JdbcServiceVertxEBProxy implements JDBCClient {
 
   private Vertx _vertx;
   private String _address;

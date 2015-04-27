@@ -18,7 +18,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.impl.actions.AbstractJdbcAction;
+import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SqlConnection;
 import io.vertx.ext.sql.UpdateResult;
@@ -41,8 +41,9 @@ import java.util.logging.Logger;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class JdbcServiceTestBase extends VertxTestBase {
-  protected JdbcService service;
+public abstract class JDBCClientTestBase extends VertxTestBase {
+
+  protected JDBCClient client;
 
   private static final List<String> SQL = new ArrayList<>();
 
@@ -148,7 +149,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   public void testSelectTx() {
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("smith").add("john").add("2003-03-03");
-    service.getConnection(onSuccess(conn -> {
+    client.getConnection(onSuccess(conn -> {
       assertNotNull(conn);
       conn.setAutoCommit(false, onSuccess(v -> {
 
@@ -172,7 +173,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   @Test
   public void testInvalidSelect() {
     // Suppress log output so this test doesn't look to fail
-    setLogLevel(AbstractJdbcAction.class.getName(), Level.SEVERE);
+    setLogLevel(AbstractJDBCAction.class.getName(), Level.SEVERE);
     String sql = "SELECT FROM WHERE FOO BAR";
     connection().query(sql, onFailure(t -> {
       assertNotNull(t);
@@ -286,8 +287,8 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
   @Test
   public void testClose() throws Exception {
-    service.getConnection(onSuccess(conn -> {
-      conn.query("SELECT 1 FROM select_table", onSuccess(results-> {
+    client.getConnection(onSuccess(conn -> {
+      conn.query("SELECT 1 FROM select_table", onSuccess(results -> {
         assertNotNull(results);
         conn.close(onSuccess(v -> {
           testComplete();
@@ -300,9 +301,9 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
   @Test
   public void testCloseThenQuery() throws Exception {
-    service.getConnection(onSuccess(conn -> {
+    client.getConnection(onSuccess(conn -> {
       conn.close(onSuccess(v -> {
-        conn.query("SELECT 1 FROM select_table", onFailure(t-> {
+        conn.query("SELECT 1 FROM select_table", onFailure(t -> {
           assertNotNull(t);
           testComplete();
         }));
@@ -329,7 +330,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
 
     CountDownLatch latch = new CountDownLatch(inserts);
     AtomicReference<SqlConnection> connRef = new AtomicReference<>();
-    service.getConnection(onSuccess(conn -> {
+    client.getConnection(onSuccess(conn -> {
       assertNotNull(conn);
       connRef.set(conn);
       conn.setAutoCommit(false, onSuccess(v -> {
@@ -362,7 +363,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
     SqlConnection conn = connRef.get();
     if (commit) {
       conn.commit(onSuccess(v -> {
-        service.getConnection(onSuccess(newconn -> {
+        client.getConnection(onSuccess(newconn -> {
           // Explicit typing of resultset is not really necessary but without it IntelliJ reports
           // syntax error :(
           newconn.queryWithParams(selectSql.toString(), selectParams, onSuccess((ResultSet resultSet) -> {
@@ -373,7 +374,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
       }));
     } else {
       conn.rollback(onSuccess(v -> {
-        service.getConnection(onSuccess(newconn -> {
+        client.getConnection(onSuccess(newconn -> {
           // Explicit typing of resultset is not really necessary but without it IntelliJ reports
           // syntax error :(
           newconn.queryWithParams(selectSql.toString(), selectParams, onSuccess((ResultSet resultSet) -> {
@@ -409,7 +410,7 @@ public abstract class JdbcServiceTestBase extends VertxTestBase {
   private SqlConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<SqlConnection> ref = new AtomicReference<>();
-    service.getConnection(onSuccess(conn -> {
+    client.getConnection(onSuccess(conn -> {
       ref.set(conn);
       latch.countDown();
     }));

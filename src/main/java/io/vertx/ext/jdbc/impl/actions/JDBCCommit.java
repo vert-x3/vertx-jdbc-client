@@ -24,20 +24,20 @@ import java.sql.SQLException;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcClose extends AbstractJdbcAction<Void> {
+public class JDBCCommit extends AbstractJDBCAction<Void> {
 
-  public JdbcClose(Vertx vertx, Connection conn) {
+  public JDBCCommit(Vertx vertx, Connection conn) {
     super(vertx, conn);
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    conn.close();
+    conn.commit();
     return null;
   }
 
   @Override
   protected String name() {
-    return "close";
+    return "commit";
   }
 }

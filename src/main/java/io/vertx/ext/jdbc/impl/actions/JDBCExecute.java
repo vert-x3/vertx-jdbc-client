@@ -20,24 +20,37 @@ import io.vertx.core.Vertx;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JdbcCommit extends AbstractJdbcAction<Void> {
+public class JDBCExecute extends AbstractJDBCAction<Void> {
 
-  public JdbcCommit(Vertx vertx, Connection conn) {
-    super(vertx, conn);
+  private final String sql;
+
+  public JDBCExecute(Vertx vertx, Connection connection, String sql) {
+    super(vertx, connection);
+    this.sql = sql;
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
-    conn.commit();
-    return null;
+    try (Statement stmt = conn.createStatement()) {
+      boolean isResultSet = stmt.execute(sql);
+      // If the execute statement happens to return a result set, we should close it in case
+      // the connection pool doesn't.
+      if (isResultSet) {
+        while (stmt.getMoreResults()) {
+          safeClose(stmt.getResultSet());
+        }
+      }
+      return null;
+    }
   }
 
   @Override
   protected String name() {
-    return "commit";
+    return "execute";
   }
 }
