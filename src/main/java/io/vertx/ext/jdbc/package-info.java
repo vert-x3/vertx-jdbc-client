@@ -108,7 +108,7 @@
  * {@link examples.Examples#example4}
  * ----
  *
- * The connection is an instance of {@link io.vertx.ext.sql.SqlConnection} which is a common interface used by
+ * The connection is an instance of {@link io.vertx.ext.sql.SQLConnection} which is a common interface used by
  * more than Vert.x sql service.
  *
  * You can learn how to use it in the http://foobar[common sql interface] documentation.

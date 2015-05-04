@@ -23,7 +23,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
-import io.vertx.ext.sql.SqlConnection;
+import io.vertx.ext.sql.SQLConnection;
 
 import javax.sql.DataSource;
 import java.util.UUID;
@@ -99,7 +99,7 @@ public interface JDBCClient {
    *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
-  JDBCClient getConnection(Handler<AsyncResult<SqlConnection>> handler);
+  JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler);
 
   /**
    * Close the client

@@ -22,7 +22,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SqlConnection;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
@@ -30,7 +30,7 @@ import java.sql.Connection;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class JDBCConnectionImpl implements SqlConnection {
+class JDBCConnectionImpl implements SQLConnection {
 
   private final Vertx vertx;
   private final Connection conn;
@@ -41,37 +41,37 @@ class JDBCConnectionImpl implements SqlConnection {
   }
 
   @Override
-  public SqlConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
+  public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
     new JDBCAutoCommit(vertx, conn, autoCommit).execute(resultHandler);
     return this;
   }
 
   @Override
-  public SqlConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
+  public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
     new JDBCExecute(vertx, conn, sql).execute(resultHandler);
     return this;
   }
 
   @Override
-  public SqlConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
+  public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
     new JDBCQuery(vertx, conn, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
-  public SqlConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
+  public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
     new JDBCQuery(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
-  public SqlConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
+  public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
     new JDBCUpdate(vertx, conn, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
-  public SqlConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
+  public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
     new JDBCUpdate(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }
@@ -82,13 +82,13 @@ class JDBCConnectionImpl implements SqlConnection {
   }
 
   @Override
-  public SqlConnection commit(Handler<AsyncResult<Void>> handler) {
+  public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
     new JDBCCommit(vertx, conn).execute(handler);
     return this;
   }
 
   @Override
-  public SqlConnection rollback(Handler<AsyncResult<Void>> handler) {
+  public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
     new JDBCRollback(vertx, conn).execute(handler);
     return this;
   }
