@@ -27,14 +27,17 @@
  *
  * === Using default shared data source
  *
- * The simplest way to create a JDBC client is as follows:
+ * In most cases you will want to share a data source between different client instances.
+ *
+ * E.g. you scale your application by deploying multiple instances of your verticle and you want each verticle instance
+ * to share the same datasource so you don't end up with multiple pools
+ *
+ * You do this as follows:
  *
  * [source,java]
  * ----
  * {@link examples.Examples#exampleCreateDefault}
  * ----
- *
- * If more than one JDBC client is created in this way with the same Vert.x instance, they will share the same data source.
  *
  * The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
  * will actually create the data source, and the specified config will be used.
@@ -63,12 +66,7 @@
  *
  * === Creating a client with a non shared data source
  *
- * In most cases you will want to share a data source between different client instances. E.g. you have a verticle that
- * creates a client instance, and when you scale the verticle by deploying more instances of it, you want each instance
- * to use the same underlying data source.
- *
- * In that case you use one of the {@link io.vertx.ext.jdbc.JDBCClient#createShared} methods as described above.
- *
+ * In most cases you will want to share a data source between different client instances.
  * However, it's possible you want to create a client instance that doesn't share its data source with any other client.
  *
  * In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#createNonShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
