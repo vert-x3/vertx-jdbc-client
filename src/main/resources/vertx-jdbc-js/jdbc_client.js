@@ -16,7 +16,7 @@
 
 /** @module vertx-jdbc-js/jdbc_client */
 var utils = require('vertx-js/util/utils');
-var SqlConnection = require('vertx-sql-js/sql_connection');
+var SQLConnection = require('vertx-sql-js/sql_connection');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
@@ -45,7 +45,7 @@ var JDBCClient = function(j_val) {
     if (__args.length === 1 && typeof __args[0] === 'function') {
       return new JDBCClient(j_jDBCClient["getConnection(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
-        handler(new SqlConnection(ar.result()), null);
+        handler(new SQLConnection(ar.result()), null);
       } else {
         handler(null, ar.cause());
       }

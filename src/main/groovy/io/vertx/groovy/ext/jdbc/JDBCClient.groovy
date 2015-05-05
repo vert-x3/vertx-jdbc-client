@@ -17,8 +17,8 @@
 package io.vertx.groovy.ext.jdbc;
 import groovy.transform.CompileStatic
 import io.vertx.lang.groovy.InternalHelper
-import io.vertx.groovy.ext.sql.SqlConnection
 import io.vertx.groovy.core.Vertx
+import io.vertx.groovy.ext.sql.SQLConnection
 import io.vertx.core.json.JsonObject
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
@@ -72,14 +72,14 @@ public class JDBCClient {
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    * @return 
    */
-  public JDBCClient getConnection(Handler<AsyncResult<SqlConnection>> handler) {
-    def ret= new io.vertx.groovy.ext.jdbc.JDBCClient(this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SqlConnection>>() {
-      public void handle(AsyncResult<io.vertx.ext.sql.SqlConnection> event) {
-        AsyncResult<SqlConnection> f
+  public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
+    def ret= new io.vertx.groovy.ext.jdbc.JDBCClient(this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
+      public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> event) {
+        AsyncResult<SQLConnection> f
         if (event.succeeded()) {
-          f = InternalHelper.<SqlConnection>result(new SqlConnection(event.result()))
+          f = InternalHelper.<SQLConnection>result(new SQLConnection(event.result()))
         } else {
-          f = InternalHelper.<SqlConnection>failure(event.cause())
+          f = InternalHelper.<SQLConnection>failure(event.cause())
         }
         handler.handle(f)
       }

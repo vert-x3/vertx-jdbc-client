@@ -92,7 +92,7 @@ This will return the connection in the handler when one is ready from the pool.
 client.getConnection(res -> {
   if (res.succeeded()) {
 
-    SqlConnection connection = res.result();
+    SQLConnection connection = res.result();
 
     connection.query("SELECT * FROM some_table", res2 -> {
       if (res2.succeeded()) {
@@ -107,7 +107,7 @@ client.getConnection(res -> {
 });
 ----
 
-The connection is an instance of `link:../../apidocs/io/vertx/ext/sql/SqlConnection.html[SqlConnection]` which is a common interface used by
+The connection is an instance of `link:../../apidocs/io/vertx/ext/sql/SQLConnection.html[SQLConnection]` which is a common interface used by
 more than Vert.x sql service.
 
 You can learn how to use it in the http://foobar[common sql interface] documentation.

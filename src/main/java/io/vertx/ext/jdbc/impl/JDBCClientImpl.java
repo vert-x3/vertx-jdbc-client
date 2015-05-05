@@ -24,7 +24,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.SqlConnection;
+import io.vertx.ext.sql.SQLConnection;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -82,10 +82,10 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   @Override
-  public JDBCClient getConnection(Handler<AsyncResult<SqlConnection>> handler) {
+  public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     Context ctx = vertx.getOrCreateContext();
     exec.execute(() -> {
-      Future<SqlConnection> res = Future.future();
+      Future<SQLConnection> res = Future.future();
       try {
         /*
         This can block until a connection is free.
@@ -101,7 +101,7 @@ public class JDBCClientImpl implements JDBCClient {
         other important operations from occurring (e.g. async file access)
         */
         Connection conn = ds.getConnection();
-        SqlConnection sconn = new JDBCConnectionImpl(vertx, conn);
+        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn);
         res.complete(sconn);
       } catch (SQLException e) {
         res.fail(e);

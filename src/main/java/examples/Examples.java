@@ -4,7 +4,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SqlConnection;
+import io.vertx.ext.sql.SQLConnection;
 
 import javax.sql.DataSource;
 
@@ -46,7 +46,7 @@ public class Examples {
     client.getConnection(res -> {
       if (res.succeeded()) {
 
-        SqlConnection connection = res.result();
+        SQLConnection connection = res.result();
 
         connection.query("SELECT * FROM some_table", res2 -> {
           if (res2.succeeded()) {

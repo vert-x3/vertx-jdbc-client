@@ -20,7 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SqlConnection;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.BeforeClass;
@@ -196,7 +196,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testInsertWithParameters() {
-    SqlConnection conn = connection();
+    SQLConnection conn = connection();
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("doe").add("jane").add("2002-02-02");
     conn.updateWithParams(sql, params, onSuccess(result -> {
@@ -215,7 +215,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testUpdate() {
-    SqlConnection conn = connection();
+    SQLConnection conn = connection();
     String sql = "UPDATE update_table SET fname='jane' WHERE id = 1";
     conn.update(sql, onSuccess(updated -> {
       assertUpdate(updated, 1);
@@ -232,7 +232,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testUpdateWithParams() {
-    SqlConnection conn = connection();
+    SQLConnection conn = connection();
     String sql = "UPDATE update_table SET fname = ? WHERE id = ?";
     JsonArray params = new JsonArray().add("bob").add(1);
     conn.updateWithParams(sql, params, onSuccess(result -> {
@@ -250,7 +250,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testUpdateNoMatch() {
-    SqlConnection conn = connection();
+    SQLConnection conn = connection();
     String sql = "UPDATE update_table SET fname='jane' WHERE id = -231";
     conn.update(sql, onSuccess(result -> {
       assertUpdate(result, 0);
@@ -329,7 +329,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     List<Integer> insertIds = new CopyOnWriteArrayList<>();
 
     CountDownLatch latch = new CountDownLatch(inserts);
-    AtomicReference<SqlConnection> connRef = new AtomicReference<>();
+    AtomicReference<SQLConnection> connRef = new AtomicReference<>();
     client.getConnection(onSuccess(conn -> {
       assertNotNull(conn);
       connRef.set(conn);
@@ -360,7 +360,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
       }
     }
 
-    SqlConnection conn = connRef.get();
+    SQLConnection conn = connRef.get();
     if (commit) {
       conn.commit(onSuccess(v -> {
         client.getConnection(onSuccess(newconn -> {
@@ -407,9 +407,9 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     }
   }
 
-  private SqlConnection connection() {
+  private SQLConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);
-    AtomicReference<SqlConnection> ref = new AtomicReference<>();
+    AtomicReference<SQLConnection> ref = new AtomicReference<>();
     client.getConnection(onSuccess(conn -> {
       ref.set(conn);
       latch.countDown();
