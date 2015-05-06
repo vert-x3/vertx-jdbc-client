@@ -73,7 +73,7 @@ public class JDBCClient {
    * @return 
    */
   public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    def ret= new io.vertx.groovy.ext.jdbc.JDBCClient(this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
+    this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
       public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> event) {
         AsyncResult<SQLConnection> f
         if (event.succeeded()) {
@@ -83,8 +83,8 @@ public class JDBCClient {
         }
         handler.handle(f)
       }
-    }));
-    return ret;
+    });
+    return this;
   }
   /**
    * Close the client

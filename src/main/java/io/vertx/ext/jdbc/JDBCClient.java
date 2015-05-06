@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -40,12 +41,12 @@ public interface JDBCClient {
   /**
    * The default data source provider is C3P0
    */
-  static final String DEFAULT_PROVIDER_CLASS =  "io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider";
+  String DEFAULT_PROVIDER_CLASS =  "io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider";
 
   /**
    * The name of the default data source
    */
-  static final String DEFAULT_DS_NAME = "DEFAULT_DS";
+  String DEFAULT_DS_NAME = "DEFAULT_DS";
 
   /**
    * Create a JDBC client which maintains its own data source.
@@ -99,10 +100,11 @@ public interface JDBCClient {
    *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
+  @Fluent
   JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler);
 
   /**
    * Close the client
    */
-  public void close();
+  void close();
 }
