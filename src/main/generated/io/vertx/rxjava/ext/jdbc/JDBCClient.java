@@ -69,7 +69,7 @@ public class JDBCClient {
   }
 
   /**
-   * Like {@link  #createShared(io.vertx.rxjava.core.Vertx, JsonObject, String)} but with the default data source name
+   * Like {@link io.vertx.rxjava.ext.jdbc.JDBCClient#createShared} but with the default data source name
    * @param vertx the Vert.x instance
    * @param config the configuration
    * @return the client

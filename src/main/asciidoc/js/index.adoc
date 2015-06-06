@@ -119,11 +119,11 @@ client.getConnection(function (res, res_err) {
 
         var rs = res2;
         // Do something with results
-      };
+      }
     });
   } else {
     // Failed to get connection - deal with it
-  };
+  }
 });
 
 
