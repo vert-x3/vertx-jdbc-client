@@ -45,7 +45,7 @@ var JDBCClient = function(j_val) {
     if (__args.length === 1 && typeof __args[0] === 'function') {
       j_jDBCClient["getConnection(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
-        handler(new SQLConnection(ar.result()), null);
+        handler(utils.convReturnVertxGen(ar.result(), SQLConnection), null);
       } else {
         handler(null, ar.cause());
       }
@@ -84,7 +84,7 @@ var JDBCClient = function(j_val) {
 JDBCClient.createNonShared = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new JDBCClient(JJDBCClient["createNonShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
+    return utils.convReturnVertxGen(JJDBCClient["createNonShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)), JDBCClient);
   } else utils.invalidArgs();
 };
 
@@ -101,9 +101,9 @@ JDBCClient.createNonShared = function(vertx, config) {
 JDBCClient.createShared = function() {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new JDBCClient(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](__args[0]._jdel, utils.convParamJsonObject(__args[1])));
+    return utils.convReturnVertxGen(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](__args[0]._jdel, utils.convParamJsonObject(__args[1])), JDBCClient);
   }else if (__args.length === 3 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object' && typeof __args[2] === 'string') {
-    return new JDBCClient(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject,java.lang.String)"](__args[0]._jdel, utils.convParamJsonObject(__args[1]), __args[2]));
+    return utils.convReturnVertxGen(JJDBCClient["createShared(io.vertx.core.Vertx,io.vertx.core.json.JsonObject,java.lang.String)"](__args[0]._jdel, utils.convParamJsonObject(__args[1]), __args[2]), JDBCClient);
   } else utils.invalidArgs();
 };
 

@@ -120,6 +120,6 @@ public class JDBCClient {
 
 
   public static JDBCClient newInstance(io.vertx.ext.jdbc.JDBCClient arg) {
-    return new JDBCClient(arg);
+    return arg != null ? new JDBCClient(arg) : null;
   }
 }
