@@ -20,6 +20,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
@@ -31,6 +33,8 @@ import java.sql.Connection;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 class JDBCConnectionImpl implements SQLConnection {
+
+  private static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
 
   private final Vertx vertx;
   private final Connection conn;
@@ -79,6 +83,15 @@ class JDBCConnectionImpl implements SQLConnection {
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
     new JDBCClose(vertx, conn).execute(handler);
+  }
+
+  @Override
+  public void close() {
+    new JDBCClose(vertx, conn).execute(ar -> {
+      if (ar.failed()) {
+        log.error("Failure in closing connection", ar.cause());
+      }
+    });
   }
 
   @Override
