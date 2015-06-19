@@ -1,5 +1,7 @@
 = Vert.x JDBC client
 
+image:https://vertx.ci.cloudbees.com/buildStatus/icon?job=vert.x3-jdbc-client["Build Status",link="https://vertx.ci.cloudbees.com/view/vert.x-3/job/vert.x3-jdbc-client/"]
+
 This provides an asynchronous interface around a JDBC datasource so you can access data in any
 database for which there is a JDBC driver.
 
