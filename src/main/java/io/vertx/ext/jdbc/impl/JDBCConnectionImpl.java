@@ -87,7 +87,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public void close() {
-    new JDBCClose(vertx, conn).execute(ar -> {
+    close(ar -> {
       if (ar.failed()) {
         log.error("Failure in closing connection", ar.cause());
       }
