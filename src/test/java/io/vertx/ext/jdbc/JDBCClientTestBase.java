@@ -53,6 +53,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     SQL.add("drop table if exists insert_table;");
     SQL.add("drop table if exists update_table;");
     SQL.add("drop table if exists delete_table;");
+    SQL.add("drop table if exists blob_table;");
     SQL.add("create table select_table (id int, lname varchar(255), fname varchar(255) );");
     SQL.add("insert into select_table values (1, 'doe', 'john');");
     SQL.add("insert into select_table values (2, 'doe', 'jane');");
@@ -62,10 +63,13 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     SQL.add("create table delete_table (id int, lname varchar(255), fname varchar(255), dob date );");
     SQL.add("insert into delete_table values (1, 'doe', 'john', '2001-01-01');");
     SQL.add("insert into delete_table values (2, 'doe', 'jane', '2002-02-02');");
+    SQL.add("create table blob_table (b blob, c clob, a int array default array[]);");
+    SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('Hello', clob),  ARRAY[1,2,3])");
   }
 
   @BeforeClass
   public static void createDb() throws Exception {
+    System.setProperty("textdb.allow_full_path", "true");
     Connection conn = DriverManager.getConnection(config().getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
@@ -205,7 +209,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
       conn.queryWithParams("SElECT DOB FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(resultSet -> {
         assertNotNull(resultSet);
         assertEquals(1, resultSet.getResults().size());
-        assertEquals("2002-02-02", resultSet.getResults().get(0).getString(0));
+        assertEquals("2002-02-01T23:00:00Z", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));
@@ -321,6 +325,45 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   @Test
   public void testRollback() throws Exception {
     testTx(5, false);
+  }
+
+  @Test
+  public void testBlob() {
+    String sql = "SELECT b FROM blob_table";
+    connection().query(sql, onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertNotNull(resultSet.getResults().get(0).getBinary(0));
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testClob() {
+    String sql = "SELECT c FROM blob_table";
+    connection().query(sql, onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertNotNull(resultSet.getResults().get(0).getString(0));
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testArray() {
+    String sql = "SELECT a FROM blob_table";
+    connection().query(sql, onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertNotNull(resultSet.getResults().get(0).getJsonArray(0));
+      testComplete();
+    }));
+
+    await();
   }
 
   private void testTx(int inserts, boolean commit) throws Exception {

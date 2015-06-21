@@ -19,9 +19,16 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -88,10 +95,82 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   }
 
   protected Object convertSqlValue(Object value) {
-    if (value instanceof Date || value instanceof Time || value instanceof Timestamp) {
-      return value.toString();
-    } else {
+    if (value == null) {
+      return null;
+    }
+
+    // valid json types are just returned as is
+    if (value instanceof Boolean || value instanceof String || value instanceof byte[]) {
       return value;
     }
+
+    // numeric values
+    if (value instanceof Number) {
+      if (value instanceof BigDecimal) {
+        BigDecimal d = (BigDecimal) value;
+        if (d.scale() == 0) {
+          return ((BigDecimal) value).toBigInteger();
+        } else {
+          // we might loose precision here
+          return ((BigDecimal) value).doubleValue();
+        }
+      }
+
+      return value;
+    }
+
+    // temporal values
+    if (value instanceof Date || value instanceof Time || value instanceof Timestamp) {
+      return OffsetDateTime.ofInstant(Instant.ofEpochMilli(((java.util.Date) value).getTime()), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
+    }
+
+    // large objects
+    if (value instanceof Clob) {
+      Clob c = (Clob) value;
+      try {
+        // result might be truncated due to downcasting to int
+        String tmp = c.getSubString(1, (int) c.length());
+        c.free();
+
+        return tmp;
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    if (value instanceof Blob) {
+      Blob b = (Blob) value;
+      try {
+        // result might be truncated due to downcasting to int
+        byte[] tmp = b.getBytes(1, (int) b.length());
+        b.free();
+        return tmp;
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    // arrays
+    if (value instanceof Array) {
+      Array a = (Array) value;
+      try {
+        Object[] arr = (Object[]) a.getArray();
+        if (arr != null) {
+          JsonArray jsonArray = new JsonArray();
+          for (Object o : arr) {
+            jsonArray.add(convertSqlValue(o));
+          }
+
+          a.free();
+
+          return jsonArray;
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    // fallback to String
+    return value.toString();
   }
 }

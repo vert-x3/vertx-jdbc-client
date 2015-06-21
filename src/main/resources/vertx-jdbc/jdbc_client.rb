@@ -20,7 +20,7 @@ module VertxJdbc
     # @return [::VertxJdbc::JDBCClient] the client
     def self.create_non_shared(vertx=nil,config=nil)
       if vertx.class.method_defined?(:j_del) && config.class == Hash && !block_given?
-        return ::VertxJdbc::JDBCClient.new(Java::IoVertxExtJdbc::JDBCClient.java_method(:createNonShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)))
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtJdbc::JDBCClient.java_method(:createNonShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)),::VertxJdbc::JDBCClient)
       end
       raise ArgumentError, "Invalid arguments when calling create_non_shared(vertx,config)"
     end
@@ -32,9 +32,9 @@ module VertxJdbc
     # @return [::VertxJdbc::JDBCClient] the client
     def self.create_shared(vertx=nil,config=nil,dataSourceName=nil)
       if vertx.class.method_defined?(:j_del) && config.class == Hash && !block_given? && dataSourceName == nil
-        return ::VertxJdbc::JDBCClient.new(Java::IoVertxExtJdbc::JDBCClient.java_method(:createShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)))
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtJdbc::JDBCClient.java_method(:createShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)),::VertxJdbc::JDBCClient)
       elsif vertx.class.method_defined?(:j_del) && config.class == Hash && dataSourceName.class == String && !block_given?
-        return ::VertxJdbc::JDBCClient.new(Java::IoVertxExtJdbc::JDBCClient.java_method(:createShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class,Java::java.lang.String.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config),dataSourceName))
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtJdbc::JDBCClient.java_method(:createShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class,Java::java.lang.String.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config),dataSourceName),::VertxJdbc::JDBCClient)
       end
       raise ArgumentError, "Invalid arguments when calling create_shared(vertx,config,dataSourceName)"
     end
@@ -44,7 +44,7 @@ module VertxJdbc
     # @return [self]
     def get_connection
       if block_given?
-        @j_del.java_method(:getConnection, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ::VertxSql::SQLConnection.new(ar.result) : nil) }))
+        @j_del.java_method(:getConnection, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ::Vertx::Util::Utils.safe_create(ar.result,::VertxSql::SQLConnection) : nil) }))
         return self
       end
       raise ArgumentError, "Invalid arguments when calling get_connection()"
