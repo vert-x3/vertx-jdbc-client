@@ -209,7 +209,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
       conn.queryWithParams("SElECT DOB FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(resultSet -> {
         assertNotNull(resultSet);
         assertEquals(1, resultSet.getResults().size());
-        assertEquals("2002-02-01T23:00:00Z", resultSet.getResults().get(0).getString(0));
+        assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));
