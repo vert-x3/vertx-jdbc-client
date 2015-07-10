@@ -165,6 +165,16 @@
  * {@link examples.Examples#example5}
  * ----
  *
+ * == JDBC Drivers
+ *
+ * If you are using the default `DataSourceProvider` (relying on c3p0), you would need to copy the JDBC driver class
+ * in your _classpath_.
+ *
+ * If your application is packaged as a _fat jar_, be sure to embed the jdbc driver. If your application is launched
+ * with the `vertx` command line, copy the JDBC driver to `${VERTX_HOME}\lib`.
+ *
+ * The behavior may be different when using a different connection pool.
+ *
  */
 @Document(fileName = "index.adoc")
 @GenModule(name = "vertx-jdbc")
