@@ -27,9 +27,9 @@ import io.vertx.core.Handler
 */
 @CompileStatic
 public class JDBCClient {
-  final def io.vertx.ext.jdbc.JDBCClient delegate;
-  public JDBCClient(io.vertx.ext.jdbc.JDBCClient delegate) {
-    this.delegate = delegate;
+  private final def io.vertx.ext.jdbc.JDBCClient delegate;
+  public JDBCClient(Object delegate) {
+    this.delegate = (io.vertx.ext.jdbc.JDBCClient) delegate;
   }
   public Object getDelegate() {
     return delegate;
@@ -41,7 +41,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createNonShared(Vertx vertx, Map<String, Object> config) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createNonShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.ext.jdbc.JDBCClient.class, io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createNonShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**
@@ -53,7 +53,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, Map<String, Object> config, String dataSourceName) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null, dataSourceName), io.vertx.ext.jdbc.JDBCClient.class, io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null, dataSourceName), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**
@@ -63,7 +63,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, Map<String, Object> config) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.ext.jdbc.JDBCClient.class, io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**

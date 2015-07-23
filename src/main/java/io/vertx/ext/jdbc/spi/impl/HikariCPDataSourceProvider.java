@@ -1,3 +1,18 @@
+/*
+* Copyright (c) 2011-2015 The original author or authors
+* ------------------------------------------------------
+* All rights reserved. This program and the accompanying materials
+* are made available under the terms of the Eclipse Public License v1.0
+* and Apache License v2.0 which accompanies this distribution.
+*
+*     The Eclipse Public License is available at
+*     http://www.eclipse.org/legal/epl-v10.html
+*
+*     The Apache License v2.0 is available at
+*     http://www.opensource.org/licenses/apache2.0.php
+*
+* You may elect to redistribute this code under either of these licenses.
+*/
 package io.vertx.ext.jdbc.spi.impl;
 
 import com.zaxxer.hikari.HikariConfig;
@@ -9,6 +24,9 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
 
+/**
+ * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
+ */
 public class HikariCPDataSourceProvider implements DataSourceProvider {
 
   @Override
@@ -95,6 +113,12 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           throw new UnsupportedOperationException(entry.getKey());
         case "threadFactory":
           throw new UnsupportedOperationException(entry.getKey());
+        case "datasource":
+          // extension to support configuring datasource.* properties
+          for (Map.Entry<String, Object> key : ((JsonObject) entry.getValue())) {
+            config.addDataSourceProperty(key.getKey(), key.getValue());
+          }
+          break;
       }
     }
 
