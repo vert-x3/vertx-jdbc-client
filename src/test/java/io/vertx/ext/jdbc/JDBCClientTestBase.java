@@ -28,10 +28,7 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -200,6 +197,8 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testInsertWithParameters() {
+    final TimeZone tz = TimeZone.getDefault();
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     SQLConnection conn = connection();
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("doe").add("jane").add("2002-02-02");
@@ -210,6 +209,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
         assertNotNull(resultSet);
         assertEquals(1, resultSet.getResults().size());
         assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
+        TimeZone.setDefault(tz);
         testComplete();
       }));
     }));
