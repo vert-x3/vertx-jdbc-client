@@ -16,6 +16,7 @@
 
 /** @module vertx-jdbc-js/jdbc_client */
 var utils = require('vertx-js/util/utils');
+var Vertx = require('vertx-js/vertx');
 var SQLConnection = require('vertx-sql-js/sql_connection');
 
 var io = Packages.io;

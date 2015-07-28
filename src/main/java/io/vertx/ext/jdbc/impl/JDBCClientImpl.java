@@ -18,8 +18,6 @@ package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -39,8 +37,6 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JDBCClientImpl implements JDBCClient {
-
-  private static final Logger log = LoggerFactory.getLogger(JDBCClient.class);
 
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
