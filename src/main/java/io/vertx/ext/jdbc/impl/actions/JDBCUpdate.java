@@ -44,18 +44,18 @@ public class JDBCUpdate extends AbstractJDBCStatement<UpdateResult> {
   @Override
   protected UpdateResult executeStatement(PreparedStatement statement) throws SQLException {
     int updated = statement.executeUpdate();
-    JsonObject result = new JsonObject();
-    result.put("updated", updated);
     // Create JsonArray of keys
     ResultSet rs = statement.getGeneratedKeys();
     JsonArray keys = new JsonArray();
-    while (rs.next()) {
-      Object key = rs.getObject(1);
-      if (key!=null) {
-        keys.add(convertSqlValue(key));
+    if (rs!=null) {
+      while (rs.next()) {
+        Object key = rs.getObject(1);
+        if (key!=null) {
+          keys.add(convertSqlValue(key));
+        }
       }
+      rs.close();
     }
-    rs.close();
     return new UpdateResult(updated, keys);
   }
 

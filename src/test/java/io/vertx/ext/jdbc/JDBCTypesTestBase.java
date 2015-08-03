@@ -48,6 +48,7 @@ public class JDBCTypesTestBase extends VertxTestBase {
   static {
     //TODO: Create table with more types for testing
     SQL.add("create table insert_table (id int not null primary key generated always as identity (START WITH 1, INCREMENT BY 1), lname varchar(255), fname varchar(255), dob date )");
+    SQL.add("create table insert_tableNoIdentity (id int not null primary key, lname varchar(255), fname varchar(255), dob date )");
   }
 
   @Before
@@ -90,6 +91,42 @@ public class JDBCTypesTestBase extends VertxTestBase {
 
         System.out.println(resultSet.getResults().get(0).getValue(0));
         testComplete();
+      }));
+    }));
+
+    await();
+  }
+
+    /**
+   * Test that insert and update works in a table without an identity column.
+   */
+  @Test
+  public void testInsertUpdateNoIdentity() {
+    SQLConnection conn = connection();
+    String insertsql = "INSERT INTO insert_tableNoIdentity (id, lname, fname, dob) VALUES (?, ?, ?, ?)";
+    JsonArray insertparams = new JsonArray().add(1).add("LastName1").addNull().add("2002-02-02");
+    conn.updateWithParams(insertsql, insertparams, onSuccess(insertResultSet -> {
+      assertUpdate(insertResultSet, 1);
+      int insertid = insertResultSet.getKeys().isEmpty() ? 1 : insertResultSet.getKeys().getInteger(0);
+      conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(1), onSuccess(insertQueryResultSet -> {
+        assertNotNull(insertQueryResultSet);
+        assertEquals(1, insertQueryResultSet.getResults().size());
+        assertEquals("LastName1",insertQueryResultSet.getResults().get(0).getValue(0));
+        System.out.println("testInsertUpdateNoIdentity: insert: " + insertQueryResultSet.getResults().get(0).getValue(0));
+        // Now test that update works
+        String updSql = "UPDATE insert_tableNoIdentity SET lname=? WHERE id=?";
+        JsonArray updParams = new JsonArray().add("LastName2").add(insertid);
+        conn.updateWithParams(updSql, updParams, onSuccess(updateResultSet -> {
+          assertUpdate(updateResultSet,1);
+          int updateid = updateResultSet.getKeys().isEmpty() ? 1 : updateResultSet.getKeys().getInteger(0);
+          conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(updateid), onSuccess(updateQueryResultSet -> {
+            assertNotNull(updateQueryResultSet);
+            assertEquals(1, updateQueryResultSet.getResults().size());
+            assertEquals("LastName2",updateQueryResultSet.getResults().get(0).getValue(0));
+            System.out.println("testInsertUpdateNoIdentity: update: " + updateQueryResultSet.getResults().get(0).getValue(0));
+            testComplete();
+          }));
+        }));
       }));
     }));
 
