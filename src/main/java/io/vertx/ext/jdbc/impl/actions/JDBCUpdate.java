@@ -50,7 +50,10 @@ public class JDBCUpdate extends AbstractJDBCStatement<UpdateResult> {
     ResultSet rs = statement.getGeneratedKeys();
     JsonArray keys = new JsonArray();
     while (rs.next()) {
-      keys.add(convertSqlValue(rs.getObject(1)));
+      Object key = rs.getObject(1);
+      if (key!=null) {
+        keys.add(convertSqlValue(key));
+      }
     }
     rs.close();
     return new UpdateResult(updated, keys);
