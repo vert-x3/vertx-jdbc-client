@@ -187,8 +187,8 @@
  *
  */
 @Document(fileName = "index.adoc")
-@GenModule(name = "vertx-jdbc")
+@ModuleGen(name = "vertx-jdbc", groupPackage = "io.vertx")
 package io.vertx.ext.jdbc;
 
-import io.vertx.codegen.annotations.GenModule;
+import io.vertx.codegen.annotations.ModuleGen;
 import io.vertx.docgen.Document;

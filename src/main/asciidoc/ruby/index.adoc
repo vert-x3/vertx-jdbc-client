@@ -177,6 +177,16 @@ Assuming the C3P0 implementation is being used (the default), the following extr
 `max_statements_per_connection`:: the maximum number of prepared statements to cache per connection - default is `0`.
 `max_idle_time`:: number of seconds after which an idle connection will be closed - default is `0` (never expire).
 
+Other Connection Pool providers are:
+
+* BoneCP
+* Hikari
+
+Similar to C3P0 they can be configured by passing the configuration values on the JSON config object. For the special
+case where you do not want to deploy your app as a fat jar but run with a vert.x distribution, then it is recommented
+to use BoneCP if you have no write permissions to add the JDBC driver to the vert.x lib directory and are passing it
+using the `-cp` command line flag.
+
 If you want to configure any other C3P0 properties, you can add a file `c3p0.properties` to the classpath.
 
 Here's an example of configuring a service:
