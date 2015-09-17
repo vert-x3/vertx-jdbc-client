@@ -67,6 +67,11 @@ class JDBCConnectionImpl implements SQLConnection {
     new JDBCQuery(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }
+  @Override
+  public SQLConnection queryWithNamedParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
+    new JDBCQuery(vertx, conn, sql, params).execute(resultHandler);
+    return this;
+  }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
@@ -76,6 +81,12 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    new JDBCUpdate(vertx, conn, sql, params).execute(resultHandler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection updateWithNamedParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
     new JDBCUpdate(vertx, conn, sql, params).execute(resultHandler);
     return this;
   }

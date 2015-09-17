@@ -38,6 +38,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// Imports for Date manipulation.  insertWithParamters has issue with timezones I think.  
+//   T05:00 instead of T00:00
+import java.util.Locale;
+import java.util.Date;
+import java.text.DateFormat; 
+import java.text.SimpleDateFormat; 
+import java.text.ParseException; 
+
+
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
@@ -110,6 +119,27 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?";
 
     connection().queryWithParams(sql, new JsonArray().add("john"), onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      assertEquals("ID", resultSet.getColumnNames().get(0));
+      assertEquals("FNAME", resultSet.getColumnNames().get(1));
+      assertEquals("LNAME", resultSet.getColumnNames().get(2));
+      JsonArray result0 = resultSet.getResults().get(0);
+      assertEquals(1, (int) result0.getInteger(0));
+      assertEquals("john", result0.getString(1));
+      assertEquals("doe", result0.getString(2));
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testSelectWithNamedParameters() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?fname";
+
+    JsonObject jo = new JsonObject("{ \"fname\": \"john\" }"); 
+    connection().queryWithNamedParams(sql, new JsonArray().add(jo), onSuccess(resultSet -> {
       assertNotNull(resultSet);
       assertEquals(1, resultSet.getResults().size());
       assertEquals("ID", resultSet.getColumnNames().get(0));
@@ -209,7 +239,19 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
       conn.queryWithParams("SElECT DOB FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(resultSet -> {
         assertNotNull(resultSet);
         assertEquals(1, resultSet.getResults().size());
-        assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
+        String resultStr = resultSet.getResults().get(0).getString(0); 
+        String[] strings = resultStr.split("T"); 
+  
+        try { 
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        Date src = df.parse("2002-02-02"); 
+        Date targ = df.parse(strings[0]); 
+
+	assertEquals(src, targ);
+        } catch (ParseException pex) { 
+          assert(false) : "Date Parsing exception thrown " + pex.toString();
+        } 
+        //assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
     }));

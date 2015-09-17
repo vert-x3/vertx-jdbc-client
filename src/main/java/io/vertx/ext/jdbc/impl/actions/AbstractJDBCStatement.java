@@ -36,6 +36,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   private final String sql;
   private final JsonArray parameters;
+  private final String namedparam_repattern= "((?:[a-z][a-z]+))";
 
   protected AbstractJDBCStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection);
@@ -62,9 +63,23 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
     if (parameters == null || parameters.size() == 0) {
       return;
     }
+    if ( this.sql.matches(namedparam_repattern) ) { 
+      fillStatementNamedParameters(statement, parameters);  
+    } else { 
+      for (int i = 0; i < parameters.size(); i++) {
+        statement.setObject(i + 1, parameters.getValue(i));
+      }
+    }
+  }
+
+  protected void fillStatementNamedParameters(PreparedStatement statement, JsonArray parameters) throws SQLException {
+    /*if (parameters == null || parameters.size() == 0) {
+      return;
+    }
     for (int i = 0; i < parameters.size(); i++) {
       statement.setObject(i + 1, parameters.getValue(i));
-    }
+    }*/
+    assert(false == true) : "Not yet implemented";
   }
 
   protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
