@@ -136,7 +136,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testSelectWithNamedParameters() {
-    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?fname";
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = :fname";
 
     JsonObject jo = new JsonObject("{ \"fname\": \"john\" }"); 
     connection().queryWithNamedParams(sql, new JsonArray().add(jo), onSuccess(resultSet -> {
