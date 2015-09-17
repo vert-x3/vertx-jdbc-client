@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -26,7 +27,10 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
@@ -36,7 +40,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   private final String sql;
   private final JsonArray parameters;
-  private final String namedparam_repattern= "((?:[a-z][a-z]+))";
+  private final List<String> namedParameters = null;
 
   protected AbstractJDBCStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection);
@@ -54,16 +58,25 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   }
 
   protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
+    if ( hasNamedParameters() ) {
+    }
     return conn.prepareStatement(sql);
   }
 
   protected abstract T executeStatement(PreparedStatement statement) throws SQLException;
 
+  protected boolean hasNamedParameters() {
+    String npRegex = "((:[a-z][a-z]+))";
+    Pattern p = Pattern.compile(npRegex);
+    Matcher m = p.matcher(this.sql);
+    boolean result = m.find();
+    return result;
+  }
   protected void fillStatement(PreparedStatement statement, JsonArray parameters) throws SQLException {
     if (parameters == null || parameters.size() == 0) {
       return;
     }
-    if ( this.sql.matches(namedparam_repattern) ) { 
+    if ( hasNamedParameters() ) {
       fillStatementNamedParameters(statement, parameters);  
     } else { 
       for (int i = 0; i < parameters.size(); i++) {
@@ -73,12 +86,28 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   }
 
   protected void fillStatementNamedParameters(PreparedStatement statement, JsonArray parameters) throws SQLException {
-    /*if (parameters == null || parameters.size() == 0) {
+    if (parameters == null || parameters.size() == 0) {
       return;
     }
-    for (int i = 0; i < parameters.size(); i++) {
-      statement.setObject(i + 1, parameters.getValue(i));
-    }*/
+    Map<String, Object> namedParams = null;
+    for ( Object obj : parameters ) {
+      if ( obj instanceof JsonObject) {
+        JsonObject jo = (JsonObject)obj;
+        namedParams = jo.getMap();
+        for ( String k : namedParams.keySet() ) {
+          System.err.println("key: " + k + " value: " + namedParams.get(k).toString());
+        }
+      }
+    }
+    // Rerun the match
+    String npRegex = "((:[a-z][a-z]+))";
+    Pattern p = Pattern.compile(npRegex);
+    Matcher m = p.matcher(this.sql);
+    for ( int index = 1; m.find(); index++ ) {
+      String key = m.group(index-1);
+      statement.setObject(index, namedParams.get(key) );
+    }
+
     assert(false == true) : "Not yet implemented";
   }
 
