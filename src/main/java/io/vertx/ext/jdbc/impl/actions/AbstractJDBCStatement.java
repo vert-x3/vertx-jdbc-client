@@ -22,13 +22,11 @@ import io.vertx.core.json.JsonObject;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.sql.Date;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +38,8 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   private final String sql;
   private final JsonArray parameters;
-  private final List<String> namedParameters = null;
+
+  private List<String> namedParameters = null;
 
   protected AbstractJDBCStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
     super(vertx, connection);
@@ -59,11 +58,30 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
 
   protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
     if ( hasNamedParameters() ) {
+      String sqlReplaced = parseForNamedParameters();
+      return conn.prepareStatement(sqlReplaced);
+    } else {
+      return conn.prepareStatement(sql);
     }
-    return conn.prepareStatement(sql);
   }
 
   protected abstract T executeStatement(PreparedStatement statement) throws SQLException;
+
+  protected String parseForNamedParameters() {
+    String npRegex = "((:[a-zA-Z][a-zA-Z0-9_]+))";
+    Pattern p = Pattern.compile(npRegex);
+    Matcher m = p.matcher(this.sql);
+    // extract parameters to list
+    namedParameters = new LinkedList<String>();
+    for ( int idx = 1; m.find(); idx++) {
+      String result = m.group(1);
+      result = result.replace(":", "");
+      namedParameters.add(result);
+    }
+    // replace occurrences of regex with ? to satisfy conn.prepareStatement
+    String sqlReplaced = m.replaceAll("?");
+    return sqlReplaced;
+  }
 
   protected boolean hasNamedParameters() {
     String npRegex = "((:[a-z][a-z]+))";
@@ -89,26 +107,20 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
     if (parameters == null || parameters.size() == 0) {
       return;
     }
-    Map<String, Object> namedParams = null;
     for ( Object obj : parameters ) {
       if ( obj instanceof JsonObject) {
         JsonObject jo = (JsonObject)obj;
-        namedParams = jo.getMap();
-        for ( String k : namedParams.keySet() ) {
-          System.err.println("key: " + k + " value: " + namedParams.get(k).toString());
+        Map<String, Object> paramMap = jo.getMap();
+        for ( String key : paramMap.keySet() ) {
+          for ( int i = 0; i < namedParameters.size(); i++ ) {
+            String param = namedParameters.get(i);
+            if ( param.equalsIgnoreCase(key)) {
+              statement.setObject(i+1, paramMap.get(key) );
+            }
+          }
         }
       }
     }
-    // Rerun the match
-    String npRegex = "((:[a-z][a-z]+))";
-    Pattern p = Pattern.compile(npRegex);
-    Matcher m = p.matcher(this.sql);
-    for ( int index = 1; m.find(); index++ ) {
-      String key = m.group(index-1);
-      statement.setObject(index, namedParams.get(key) );
-    }
-
-    assert(false == true) : "Not yet implemented";
   }
 
   protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {

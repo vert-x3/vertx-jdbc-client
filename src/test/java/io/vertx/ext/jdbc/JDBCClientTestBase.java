@@ -247,10 +247,43 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
         Date src = df.parse("2002-02-02"); 
         Date targ = df.parse(strings[0]); 
 
-	assertEquals(src, targ);
+        assertEquals(src, targ);
         } catch (ParseException pex) { 
           assert(false) : "Date Parsing exception thrown " + pex.toString();
         } 
+        //assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
+        testComplete();
+      }));
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testInsertWithNamedParameters() {
+    SQLConnection conn = connection();
+    String sql = "INSERT INTO insert_table VALUES (:id, :lname, :fname, :bday);";
+    JsonObject jo = new JsonObject("{ \"id\": null, \"lname\": \"doe\", \"fname\": \"jane\", \"bday\": \"2002-02-02\" }");
+
+    JsonArray params = new JsonArray().add(jo);
+    conn.updateWithNamedParams(sql, params, onSuccess(result -> {
+      assertUpdate(result, 1);
+      int id = result.getKeys().getInteger(0);
+      conn.queryWithParams("SElECT DOB FROM insert_table WHERE id=?;", new JsonArray().add(id), onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertEquals(1, resultSet.getResults().size());
+        String resultStr = resultSet.getResults().get(0).getString(0);
+        String[] strings = resultStr.split("T");
+
+        try {
+          DateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+          Date src = df.parse("2002-02-02");
+          Date targ = df.parse(strings[0]);
+
+          assertEquals(src, targ);
+        } catch (ParseException pex) {
+          assert(false) : "Date Parsing exception thrown " + pex.toString();
+        }
         //assertEquals("2002-02-02T00:00:00Z", resultSet.getResults().get(0).getString(0));
         testComplete();
       }));
@@ -282,6 +315,25 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     String sql = "UPDATE update_table SET fname = ? WHERE id = ?";
     JsonArray params = new JsonArray().add("bob").add(1);
     conn.updateWithParams(sql, params, onSuccess(result -> {
+      assertUpdate(result, 1);
+      conn.query("SELECT fname FROM update_table WHERE id = 1", onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertEquals(1, resultSet.getResults().size());
+        assertEquals("bob", resultSet.getResults().get(0).getString(0));
+        testComplete();
+      }));
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testUpdateWithNamedParams() {
+    SQLConnection conn = connection();
+    String sql = "UPDATE update_table SET fname = :fname WHERE id = :id";
+    JsonObject jo = new JsonObject("{ \"id\": 1, \"fname\": \"bob\"}");
+    JsonArray params = new JsonArray().add(jo);
+    conn.updateWithNamedParams(sql, params, onSuccess(result -> {
       assertUpdate(result, 1);
       conn.query("SELECT fname FROM update_table WHERE id = 1", onSuccess(resultSet -> {
         assertNotNull(resultSet);

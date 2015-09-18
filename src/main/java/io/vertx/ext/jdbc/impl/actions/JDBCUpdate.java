@@ -38,7 +38,12 @@ public class JDBCUpdate extends AbstractJDBCStatement<UpdateResult> {
 
   @Override
   protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
-    return conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+    if ( hasNamedParameters() ) {
+      String sqlReplaced = parseForNamedParameters();
+      return conn.prepareStatement(sqlReplaced, Statement.RETURN_GENERATED_KEYS);
+    } else {
+      return conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+    }
   }
 
   @Override
