@@ -67,15 +67,15 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
 
   protected abstract T executeStatement(PreparedStatement statement) throws SQLException;
 
+  private static final String NAMEDPARAM_REGEX = "(\\?[a-zA-Z][a-zA-Z0-9_]+)";
   protected String parseForNamedParameters() {
-    String npRegex = "((:[a-zA-Z][a-zA-Z0-9_]+))";
-    Pattern p = Pattern.compile(npRegex);
+    Pattern p = Pattern.compile(NAMEDPARAM_REGEX);
     Matcher m = p.matcher(this.sql);
     // extract parameters to list
     namedParameters = new LinkedList<String>();
     for ( int idx = 1; m.find(); idx++) {
       String result = m.group(1);
-      result = result.replace(":", "");
+      result = result.replace("?", "");
       namedParameters.add(result);
     }
     // replace occurrences of regex with ? to satisfy conn.prepareStatement
@@ -84,8 +84,7 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
   }
 
   protected boolean hasNamedParameters() {
-    String npRegex = "((:[a-z][a-z]+))";
-    Pattern p = Pattern.compile(npRegex);
+    Pattern p = Pattern.compile(NAMEDPARAM_REGEX);
     Matcher m = p.matcher(this.sql);
     boolean result = m.find();
     return result;

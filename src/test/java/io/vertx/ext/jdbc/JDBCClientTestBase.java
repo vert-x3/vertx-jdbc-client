@@ -136,7 +136,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @Test
   public void testSelectWithNamedParameters() {
-    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = :fname";
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?fname";
 
     JsonObject jo = new JsonObject("{ \"fname\": \"john\" }"); 
     connection().queryWithNamedParams(sql, new JsonArray().add(jo), onSuccess(resultSet -> {
@@ -262,7 +262,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   @Test
   public void testInsertWithNamedParameters() {
     SQLConnection conn = connection();
-    String sql = "INSERT INTO insert_table VALUES (:id, :lname, :fname, :bday);";
+    String sql = "INSERT INTO insert_table VALUES (?id, ?lname, ?fname, ?bday);";
     JsonObject jo = new JsonObject("{ \"id\": null, \"lname\": \"doe\", \"fname\": \"jane\", \"bday\": \"2002-02-02\" }");
 
     JsonArray params = new JsonArray().add(jo);
@@ -330,7 +330,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   @Test
   public void testUpdateWithNamedParams() {
     SQLConnection conn = connection();
-    String sql = "UPDATE update_table SET fname = :fname WHERE id = :id";
+    String sql = "UPDATE update_table SET fname = ?fname WHERE id = ?id";
     JsonObject jo = new JsonObject("{ \"id\": 1, \"fname\": \"bob\"}");
     JsonArray params = new JsonArray().add(jo);
     conn.updateWithNamedParams(sql, params, onSuccess(result -> {
