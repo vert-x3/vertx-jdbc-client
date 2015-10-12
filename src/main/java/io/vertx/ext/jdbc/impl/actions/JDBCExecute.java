@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -42,7 +43,9 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
       // the connection pool doesn't.
       if (isResultSet) {
         while (stmt.getMoreResults()) {
-          safeClose(stmt.getResultSet());
+          try (ResultSet rs = stmt.getResultSet()) {
+            // TODO: is this correct? just ignore?
+          };
         }
       }
       return null;

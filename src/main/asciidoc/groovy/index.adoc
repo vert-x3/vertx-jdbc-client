@@ -14,7 +14,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-jdbc-client</artifactId>
-  <version>3.1.0</version>
+  <version>3.2.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -22,7 +22,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-jdbc-client:3.1.0
+compile io.vertx:vertx-jdbc-client:3.2.0-SNAPSHOT
 ----
 
 == Creating a the client
@@ -212,6 +212,6 @@ If you are using the default `DataSourceProvider` (relying on c3p0), you would n
 in your _classpath_.
 
 If your application is packaged as a _fat jar_, be sure to embed the jdbc driver. If your application is launched
-with the `vertx` command line, copy the JDBC driver to `${VERTX_HOME}\lib`.
+with the `vertx` command line, copy the JDBC driver to `${VERTX_HOME}/lib`.
 
 The behavior may be different when using a different connection pool.

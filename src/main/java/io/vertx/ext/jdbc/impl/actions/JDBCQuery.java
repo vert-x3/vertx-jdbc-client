@@ -19,30 +19,38 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.*;
 import java.sql.ResultSet;
-import java.sql.SQLException;
+
+import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JDBCQuery extends AbstractJDBCStatement<io.vertx.ext.sql.ResultSet> {
+public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
 
-  public JDBCQuery(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
-    super(vertx, connection, sql, parameters);
+  private final String sql;
+  private final JsonArray in;
+
+  public JDBCQuery(Vertx vertx, Connection connection, String sql, JsonArray in) {
+    super(vertx, connection);
+    this.sql = sql;
+    this.in = in;
   }
 
   @Override
-  protected io.vertx.ext.sql.ResultSet executeStatement(PreparedStatement statement) throws SQLException {
-    ResultSet rs = statement.executeQuery();
-    io.vertx.ext.sql.ResultSet results = asList(rs);
-    safeClose(rs);
-    return results;
+  protected io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
+    try (PreparedStatement statement = conn.prepareStatement(sql)) {
+      fillStatement(statement, in);
+
+      try (ResultSet rs = statement.executeQuery()) {
+        return asList(rs);
+      }
+    }
   }
 
   @Override
   protected String name() {
-    return "executeQuery";
+    return "query";
   }
 }

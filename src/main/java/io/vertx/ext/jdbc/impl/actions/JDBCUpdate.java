@@ -18,7 +18,6 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
@@ -27,36 +26,44 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
+
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JDBCUpdate extends AbstractJDBCStatement<UpdateResult> {
+public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
-  public JDBCUpdate(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
-    super(vertx, connection, sql, parameters);
+  private final String sql;
+  private final JsonArray in;
+
+  public JDBCUpdate(Vertx vertx, Connection connection, String sql, JsonArray in) {
+    super(vertx, connection);
+    this.sql = sql;
+    this.in = in;
   }
 
   @Override
-  protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
-    return conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-  }
+  protected UpdateResult execute(Connection conn) throws SQLException {
+    try (PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+      fillStatement(statement, in);
 
-  @Override
-  protected UpdateResult executeStatement(PreparedStatement statement) throws SQLException {
-    int updated = statement.executeUpdate();
-    // Create JsonArray of keys
-    ResultSet rs = statement.getGeneratedKeys();
-    JsonArray keys = new JsonArray();
-    if (rs!=null) {
-      while (rs.next()) {
-        Object key = rs.getObject(1);
-        if (key!=null) {
-          keys.add(convertSqlValue(key));
+      int updated = statement.executeUpdate();
+      JsonArray keys = new JsonArray();
+
+      // Create JsonArray of keys
+      try (ResultSet rs = statement.getGeneratedKeys()) {
+        if (rs != null) {
+          while (rs.next()) {
+            Object key = rs.getObject(1);
+            if (key != null) {
+              keys.add(convertSqlValue(key));
+            }
+          }
         }
       }
-      rs.close();
+
+      return new UpdateResult(updated, keys);
     }
-    return new UpdateResult(updated, keys);
   }
 
   @Override
