@@ -56,7 +56,7 @@ public class JDBCUpdate extends AbstractJDBCStatement<UpdateResult> {
       }
       rs.close();
     }
-    return new UpdateResult(updated, keys);
+    return UpdateResult.create(updated, keys);
   }
 
   @Override
