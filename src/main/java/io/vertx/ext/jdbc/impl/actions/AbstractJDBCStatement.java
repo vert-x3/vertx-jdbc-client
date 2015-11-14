@@ -91,7 +91,7 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
       results.add(result);
     }
 
-    return new io.vertx.ext.sql.ResultSet(columnNames, results);
+    return io.vertx.ext.sql.ResultSet.create(columnNames, results);
   }
 
   protected Object convertSqlValue(Object value) {
