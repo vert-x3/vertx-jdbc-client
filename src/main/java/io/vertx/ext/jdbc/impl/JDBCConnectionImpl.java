@@ -81,6 +81,18 @@ class JDBCConnectionImpl implements SQLConnection {
   }
 
   @Override
+  public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
+    new JDBCCallable(vertx, conn, sql, null, null).execute(resultHandler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
+    new JDBCCallable(vertx, conn, sql, params, outputs).execute(resultHandler);
+    return this;
+  }
+
+  @Override
   public void close(Handler<AsyncResult<Void>> handler) {
     new JDBCClose(vertx, conn).execute(handler);
   }

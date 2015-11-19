@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 
 import java.math.BigDecimal;
@@ -25,49 +24,79 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
-  private final String sql;
-  private final JsonArray parameters;
+final class JDBCStatementHelper {
 
-  protected AbstractJDBCStatement(Vertx vertx, Connection connection, String sql, JsonArray parameters) {
-    super(vertx, connection);
-    this.sql = sql;
-    this.parameters = parameters;
-  }
+  private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
-  @Override
-  protected final T execute(Connection conn) throws SQLException {
-    try (PreparedStatement statement = preparedStatement(conn, sql)) {
-      fillStatement(statement, parameters);
 
-      return executeStatement(statement);
+  private JDBCStatementHelper() {}
+
+  public static void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
+    if (in == null) {
+      in = EMPTY;
+    }
+
+    for (int i = 0; i < in.size(); i++) {
+      Object value = in.getValue(i);
+
+      if (value != null) {
+        statement.setObject(i + 1, in.getValue(i));
+      } else {
+        statement.setNull(i + 1, Types.NULL);
+      }
     }
   }
 
-  protected PreparedStatement preparedStatement(Connection conn, String sql) throws SQLException {
-    return conn.prepareStatement(sql);
+  public static void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
+    if (in == null) {
+      in = EMPTY;
+    }
+
+    if (out == null) {
+      out = EMPTY;
+    }
+
+    int max = Math.max(in.size(), out.size());
+
+    for (int i = 0; i < max; i++) {
+      Object value = null;
+
+      if (i < in.size()) {
+        value = in.getValue(i);
+      }
+
+      // found a in value, use it as a input parameter
+      if (value != null) {
+        statement.setObject(i + 1, value);
+        continue;
+      }
+
+      if (i < out.size()) {
+        value = out.getValue(i);
+      }
+
+      // found a out value, use it as a output parameter
+      if (value != null) {
+        // We're using the int from the enum instead of the enum itself to allow working with Drivers
+        // that have not been upgraded to Java8 yet.
+        statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
+        continue;
+      }
+
+      // assume null input
+      statement.setNull(i + 1, Types.NULL);
+    }
   }
 
-  protected abstract T executeStatement(PreparedStatement statement) throws SQLException;
-
-  protected void fillStatement(PreparedStatement statement, JsonArray parameters) throws SQLException {
-    if (parameters == null || parameters.size() == 0) {
-      return;
-    }
-    for (int i = 0; i < parameters.size(); i++) {
-      statement.setObject(i + 1, parameters.getValue(i));
-    }
-  }
-
-  protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
+  public static io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
     ResultSetMetaData metaData = rs.getMetaData();
@@ -94,7 +123,7 @@ public abstract class AbstractJDBCStatement<T> extends AbstractJDBCAction<T> {
     return new io.vertx.ext.sql.ResultSet(columnNames, results);
   }
 
-  protected Object convertSqlValue(Object value) {
+  public static Object convertSqlValue(Object value) {
     if (value == null) {
       return null;
     }
