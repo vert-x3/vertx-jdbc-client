@@ -38,7 +38,7 @@
  *
  * [source,groovy,subs="+attributes"]
  * ----
- * compile ${maven.groupId}:${maven.artifactId}:${maven.version}
+ * compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
  * ----
  *
  * == Creating a the client

@@ -52,13 +52,13 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           config.setAutoCommit((Boolean) entry.getValue());
           break;
         case "connectionTimeout":
-          config.setConnectionTimeout((Long) entry.getValue());
+          config.setConnectionTimeout(getLong(entry.getValue()));
           break;
         case "idleTimeout":
-          config.setIdleTimeout((Long) entry.getValue());
+          config.setIdleTimeout(getLong(entry.getValue()));
           break;
         case "maxLifetime":
-          config.setMaxLifetime((Long) entry.getValue());
+          config.setMaxLifetime(getLong(entry.getValue()));
           break;
         case "connectionTestQuery":
           config.setConnectionTestQuery((String) entry.getValue());
@@ -104,7 +104,7 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           config.setTransactionIsolation((String) entry.getValue());
           break;
         case "validationTimeout":
-          config.setValidationTimeout((Long) entry.getValue());
+          config.setValidationTimeout(getLong(entry.getValue()));
           break;
         case "leakDetectionThreshold":
           config.setLeakDetectionThreshold((Long) entry.getValue());
@@ -123,6 +123,16 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
     }
 
     return new HikariDataSource(config);
+  }
+
+  private long getLong(Object value) {
+    if (value.getClass() == Long.class || value.getClass() == Long.TYPE) {
+      return (Long) value;
+    }
+    if (value.getClass() == Integer.class || value.getClass() == Integer.TYPE) {
+      return Long.valueOf((Integer) value);
+    }
+    throw new IllegalArgumentException("Invalid value to be cast to long: " + value);
   }
 
   @Override
