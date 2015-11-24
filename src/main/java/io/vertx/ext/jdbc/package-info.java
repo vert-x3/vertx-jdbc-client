@@ -56,7 +56,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#exampleCreateDefault}
+ * {@link examples.JDBCExamples#exampleCreateDefault}
  * ----
  *
  * The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
@@ -70,7 +70,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#exampleCreateDataSourceName}
+ * {@link examples.JDBCExamples#exampleCreateDataSourceName}
  * ----
  *
  * If different clients are created using the same Vert.x instance and specifying the same data source name, they will
@@ -93,7 +93,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#exampleCreateNonShared}
+ * {@link examples.JDBCExamples#exampleCreateNonShared}
  * ----
  *
  * This is equivalent to calling {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject, java.lang.String)}
@@ -105,7 +105,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#exampleCreateWithDataSource}
+ * {@link examples.JDBCExamples#exampleCreateWithDataSource}
  * ----
  *
  * == Closing the client
@@ -125,7 +125,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#example4}
+ * {@link examples.JDBCExamples#example4}
  * ----
  *
  * The connection is an instance of {@link io.vertx.ext.sql.SQLConnection} which is a common interface used by
@@ -172,7 +172,7 @@
  *
  * [source,java]
  * ----
- * {@link examples.Examples#example5}
+ * {@link examples.JDBCExamples#example5}
  * ----
  *
  * == JDBC Drivers

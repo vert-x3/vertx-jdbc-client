@@ -12,7 +12,7 @@ import javax.sql.DataSource;
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class Examples {
+public class JDBCExamples {
 
   public void exampleCreateDefault(Vertx vertx, JsonObject config) {
 
