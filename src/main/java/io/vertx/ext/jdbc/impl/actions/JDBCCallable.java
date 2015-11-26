@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonArray;
 import java.sql.*;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
@@ -79,7 +80,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
           }
 
           // there is no information about column names
-          return new io.vertx.ext.sql.ResultSet(null, results);
+          return new io.vertx.ext.sql.ResultSet(Collections.emptyList(), results);
         } else {
           // no results
           return null;
