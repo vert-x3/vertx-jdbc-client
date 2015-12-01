@@ -48,45 +48,52 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
     try (CallableStatement statement = conn.prepareCall(sql)) {
       fillStatement(statement, in, out);
 
-      boolean res = statement.execute();
+      boolean retResult = statement.execute();
+      boolean outResult = out != null && out.size() > 0;
 
-      if (res) {
-        // there is a resultSet
+      if (retResult) {
+        // normal return only
         try (ResultSet rs = statement.getResultSet()) {
-          return asList(rs);
+          if (outResult) {
+            // add the registered outputs
+            return asList(rs).setOutput(convertOutputs(statement));
+          } else {
+            return asList(rs);
+          }
         }
       } else {
-        // there were registered outputs
-        if (out != null && out.size() > 0) {
-          List<JsonArray> results = new ArrayList<>();
-          JsonArray result = new JsonArray();
-
-          // one line resultSet
-          results.add(result);
-
-          for (int i = 0; i < out.size(); i++) {
-            Object var = out.getValue(i);
-
-            if (var != null) {
-              Object value = statement.getObject(i + 1);
-              if (value instanceof ResultSet) {
-                result.add(asList((ResultSet) value));
-              } else {
-                result.add(convertSqlValue(value));
-              }
-            } else {
-              result.addNull();
-            }
-          }
-
-          // there is no information about column names
-          return new io.vertx.ext.sql.ResultSet(Collections.emptyList(), results);
-        } else {
-          // no results
-          return null;
+        if (outResult) {
+          // only outputs are available
+          return new io.vertx.ext.sql.ResultSet(Collections.emptyList(), Collections.emptyList()).setOutput(convertOutputs(statement));
         }
       }
+
+      // no return
+      return null;
     }
+  }
+
+  private JsonArray convertOutputs(CallableStatement statement) throws SQLException {
+    JsonArray result = new JsonArray();
+
+    for (int i = 0; i < out.size(); i++) {
+      Object var = out.getValue(i);
+
+      if (var != null) {
+        Object value = statement.getObject(i + 1);
+        if (value == null) {
+          result.addNull();
+        } else if (value instanceof ResultSet) {
+          result.add(asList((ResultSet) value));
+        } else {
+          result.add(convertSqlValue(value));
+        }
+      } else {
+        result.addNull();
+      }
+    }
+
+    return result;
   }
 
   @Override

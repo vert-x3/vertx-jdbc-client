@@ -20,6 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
+import org.jruby.RubyProcess;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,6 +59,7 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
   @BeforeClass
   public static void createDb() throws Exception {
     System.setProperty("textdb.allow_full_path", "true");
+    System.setProperty("statement.separator", ";;");
     Connection conn = DriverManager.getConnection(config().getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
@@ -95,8 +97,8 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
   public void testStoredProcedure1() {
     connection().callWithParams("{call customer_lastname(?, ?)}", new JsonArray().add("Paulo"), new JsonArray().addNull().add("VARCHAR"), onSuccess(resultSet -> {
       assertNotNull(resultSet);
-      assertEquals(1, resultSet.getResults().size());
-      assertEquals("Lopes", resultSet.getResults().get(0).getString(1));
+      assertEquals(0, resultSet.getResults().size());
+      assertEquals("Lopes", resultSet.getOutput().getString(1));
       testComplete();
     }));
 
