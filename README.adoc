@@ -12,3 +12,6 @@ Please see the in source asciidoc documentation or the main documentation on the
 * link:src/main/asciidoc/js/index.adoc[JavaScript in-source docs]
 * link:src/main/asciidoc/groovy/index.adoc[Groovy in-source docs]
 
+= Use as OSGI bundle
+
+Vert.x JDBC client can be used as OSGI bundle.
