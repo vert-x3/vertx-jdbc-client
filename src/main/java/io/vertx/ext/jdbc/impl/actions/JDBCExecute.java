@@ -39,9 +39,6 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
   @Override
   protected Void execute(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
-
-      System.out.println("Starting execute " + sql + " " + Thread.currentThread());
-
       boolean isResultSet = stmt.execute(sql);
       // If the execute statement happens to return a result set, we should close it in case
       // the connection pool doesn't.
@@ -52,9 +49,6 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
           };
         }
       }
-
-      System.out.println("Ending execute " + sql + " " + Thread.currentThread());
-
       return null;
     }
   }

@@ -46,9 +46,6 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   @Override
   protected UpdateResult execute(Connection conn) throws SQLException {
     try (PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-      System.out.println("Starting update " + sql + " " + Thread.currentThread());
-
       fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
@@ -65,8 +62,6 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           }
         }
       }
-
-      System.out.println("Ending update " + sql + " " + Thread.currentThread());
 
       return new UpdateResult(updated, keys);
     }
