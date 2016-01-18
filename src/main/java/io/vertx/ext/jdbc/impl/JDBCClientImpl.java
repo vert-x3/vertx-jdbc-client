@@ -130,11 +130,6 @@ public class JDBCClientImpl implements JDBCClient {
     }
   }
 
-  private ClassLoader getClassLoader() {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-    return tccl == null ? getClass().getClassLoader() : tccl;
-  }
-
   private class DataSourceHolder implements Shareable {
 
     DataSourceProvider provider;
@@ -159,23 +154,41 @@ public class JDBCClientImpl implements JDBCClient {
         if (providerClass == null) {
           providerClass = DEFAULT_PROVIDER_CLASS;
         }
+
+        if (Thread.currentThread().getContextClassLoader() != null) {
+          try {
+            // Try with the TCCL
+            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(providerClass);
+            provider = (DataSourceProvider) clazz.newInstance();
+            ds = provider.getDataSource(config);
+            return ds;
+          } catch (ClassNotFoundException e) {
+            // Next try.
+          } catch (InstantiationException | SQLException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
         try {
-          Class clazz = getClassLoader().loadClass(providerClass);
+          // Try with the classloader of the current class.
+          Class clazz = this.getClass().getClassLoader().loadClass(providerClass);
           provider = (DataSourceProvider) clazz.newInstance();
           ds = provider.getDataSource(config);
-        } catch (Exception e) {
+          return ds;
+        } catch (ClassNotFoundException | InstantiationException | SQLException | IllegalAccessException e) {
           throw new RuntimeException(e);
         }
       }
+
       return ds;
     }
 
     synchronized ExecutorService exec() {
       if (exec == null) {
         exec = new ThreadPoolExecutor(1, 1,
-          1000L, TimeUnit.MILLISECONDS,
-          new LinkedBlockingQueue<>(),
-          (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
+            1000L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
       }
       return exec;
     }
