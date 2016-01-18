@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.core.Context;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
@@ -31,6 +32,7 @@ import java.sql.DriverManager;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -363,6 +365,36 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
       testComplete();
     }));
 
+    await();
+  }
+
+  @Test
+  public void testWorkerPerConnection() {
+    int numConns = 4;
+    ArrayList<SQLConnection> conns = new ArrayList<>();
+    for (int i = 0;i < numConns;i++) {
+      conns.add(connection());
+    }
+    AtomicInteger count = new AtomicInteger();
+    Context context = vertx.getOrCreateContext();
+    context.runOnContext(v -> {
+      for (SQLConnection conn : conns) {
+        conn.setAutoCommit(false, onSuccess(ar1 -> {
+          conn.execute("LOCK TABLE insert_table WRITE", onSuccess(ar2 -> {
+            String sql = "INSERT INTO insert_table VALUES (null, 'doe', 'john', '2001-01-01');";
+            conn.update(sql, onSuccess(res3 -> {
+              conn.commit(onSuccess(committed -> {
+                conn.close(onSuccess(closed -> {
+                  if (count.incrementAndGet() == numConns) {
+                    testComplete();
+                  }
+                }));
+              }));
+            }));
+          }));
+        }));
+      }
+    });
     await();
   }
 
