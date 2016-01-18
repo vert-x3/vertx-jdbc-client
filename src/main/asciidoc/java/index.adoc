@@ -188,3 +188,10 @@ If your application is packaged as a _fat jar_, be sure to embed the jdbc driver
 with the `vertx` command line, copy the JDBC driver to `${VERTX_HOME}/lib`.
 
 The behavior may be different when using a different connection pool.
+
+
+== Use as OSGi bundle
+
+Vert.x JDBC client can be used as an OSGi bundle. However notice that you would need to deploy all dependencies
+first. Some connection pool requires the JDBC driver to be loaded from the classpath, and so cannot be packaged /
+deployed as bundle.

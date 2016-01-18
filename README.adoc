@@ -11,4 +11,3 @@ Please see the in source asciidoc documentation or the main documentation on the
 * link:src/main/asciidoc/java/index.adoc[Java in-source docs]
 * link:src/main/asciidoc/js/index.adoc[JavaScript in-source docs]
 * link:src/main/asciidoc/groovy/index.adoc[Groovy in-source docs]
-
