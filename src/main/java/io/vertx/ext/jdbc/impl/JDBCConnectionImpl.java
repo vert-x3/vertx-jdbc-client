@@ -44,10 +44,15 @@ class JDBCConnectionImpl implements SQLConnection {
   private final Connection conn;
   private final Context context;
 
+  private ClassLoader getClassLoader() {
+    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+    return tccl == null ? getClass().getClassLoader() : tccl;
+  }
+
   public JDBCConnectionImpl(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
-    this.context = ((VertxInternal)vertx).createWorkerContext(false, null, new JsonObject(), Thread.currentThread().getContextClassLoader());
+    this.context = ((VertxInternal)vertx).createWorkerContext(false, null, new JsonObject(), getClassLoader());
   }
 
   @Override
