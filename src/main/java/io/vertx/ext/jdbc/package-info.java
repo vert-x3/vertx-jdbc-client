@@ -128,8 +128,8 @@
  * {@link examples.JDBCExamples#example4}
  * ----
  *
- * The connection is an instance of {@link io.vertx.ext.sql.SQLConnection} which is a common interface used by
- * more than Vert.x sql service.
+ * The connection is an instance of {@link io.vertx.ext.sql.SQLConnection} which is a common interface not only used by
+ * the Vert.x JDBC Client.
  *
  * You can learn how to use it in the http://foobar[common sql interface] documentation.
  *
