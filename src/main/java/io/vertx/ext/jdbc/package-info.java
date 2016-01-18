@@ -185,6 +185,12 @@
  *
  * The behavior may be different when using a different connection pool.
  *
+ *
+ * == Use as OSGi bundle
+ *
+ * Vert.x JDBC client can be used as an OSGi bundle. However notice that you would need to deploy all dependencies
+ * first. Some connection pool requires the JDBC driver to be loaded from the classpath, and so cannot be packaged /
+ * deployed as bundle.
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-jdbc", groupPackage = "io.vertx")
