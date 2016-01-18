@@ -47,28 +47,17 @@ public abstract class AbstractJDBCAction<T> {
     this.context = context;
   }
 
-  public void handle(Future<T> future, long timerID) {
+  public void handle(Future<T> future) {
     try {
       T result = execute(conn);
-      if (!future.isComplete()) {
-        vertx.cancelTimer(timerID);
-        future.complete(result);
-      }
+      future.complete(result);
     } catch (SQLException e) {
-      if (!future.isComplete()) {
-        vertx.cancelTimer(timerID);
-        future.fail(e);
-      }
+      future.fail(e);
     }
   }
 
   public void execute(Handler<AsyncResult<T>> resultHandler) {
     Future<T> f = Future.future();
-    long timerID = vertx.setTimer(5000, id -> {
-      if (!f.isComplete()) {
-        f.fail(new TimeoutException());
-      }
-    });
     Context callbackContext = vertx.getOrCreateContext();
     context.runOnContext(v -> {
       f.setHandler(ar -> {
@@ -76,7 +65,7 @@ public abstract class AbstractJDBCAction<T> {
           resultHandler.handle(ar);
         });
       });
-      handle(f, timerID);
+      handle(f);
     });
   }
 
