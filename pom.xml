@@ -157,13 +157,18 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Bundle-Version>${project.version}</Bundle-Version>
             <!--Copy to bundle and export-->
-            <Export-Package>io.vertx.ext.jdbc;version=${project.version}</Export-Package>
-            <Import-Package>*;resolution:=optional</Import-Package>
+            <Export-Package>io.vertx.ext.jdbc;version=${project.version},
+              io.vertx.groovy.ext.jdbc;version=${project.version},
+              io.vertx.rxjava.ext.jdbc;version=${project.version},
+              io.vertx.ext.jdbc.spi;version=${project.version}
+            </Export-Package>
+            <Import-Package>
+              javax.sql,
+              io.vertx.ext.sql*,
+              io.vertx.core*,
+              *;resolution:=optional</Import-Package>
             <Include-Resource>{maven-resources}</Include-Resource>
-            <Service-Component>*</Service-Component>
-            <_dsannotations>*</_dsannotations>
           </instructions>
         </configuration>
         <executions>
