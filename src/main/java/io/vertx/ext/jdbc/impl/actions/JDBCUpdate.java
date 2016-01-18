@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.UpdateResult;
@@ -36,8 +37,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   private final String sql;
   private final JsonArray in;
 
-  public JDBCUpdate(Vertx vertx, Connection connection, String sql, JsonArray in) {
-    super(vertx, connection);
+  public JDBCUpdate(Vertx vertx, Connection connection, Context context, String sql, JsonArray in) {
+    super(vertx, connection, context);
     this.sql = sql;
     this.in = in;
   }
@@ -45,6 +46,9 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   @Override
   protected UpdateResult execute(Connection conn) throws SQLException {
     try (PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+      System.out.println("Starting update " + sql + " " + Thread.currentThread());
+
       fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
@@ -61,6 +65,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           }
         }
       }
+
+      System.out.println("Ending update " + sql + " " + Thread.currentThread());
 
       return new UpdateResult(updated, keys);
     }

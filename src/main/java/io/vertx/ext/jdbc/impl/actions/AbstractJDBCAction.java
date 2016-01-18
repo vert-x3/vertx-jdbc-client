@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -26,34 +27,57 @@ import io.vertx.core.logging.LoggerFactory;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class AbstractJDBCAction<T> implements Handler<Future<T>> {
+public abstract class AbstractJDBCAction<T> {
 
   private static final Logger log = LoggerFactory.getLogger(AbstractJDBCAction.class);
 
   protected final Vertx vertx;
   protected final Connection conn;
+  protected final Context context;
 
-  protected AbstractJDBCAction(Vertx vertx, Connection conn) {
+  protected AbstractJDBCAction(Vertx vertx, Connection conn, Context context) {
     this.vertx = vertx;
     this.conn = conn;
+    this.context = context;
   }
 
-  @Override
-  public void handle(Future<T> future) {
+  public void handle(Future<T> future, long timerID) {
     try {
       T result = execute(conn);
-      future.complete(result);
+      if (!future.isComplete()) {
+        vertx.cancelTimer(timerID);
+        future.complete(result);
+      }
     } catch (SQLException e) {
-      future.fail(e);
+      if (!future.isComplete()) {
+        vertx.cancelTimer(timerID);
+        future.fail(e);
+      }
     }
   }
 
   public void execute(Handler<AsyncResult<T>> resultHandler) {
-    vertx.executeBlocking(this, resultHandler);
+    Future<T> f = Future.future();
+    long timerID = vertx.setTimer(5000, id -> {
+      if (!f.isComplete()) {
+        f.fail(new TimeoutException());
+      }
+    });
+    Context callbackContext = vertx.getOrCreateContext();
+    context.runOnContext(v -> {
+      f.setHandler(ar -> {
+        callbackContext.runOnContext(v2 -> {
+          resultHandler.handle(ar);
+        });
+      });
+      handle(f, timerID);
+    });
   }
 
   protected abstract T execute(Connection conn) throws SQLException;

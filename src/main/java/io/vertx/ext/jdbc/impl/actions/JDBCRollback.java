@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 
 import java.sql.Connection;
@@ -26,8 +27,8 @@ import java.sql.SQLException;
  */
 public class JDBCRollback extends AbstractJDBCAction<Void> {
 
-  public JDBCRollback(Vertx vertx, Connection conn) {
-    super(vertx, conn);
+  public JDBCRollback(Vertx vertx, Connection conn, Context context) {
+    super(vertx, conn, context);
   }
 
   @Override
