@@ -20,7 +20,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
-import org.jruby.RubyProcess;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -54,6 +53,9 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
     SQL.add("create function an_hour_before()\n" +
         "  returns timestamp\n" +
         "  return now() - 1 hour");
+    SQL.add("create procedure times2(INOUT param INT)\n" +
+        "  modifies sql data\n" +
+        "  SET param = param * 2");
   }
 
   @BeforeClass
@@ -110,6 +112,18 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
     connection().callWithParams("{call an_hour_before()}", null, null, onSuccess(resultSet -> {
       assertNotNull(resultSet);
       assertEquals(1, resultSet.getResults().size());
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStoredProcedure3() {
+    connection().callWithParams("{call times2(?)}", new JsonArray().add(2), new JsonArray().add("INTEGER"), onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(0, resultSet.getResults().size());
+      assertEquals(new Integer(4), resultSet.getOutput().getInteger(0));
       testComplete();
     }));
 
