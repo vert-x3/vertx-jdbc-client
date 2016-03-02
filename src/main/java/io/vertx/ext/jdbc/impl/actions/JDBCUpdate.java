@@ -35,7 +35,7 @@ import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
  */
 public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
-  private static final Pattern regex = Pattern.compile(".*insert.*", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE);
+  private static final Pattern regex = Pattern.compile("(^|\\s)insert(\\s|$)", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE);
 
   private final String sql;
   private final JsonArray in;
@@ -48,7 +48,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
   @Override
   protected UpdateResult execute(Connection conn) throws SQLException {
-    final boolean returKeys = regex.matcher(sql).matches();
+    final boolean returKeys = regex.matcher(sql).groupCount() == 2;
     try (PreparedStatement statement = conn.prepareStatement(sql, returKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
       fillStatement(statement, in);
 
