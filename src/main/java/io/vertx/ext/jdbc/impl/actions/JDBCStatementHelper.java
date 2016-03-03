@@ -68,6 +68,7 @@ final class JDBCStatementHelper {
 
     for (int i = 0; i < max; i++) {
       Object value = null;
+      boolean set = false;
 
       if (i < in.size()) {
         value = in.getValue(i);
@@ -76,8 +77,11 @@ final class JDBCStatementHelper {
       // found a in value, use it as a input parameter
       if (value != null) {
         statement.setObject(i + 1, value);
-        continue;
+        set = true;
       }
+
+      // reset
+      value = null;
 
       if (i < out.size()) {
         value = out.getValue(i);
@@ -88,11 +92,13 @@ final class JDBCStatementHelper {
         // We're using the int from the enum instead of the enum itself to allow working with Drivers
         // that have not been upgraded to Java8 yet.
         statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
-        continue;
+        set = true;
       }
 
-      // assume null input
-      statement.setNull(i + 1, Types.NULL);
+      if (!set) {
+        // assume null input
+        statement.setNull(i + 1, Types.NULL);
+      }
     }
   }
 
