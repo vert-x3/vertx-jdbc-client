@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.regex.Pattern;
 
 import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
 
@@ -33,6 +34,8 @@ import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
+
+  private static final Pattern regex = Pattern.compile("(^|\\s)insert(\\s|$)", Pattern.CASE_INSENSITIVE + Pattern.MULTILINE);
 
   private final String sql;
   private final JsonArray in;
@@ -45,21 +48,26 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
   @Override
   protected UpdateResult execute(Connection conn) throws SQLException {
-    try (PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    final boolean returKeys = regex.matcher(sql).groupCount() == 2;
+    try (PreparedStatement statement = conn.prepareStatement(sql, returKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
       fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
       JsonArray keys = new JsonArray();
 
       // Create JsonArray of keys
-      try (ResultSet rs = statement.getGeneratedKeys()) {
-        if (rs != null) {
-          while (rs.next()) {
-            Object key = rs.getObject(1);
-            if (key != null) {
-              keys.add(convertSqlValue(key));
+      if (returKeys) {
+        try (ResultSet rs = statement.getGeneratedKeys()) {
+          if (rs != null) {
+            while (rs.next()) {
+              Object key = rs.getObject(1);
+              if (key != null) {
+                keys.add(convertSqlValue(key));
+              }
             }
           }
+        } catch (SQLException e) {
+          // do not crash if no permissions
         }
       }
 
