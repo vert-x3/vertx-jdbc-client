@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
@@ -28,6 +29,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,6 +88,23 @@ public class JDBCCustomTypesTest extends VertxTestBase {
     await();
   }
 
+  @Test
+  public void testCustomInsert() {
+    String sql = "INSERT INTO t (u) VALUES (?)";
+    final String uuid = UUID.randomUUID().toString();
+
+    final SQLConnection conn = connection();
+
+    conn.setAutoCommit(false, tx -> {
+      if (tx.succeeded()) {
+        conn.updateWithParams(sql, new JsonArray().add(uuid), onSuccess(resultSet -> {
+          testComplete();
+        }));
+      }
+    });
+
+    await();
+  }
 
   private SQLConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);

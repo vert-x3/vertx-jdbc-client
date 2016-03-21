@@ -26,16 +26,23 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 final class JDBCStatementHelper {
 
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
+  private static final Pattern DATETIME = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$");
+  private static final Pattern DATE = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}$");
+  private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
+  private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
 
   private JDBCStatementHelper() {}
 
@@ -48,7 +55,11 @@ final class JDBCStatementHelper {
       Object value = in.getValue(i);
 
       if (value != null) {
-        statement.setObject(i + 1, in.getValue(i));
+        if (value instanceof String) {
+          statement.setObject(i + 1, optimisticCast((String) value));
+        } else {
+          statement.setObject(i + 1, value);
+        }
       } else {
         statement.setNull(i + 1, Types.NULL);
       }
@@ -76,7 +87,11 @@ final class JDBCStatementHelper {
 
       // found a in value, use it as a input parameter
       if (value != null) {
-        statement.setObject(i + 1, value);
+        if (value instanceof String) {
+          statement.setObject(i + 1, optimisticCast((String) value));
+        } else {
+          statement.setObject(i + 1, value);
+        }
         set = true;
       }
 
@@ -207,5 +222,34 @@ final class JDBCStatementHelper {
 
     // fallback to String
     return value.toString();
+  }
+
+  private static Object optimisticCast(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    // sql time
+    if (TIME.matcher(value).matches()) {
+      return new java.sql.Time(Instant.from(ISO_INSTANT.parse("1900-01-01T" + value)).toEpochMilli());
+    }
+
+    // sql date
+    if (DATE.matcher(value).matches()) {
+      return new java.sql.Date(Instant.from(ISO_INSTANT.parse(value + "T00:00:00Z")).toEpochMilli());
+    }
+
+    // sql timestamp
+    if (DATETIME.matcher(value).matches()) {
+      return new java.sql.Timestamp(Instant.from(ISO_INSTANT.parse(value)).toEpochMilli());
+    }
+
+    // sql uuid
+    if (UUID.matcher(value).matches()) {
+      return java.util.UUID.fromString(value);
+    }
+
+    // unknown
+    return value;
   }
 }
