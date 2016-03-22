@@ -17,25 +17,25 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.sql.Date;
+import java.time.*;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import static java.time.format.DateTimeFormatter.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 final class JDBCStatementHelper {
+
+  private static final Logger log = LoggerFactory.getLogger(JDBCStatementHelper.class);
 
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
@@ -144,7 +144,7 @@ final class JDBCStatementHelper {
     return new io.vertx.ext.sql.ResultSet(columnNames, results);
   }
 
-  public static Object convertSqlValue(Object value) {
+  public static Object convertSqlValue(Object value) throws SQLException {
     if (value == null) {
       return null;
     }
@@ -170,7 +170,15 @@ final class JDBCStatementHelper {
     }
 
     // temporal values
-    if (value instanceof Date || value instanceof Time || value instanceof Timestamp) {
+    if (value instanceof Time) {
+      return ((Time) value).toLocalTime().atOffset(ZoneOffset.UTC).format(ISO_LOCAL_TIME);
+    }
+
+    if (value instanceof Date) {
+      return ((Date) value).toLocalDate().format(ISO_LOCAL_DATE);
+    }
+
+    if (value instanceof Timestamp) {
       return OffsetDateTime.ofInstant(Instant.ofEpochMilli(((java.util.Date) value).getTime()), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
     }
 
@@ -179,12 +187,9 @@ final class JDBCStatementHelper {
       Clob c = (Clob) value;
       try {
         // result might be truncated due to downcasting to int
-        String tmp = c.getSubString(1, (int) c.length());
+        return c.getSubString(1, (int) c.length());
+      } finally {
         c.free();
-
-        return tmp;
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
       }
     }
 
@@ -192,11 +197,9 @@ final class JDBCStatementHelper {
       Blob b = (Blob) value;
       try {
         // result might be truncated due to downcasting to int
-        byte[] tmp = b.getBytes(1, (int) b.length());
+        return b.getBytes(1, (int) b.length());
+      } finally {
         b.free();
-        return tmp;
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
       }
     }
 
@@ -210,13 +213,10 @@ final class JDBCStatementHelper {
           for (Object o : arr) {
             jsonArray.add(convertSqlValue(o));
           }
-
-          a.free();
-
           return jsonArray;
         }
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
+      } finally {
+        a.free();
       }
     }
 
@@ -224,29 +224,45 @@ final class JDBCStatementHelper {
     return value.toString();
   }
 
-  private static Object optimisticCast(String value) {
+  public static Object optimisticCast(String value) {
     if (value == null) {
       return null;
     }
 
-    // sql time
-    if (TIME.matcher(value).matches()) {
-      return new java.sql.Time(Instant.from(ISO_INSTANT.parse("1900-01-01T" + value)).toEpochMilli());
-    }
+    try {
+      // sql time
+      if (TIME.matcher(value).matches()) {
+        // convert from local time to instant
+        Instant instant = LocalTime.parse(value).atDate(LocalDate.of(1970, 1, 1)).toInstant(ZoneOffset.UTC);
+        // calculate the timezone offset in millis
+        int offset = TimeZone.getDefault().getOffset(instant.toEpochMilli());
+        // need to remove the offset since time has no TZ component
+        return new Time(instant.toEpochMilli() - offset);
+      }
 
-    // sql date
-    if (DATE.matcher(value).matches()) {
-      return new java.sql.Date(Instant.from(ISO_INSTANT.parse(value + "T00:00:00Z")).toEpochMilli());
-    }
+      // sql date
+      if (DATE.matcher(value).matches()) {
+        // convert from local date to instant
+        Instant instant = LocalDate.parse(value).atTime(LocalTime.of(0, 0, 0, 0)).toInstant(ZoneOffset.UTC);
+        // calculate the timezone offset in millis
+        int offset = TimeZone.getDefault().getOffset(instant.toEpochMilli());
+        // need to remove the offset since time has no TZ component
+        return new Date(instant.toEpochMilli() - offset);
+      }
 
-    // sql timestamp
-    if (DATETIME.matcher(value).matches()) {
-      return new java.sql.Timestamp(Instant.from(ISO_INSTANT.parse(value)).toEpochMilli());
-    }
+      // sql timestamp
+      if (DATETIME.matcher(value).matches()) {
+        Instant instant = Instant.from(ISO_INSTANT.parse(value));
+        return new Timestamp(instant.toEpochMilli());
+      }
 
-    // sql uuid
-    if (UUID.matcher(value).matches()) {
-      return java.util.UUID.fromString(value);
+      // sql uuid
+      if (UUID.matcher(value).matches()) {
+        return java.util.UUID.fromString(value);
+      }
+
+    } catch (RuntimeException e) {
+      log.debug(e);
     }
 
     // unknown
