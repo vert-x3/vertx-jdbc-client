@@ -30,15 +30,21 @@ import java.sql.Statement;
 public class JDBCExecute extends AbstractJDBCAction<Void> {
 
   private final String sql;
+  private final int timeout;
 
-  public JDBCExecute(Vertx vertx, Connection connection, Context context, String sql) {
+  public JDBCExecute(Vertx vertx, Connection connection, Context context, int timeout, String sql) {
     super(vertx, connection, context);
     this.sql = sql;
+    this.timeout = timeout;
   }
 
   @Override
   protected Void execute(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      if (timeout > 0) {
+        stmt.setQueryTimeout(timeout);
+      }
+
       boolean isResultSet = stmt.execute(sql);
       // If the execute statement happens to return a result set, we should close it in case
       // the connection pool doesn't.

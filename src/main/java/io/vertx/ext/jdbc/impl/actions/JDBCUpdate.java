@@ -39,17 +39,23 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
   private final String sql;
   private final JsonArray in;
+  private final int timeout;
 
-  public JDBCUpdate(Vertx vertx, Connection connection, Context context, String sql, JsonArray in) {
+  public JDBCUpdate(Vertx vertx, Connection connection, Context context, int timeout, String sql, JsonArray in) {
     super(vertx, connection, context);
     this.sql = sql;
     this.in = in;
+    this.timeout = timeout;
   }
 
   @Override
   protected UpdateResult execute(Connection conn) throws SQLException {
     final boolean returKeys = regex.matcher(sql).groupCount() == 2;
     try (PreparedStatement statement = conn.prepareStatement(sql, returKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
+      if (timeout > 0) {
+        statement.setQueryTimeout(timeout);
+      }
+
       fillStatement(statement, in);
 
       int updated = statement.executeUpdate();

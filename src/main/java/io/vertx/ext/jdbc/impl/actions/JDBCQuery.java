@@ -32,16 +32,22 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
 
   private final String sql;
   private final JsonArray in;
+  private final int timeout;
 
-  public JDBCQuery(Vertx vertx, Connection connection, Context context, String sql, JsonArray in) {
+  public JDBCQuery(Vertx vertx, Connection connection, Context context, int timeout, String sql, JsonArray in) {
     super(vertx, connection, context);
     this.sql = sql;
     this.in = in;
+    this.timeout = timeout;
   }
 
   @Override
   protected io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
     try (PreparedStatement statement = conn.prepareStatement(sql)) {
+      if (timeout > 0) {
+        statement.setQueryTimeout(timeout);
+      }
+
       fillStatement(statement, in);
 
       try (ResultSet rs = statement.executeQuery()) {
