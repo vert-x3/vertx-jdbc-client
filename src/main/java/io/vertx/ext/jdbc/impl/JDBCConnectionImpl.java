@@ -27,9 +27,11 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.TransactionIsolation;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -128,5 +130,58 @@ class JDBCConnectionImpl implements SQLConnection {
   public SQLConnection setQueryTimeout(int timeoutInSeconds) {
     this.timeout = timeoutInSeconds;
     return this;
+  }
+
+  @Override
+  public SQLConnection setTransactionIsolation(TransactionIsolation isolation) {
+    try {
+      switch (isolation) {
+        case READ_COMMITTED:
+          conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+          break;
+        case READ_UNCOMMITTED:
+          conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+          break;
+        case REPEATABLE_READ:
+          conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+          break;
+        case SERIALIZABLE:
+          conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+          break;
+        case NONE:
+          conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
+          break;
+        default:
+          log.warn("Unknown isolation level " + isolation.name());
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    return this;
+  }
+
+  @Override
+  public TransactionIsolation getTransactionIsolation() {
+    try {
+      int level = conn.getTransactionIsolation();
+      switch (level) {
+        case Connection.TRANSACTION_READ_COMMITTED:
+          return TransactionIsolation.READ_COMMITTED;
+        case Connection.TRANSACTION_READ_UNCOMMITTED:
+          return TransactionIsolation.READ_UNCOMMITTED;
+        case Connection.TRANSACTION_REPEATABLE_READ:
+          return TransactionIsolation.REPEATABLE_READ;
+        case Connection.TRANSACTION_SERIALIZABLE:
+          return TransactionIsolation.SERIALIZABLE;
+        case Connection.TRANSACTION_NONE:
+          return TransactionIsolation.NONE;
+        default:
+          log.warn("Unknown isolation level " + level);
+          return TransactionIsolation.NONE;
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
