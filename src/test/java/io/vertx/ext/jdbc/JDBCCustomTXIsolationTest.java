@@ -18,17 +18,11 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.TransactionIsolation;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,8 +55,22 @@ public class JDBCCustomTXIsolationTest extends VertxTestBase {
   public void testGetSet() {
     SQLConnection conn = connection();
 
-    TransactionIsolation txIsolation = conn.getTransactionIsolation();
-    conn.setTransactionIsolation(txIsolation);
+    conn.getTransactionIsolation(txIsolation -> {
+      if (txIsolation.failed()) {
+        fail(txIsolation.cause());
+        return;
+      }
+
+      conn.setTransactionIsolation(txIsolation.result(), res -> {
+        if (res.failed()) {
+          fail(res.cause());
+        }
+
+        testComplete();
+      });
+    });
+
+    await();
   }
 
 
