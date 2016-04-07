@@ -37,7 +37,7 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
+  protected Void execute() throws SQLException {
     try (Statement stmt = conn.createStatement()) {
       boolean isResultSet = stmt.execute(sql);
       // If the execute statement happens to return a result set, we should close it in case

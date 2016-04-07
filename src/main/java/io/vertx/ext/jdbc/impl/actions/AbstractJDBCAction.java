@@ -49,7 +49,7 @@ public abstract class AbstractJDBCAction<T> {
 
   public void handle(Future<T> future) {
     try {
-      T result = execute(conn);
+      T result = execute();
       future.complete(result);
     } catch (SQLException e) {
       future.fail(e);
@@ -69,7 +69,7 @@ public abstract class AbstractJDBCAction<T> {
     });
   }
 
-  protected abstract T execute(Connection conn) throws SQLException;
+  protected abstract T execute() throws SQLException;
 
   protected abstract String name();
 }

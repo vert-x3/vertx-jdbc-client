@@ -21,7 +21,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.impl.WorkerContext;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -32,6 +31,7 @@ import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -126,6 +126,24 @@ class JDBCConnectionImpl implements SQLConnection {
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
     new JDBCRollback(vertx, conn, context).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, sqlStatements).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, statement, args).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, statement, inArgs, outArgs).execute(handler);
     return this;
   }
 }
