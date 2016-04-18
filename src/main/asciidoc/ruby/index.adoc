@@ -206,6 +206,17 @@ client = VertxJdbc::JDBCClient.create_shared(vertx, config)
 
 ----
 
+Hikari uses a different set of properties:
+
+* `jdbcUrl` for the JDBC URL
+* `driverClassName` for the JDBC driven class name
+* `maximumPoolSize` for the pool size
+* `username` for the login (`password` for the password)
+
+Refer to the https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby[Hikari documentation]
+for further details. Also refer to the http://www.jolbox.com/configuration.html[BoneCP documentation]
+to configure BoneCP.
+
 == JDBC Drivers
 
 If you are using the default `DataSourceProvider` (relying on c3p0), you would need to copy the JDBC driver class
