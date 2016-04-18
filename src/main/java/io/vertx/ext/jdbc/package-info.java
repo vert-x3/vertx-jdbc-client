@@ -131,7 +131,7 @@
  * The connection is an instance of {@link io.vertx.ext.sql.SQLConnection} which is a common interface not only used by
  * the Vert.x JDBC Client.
  *
- * You can learn how to use it in the http://foobar[common sql interface] documentation.
+ * You can learn how to use it in the http://vertx.io/docs/vertx-sql-common/$lang/[common sql interface] documentation.
  *
  * == Configuration
  *

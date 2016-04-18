@@ -152,7 +152,7 @@ client.getConnection({ res ->
 The connection is an instance of `link:../../groovydoc/io/vertx/groovy/ext/sql/SQLConnection.html[SQLConnection]` which is a common interface not only used by
 the Vert.x JDBC Client.
 
-You can learn how to use it in the http://foobar[common sql interface] documentation.
+You can learn how to use it in the http://vertx.io/docs/vertx-sql-common/groovy/[common sql interface] documentation.
 
 == Configuration
 
