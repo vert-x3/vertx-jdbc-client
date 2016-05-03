@@ -32,8 +32,8 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
 
   private final String sql;
 
-  public JDBCExecute(Vertx vertx, Connection connection, WorkerExecutor context, String sql) {
-    super(vertx, connection, context);
+  public JDBCExecute(Vertx vertx, Connection connection, WorkerExecutor exec, String sql) {
+    super(vertx, connection, exec);
     this.sql = sql;
   }
 

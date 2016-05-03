@@ -28,8 +28,8 @@ import java.sql.SQLException;
  */
 public class JDBCRollback extends AbstractJDBCAction<Void> {
 
-  public JDBCRollback(Vertx vertx, Connection conn, WorkerExecutor context) {
-    super(vertx, conn, context);
+  public JDBCRollback(Vertx vertx, Connection exec, WorkerExecutor context) {
+    super(vertx, exec, context);
   }
 
   @Override

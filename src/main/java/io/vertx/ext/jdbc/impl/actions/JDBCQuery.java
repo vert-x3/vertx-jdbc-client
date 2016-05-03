@@ -34,8 +34,8 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
   private final String sql;
   private final JsonArray in;
 
-  public JDBCQuery(Vertx vertx, Connection connection, WorkerExecutor context, String sql, JsonArray in) {
-    super(vertx, connection, context);
+  public JDBCQuery(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, JsonArray in) {
+    super(vertx, connection, exec);
     this.sql = sql;
     this.in = in;
   }

@@ -28,8 +28,8 @@ import java.sql.SQLException;
  */
 public class JDBCCommit extends AbstractJDBCAction<Void> {
 
-  public JDBCCommit(Vertx vertx, Connection conn, WorkerExecutor context) {
-    super(vertx, conn, context);
+  public JDBCCommit(Vertx vertx, Connection conn, WorkerExecutor exec) {
+    super(vertx, conn, exec);
   }
 
   @Override

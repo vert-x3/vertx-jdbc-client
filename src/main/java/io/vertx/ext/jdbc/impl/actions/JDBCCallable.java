@@ -38,8 +38,8 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private final JsonArray in;
   private final JsonArray out;
 
-  public JDBCCallable(Vertx vertx, Connection connection, WorkerExecutor context, String sql, JsonArray in, JsonArray out) {
-    super(vertx, connection, context);
+  public JDBCCallable(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, JsonArray in, JsonArray out) {
+    super(vertx, connection, exec);
     this.sql = sql;
     this.in = in;
     this.out = out;

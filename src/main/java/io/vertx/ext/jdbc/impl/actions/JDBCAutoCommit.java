@@ -29,8 +29,8 @@ import java.sql.SQLException;
 public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
   private boolean autoCommit;
 
-  public JDBCAutoCommit(Vertx vertx, Connection conn, WorkerExecutor context, boolean autoCommit) {
-    super(vertx, conn, context);
+  public JDBCAutoCommit(Vertx vertx, Connection conn, WorkerExecutor exec, boolean autoCommit) {
+    super(vertx, conn, exec);
     this.autoCommit = autoCommit;
   }
 

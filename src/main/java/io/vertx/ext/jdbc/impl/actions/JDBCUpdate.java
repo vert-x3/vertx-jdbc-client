@@ -41,8 +41,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   private final String sql;
   private final JsonArray in;
 
-  public JDBCUpdate(Vertx vertx, Connection connection, WorkerExecutor context, String sql, JsonArray in) {
-    super(vertx, connection, context);
+  public JDBCUpdate(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, JsonArray in) {
+    super(vertx, connection, exec);
     this.sql = sql;
     this.in = in;
   }

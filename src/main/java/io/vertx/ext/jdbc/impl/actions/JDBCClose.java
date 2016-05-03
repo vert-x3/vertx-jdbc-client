@@ -28,8 +28,8 @@ import java.sql.SQLException;
  */
 public class JDBCClose extends AbstractJDBCAction<Void> {
 
-  public JDBCClose(Vertx vertx, Connection conn, WorkerExecutor context) {
-    super(vertx, conn, context);
+  public JDBCClose(Vertx vertx, Connection conn, WorkerExecutor exec) {
+    super(vertx, conn, exec);
   }
 
   @Override
