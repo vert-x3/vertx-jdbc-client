@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
@@ -33,7 +34,7 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
   private final String sql;
   private final JsonArray in;
 
-  public JDBCQuery(Vertx vertx, Connection connection, Context context, String sql, JsonArray in) {
+  public JDBCQuery(Vertx vertx, Connection connection, WorkerExecutor context, String sql, JsonArray in) {
     super(vertx, connection, context);
     this.sql = sql;
     this.in = in;
