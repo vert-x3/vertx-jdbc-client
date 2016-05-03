@@ -52,7 +52,7 @@ class JDBCConnectionImpl implements SQLConnection {
   public JDBCConnectionImpl(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
-    this.context = ((VertxInternal)vertx).createWorkerContext(false, null, new JsonObject(), getClassLoader());
+    this.context = ((VertxInternal)vertx).createWorkerContext(false, null, null, new JsonObject(), getClassLoader());
   }
 
   @Override
