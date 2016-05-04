@@ -106,7 +106,12 @@ final class JDBCStatementHelper {
       if (value != null) {
         // We're using the int from the enum instead of the enum itself to allow working with Drivers
         // that have not been upgraded to Java8 yet.
-        statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
+        if (value instanceof String) {
+          statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
+        } else if (value instanceof Number) {
+          // for cases where vendors have special codes (e.g.: Oracle)
+          statement.registerOutParameter(i + 1, ((Number) value).intValue());
+        }
         set = true;
       }
 
