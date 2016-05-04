@@ -17,9 +17,11 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
+import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.sql.SQLConnection;
@@ -28,6 +30,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -46,6 +49,7 @@ public class JDBCClientImpl implements JDBCClient {
   // We use this executor to execute getConnection requests
   private final ExecutorService exec;
   private final DataSource ds;
+  private final PoolMetrics metrics;
 
   /*
   Create client with specific datasource
@@ -54,9 +58,10 @@ public class JDBCClientImpl implements JDBCClient {
     Objects.requireNonNull(vertx);
     Objects.requireNonNull(dataSource);
     this.vertx = vertx;
-    this.holder = new DataSourceHolder(dataSource);
+    this.holder = new DataSourceHolder((VertxInternal) vertx, dataSource);
     this.exec = holder.exec();
     this.ds = dataSource;
+    this.metrics = holder.metrics;
   }
 
   /*
@@ -70,6 +75,7 @@ public class JDBCClientImpl implements JDBCClient {
     this.holder = lookupHolder(datasourceName, config);
     this.exec = holder.exec();
     this.ds = holder.ds();
+    this.metrics = holder.metrics;
   }
 
   @Override
@@ -80,6 +86,9 @@ public class JDBCClientImpl implements JDBCClient {
   @Override
   public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     Context ctx = vertx.getOrCreateContext();
+    boolean enabled = metrics != null && metrics.isEnabled();
+    Object metric = enabled ? metrics.taskSubmitted() : null;
+    PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
       Future<SQLConnection> res = Future.future();
       try {
@@ -97,7 +106,10 @@ public class JDBCClientImpl implements JDBCClient {
         other important operations from occurring (e.g. async file access)
         */
         Connection conn = ds.getConnection();
-        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn);
+        if (metrics != null) {
+          metrics.taskBegin(metric);
+        }
+        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn, metrics, metric);
         res.complete(sconn);
       } catch (SQLException e) {
         res.fail(e);
@@ -112,7 +124,7 @@ public class JDBCClientImpl implements JDBCClient {
       LocalMap<String, DataSourceHolder> map = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
       DataSourceHolder theHolder = map.get(datasourceName);
       if (theHolder == null) {
-        theHolder = new DataSourceHolder(config, () -> removeFromMap(map, datasourceName));
+        theHolder = new DataSourceHolder((VertxInternal) vertx, config, () -> removeFromMap(map, datasourceName), datasourceName);
         map.put(datasourceName, theHolder);
       } else {
         theHolder.incRefCount();
@@ -132,20 +144,27 @@ public class JDBCClientImpl implements JDBCClient {
 
   private class DataSourceHolder implements Shareable {
 
+    private final VertxInternal vertx;
     DataSourceProvider provider;
     JsonObject config;
     Runnable closeRunner;
     DataSource ds;
+    PoolMetrics metrics;
     ExecutorService exec;
     int refCount = 1;
+    String name;
 
-    public DataSourceHolder(DataSource ds) {
+    public DataSourceHolder(VertxInternal vertx, DataSource ds) {
       this.ds = ds;
+      this.metrics = vertx.metricsSPI().createMetrics(ds, UUID.randomUUID().toString(), -1);
+      this.vertx = vertx;
     }
 
-    public DataSourceHolder(JsonObject config, Runnable closeRunner) {
+    public DataSourceHolder(VertxInternal vertx, JsonObject config, Runnable closeRunner, String name) {
       this.config = config;
       this.closeRunner = closeRunner;
+      this.vertx = vertx;
+      this.name = name;
     }
 
     synchronized DataSource ds() {
@@ -161,6 +180,8 @@ public class JDBCClientImpl implements JDBCClient {
             Class clazz = Thread.currentThread().getContextClassLoader().loadClass(providerClass);
             provider = (DataSourceProvider) clazz.newInstance();
             ds = provider.getDataSource(config);
+            int poolSize = provider.maximumPoolSize(ds, config);
+            metrics = vertx.metricsSPI().createMetrics(ds, name, poolSize);
             return ds;
           } catch (ClassNotFoundException e) {
             // Next try.
@@ -174,6 +195,8 @@ public class JDBCClientImpl implements JDBCClient {
           Class clazz = this.getClass().getClassLoader().loadClass(providerClass);
           provider = (DataSourceProvider) clazz.newInstance();
           ds = provider.getDataSource(config);
+          int poolSize = provider.maximumPoolSize(ds, config);
+          metrics = vertx.metricsSPI().createMetrics(ds, name, poolSize);
           return ds;
         } catch (ClassNotFoundException | InstantiationException | SQLException | IllegalAccessException e) {
           throw new RuntimeException(e);
@@ -199,6 +222,9 @@ public class JDBCClientImpl implements JDBCClient {
 
     synchronized void close() {
       if (--refCount == 0) {
+        if (metrics != null) {
+          metrics.close();
+        }
         if (provider != null) {
           vertx.executeBlocking(future -> {
             try {

@@ -25,6 +25,7 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
@@ -43,17 +44,21 @@ class JDBCConnectionImpl implements SQLConnection {
   private final Connection conn;
   private final Context context;
   private final WorkerExecutor executor;
+  private final PoolMetrics metrics;
+  private final Object metric;
 
   private ClassLoader getClassLoader() {
     ClassLoader tccl = Thread.currentThread().getContextClassLoader();
     return tccl == null ? getClass().getClassLoader() : tccl;
   }
 
-  public JDBCConnectionImpl(Vertx vertx, Connection conn) {
+  public JDBCConnectionImpl(Vertx vertx, Connection conn, PoolMetrics metrics, Object metric) {
     this.vertx = vertx;
     this.conn = conn;
     this.context = vertx.getOrCreateContext();
     this.executor = ((ContextInternal)context).createWorkerExecutor();
+    this.metrics = metrics;
+    this.metric = metric;
   }
 
   @Override
@@ -106,6 +111,9 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
+    if (metrics != null) {
+      metrics.taskEnd(metric, true);
+    }
     new JDBCClose(vertx, conn, executor).execute(handler);
   }
 

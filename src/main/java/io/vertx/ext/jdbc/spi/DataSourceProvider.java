@@ -26,6 +26,8 @@ import java.sql.SQLException;
  */
 public interface DataSourceProvider {
 
+  int maximumPoolSize(DataSource dataSource, JsonObject config) throws SQLException;
+
   DataSource getDataSource(JsonObject config) throws SQLException;
 
   void close(DataSource dataSource) throws SQLException;

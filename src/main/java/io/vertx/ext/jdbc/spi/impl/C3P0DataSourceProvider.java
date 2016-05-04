@@ -18,6 +18,8 @@ package io.vertx.ext.jdbc.spi.impl;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.PooledDataSource;
+import com.mchange.v2.c3p0.cfg.C3P0Config;
+import com.mchange.v2.c3p0.impl.C3P0Defaults;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 
@@ -85,5 +87,17 @@ public class C3P0DataSourceProvider implements DataSourceProvider {
     if (dataSource instanceof PooledDataSource) {
       ((PooledDataSource) dataSource).close();
     }
+  }
+
+  @Override
+  public int maximumPoolSize(DataSource dataSource, JsonObject config) throws SQLException {
+    if (dataSource instanceof PooledDataSource) {
+      Integer val = config.getInteger("max_pool_size");
+      if (val == null) {
+        val =  C3P0Config.initializeIntPropertyVar("maxPoolSize", C3P0Defaults.maxPoolSize());
+      }
+      return val;
+    }
+    return -1;
   }
 }

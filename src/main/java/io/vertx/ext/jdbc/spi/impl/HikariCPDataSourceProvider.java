@@ -136,6 +136,14 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
   }
 
   @Override
+  public int maximumPoolSize(DataSource dataSource, JsonObject config) throws SQLException {
+    if (dataSource instanceof HikariDataSource) {
+      return ((HikariDataSource)dataSource).getMaximumPoolSize();
+    }
+    return -1;
+  }
+
+  @Override
   public void close(DataSource dataSource) throws SQLException {
     if (dataSource instanceof HikariDataSource) {
       ((HikariDataSource) dataSource).close();
