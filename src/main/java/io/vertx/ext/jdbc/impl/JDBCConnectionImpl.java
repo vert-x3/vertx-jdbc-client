@@ -53,7 +53,7 @@ class JDBCConnectionImpl implements SQLConnection {
     this.vertx = vertx;
     this.conn = conn;
     this.context = vertx.getOrCreateContext();
-    this.executor = ((ContextInternal)context).createExecutor();
+    this.executor = ((ContextInternal)context).createWorkerExecutor();
   }
 
   @Override
