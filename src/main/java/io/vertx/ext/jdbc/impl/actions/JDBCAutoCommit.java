@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,8 +29,8 @@ import java.sql.SQLException;
 public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
   private boolean autoCommit;
 
-  public JDBCAutoCommit(Vertx vertx, Connection conn, Context context, boolean autoCommit) {
-    super(vertx, conn, context);
+  public JDBCAutoCommit(Vertx vertx, Connection conn, WorkerExecutor exec, boolean autoCommit) {
+    super(vertx, conn, exec);
     this.autoCommit = autoCommit;
   }
 

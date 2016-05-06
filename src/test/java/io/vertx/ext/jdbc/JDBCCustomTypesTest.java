@@ -16,6 +16,7 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
@@ -26,8 +27,10 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -42,7 +45,7 @@ public class JDBCCustomTypesTest extends VertxTestBase {
 
   static {
     SQL.add("drop table if exists t");
-    SQL.add("create table t (u UUID)");
+    SQL.add("create table t (u UUID, d DATE, t TIME, ts TIMESTAMP)");
     SQL.add("insert into t (u) values (random_uuid())");
   }
 
@@ -86,6 +89,23 @@ public class JDBCCustomTypesTest extends VertxTestBase {
     await();
   }
 
+  @Test
+  public void testCustomInsert() {
+    String sql = "INSERT INTO t (u, t, d, ts) VALUES (?, ?, ?, ?)";
+    final String uuid = UUID.randomUUID().toString();
+
+    final SQLConnection conn = connection();
+
+    conn.setAutoCommit(false, tx -> {
+      if (tx.succeeded()) {
+        conn.updateWithParams(sql, new JsonArray().add(uuid).add("09:00:00").add("2015-03-16").add(Instant.now()), onSuccess(resultSet -> {
+          testComplete();
+        }));
+      }
+    });
+
+    await();
+  }
 
   private SQLConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);

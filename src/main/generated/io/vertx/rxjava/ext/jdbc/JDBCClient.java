@@ -17,7 +17,6 @@
 package io.vertx.rxjava.ext.jdbc;
 
 import java.util.Map;
-import io.vertx.lang.rxjava.InternalHelper;
 import rx.Observable;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.ext.sql.SQLConnection;
@@ -51,7 +50,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createNonShared(Vertx vertx, JsonObject config) { 
-    JDBCClient ret= JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createNonShared((io.vertx.core.Vertx) vertx.getDelegate(), config));
+    JDBCClient ret = JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createNonShared((io.vertx.core.Vertx)vertx.getDelegate(), config));
     return ret;
   }
 
@@ -64,7 +63,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, JsonObject config, String dataSourceName) { 
-    JDBCClient ret= JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx) vertx.getDelegate(), config, dataSourceName));
+    JDBCClient ret = JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config, dataSourceName));
     return ret;
   }
 
@@ -75,7 +74,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, JsonObject config) { 
-    JDBCClient ret= JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx) vertx.getDelegate(), config));
+    JDBCClient ret = JDBCClient.newInstance(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config));
     return ret;
   }
 
@@ -86,15 +85,13 @@ public class JDBCClient {
    * @return 
    */
   public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) { 
-    this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
-      public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> event) {
-        AsyncResult<SQLConnection> f;
-        if (event.succeeded()) {
-          f = InternalHelper.<SQLConnection>result(new SQLConnection(event.result()));
+    delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
+      public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> ar) {
+        if (ar.succeeded()) {
+          handler.handle(io.vertx.core.Future.succeededFuture(SQLConnection.newInstance(ar.result())));
         } else {
-          f = InternalHelper.<SQLConnection>failure(event.cause());
+          handler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        handler.handle(f);
       }
     });
     return this;
@@ -115,7 +112,7 @@ public class JDBCClient {
    * Close the client
    */
   public void close() { 
-    this.delegate.close();
+    delegate.close();
   }
 
 

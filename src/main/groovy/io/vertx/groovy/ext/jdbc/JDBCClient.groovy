@@ -42,7 +42,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createNonShared(Vertx vertx, Map<String, Object> config) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createNonShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createNonShared(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**
@@ -54,7 +54,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, Map<String, Object> config, String dataSourceName) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null, dataSourceName), io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, config != null ? new io.vertx.core.json.JsonObject(config) : null, dataSourceName), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**
@@ -64,7 +64,7 @@ public class JDBCClient {
    * @return the client
    */
   public static JDBCClient createShared(Vertx vertx, Map<String, Object> config) {
-    def ret= InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
+    def ret = InternalHelper.safeCreate(io.vertx.ext.jdbc.JDBCClient.createShared(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.ext.jdbc.JDBCClient.class);
     return ret;
   }
   /**
@@ -74,23 +74,21 @@ public class JDBCClient {
    * @return 
    */
   public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    this.delegate.getConnection(new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
-      public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> event) {
-        AsyncResult<SQLConnection> f
-        if (event.succeeded()) {
-          f = InternalHelper.<SQLConnection>result(new SQLConnection(event.result()))
+    delegate.getConnection(handler != null ? new Handler<AsyncResult<io.vertx.ext.sql.SQLConnection>>() {
+      public void handle(AsyncResult<io.vertx.ext.sql.SQLConnection> ar) {
+        if (ar.succeeded()) {
+          handler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.ext.sql.SQLConnection.class)));
         } else {
-          f = InternalHelper.<SQLConnection>failure(event.cause())
+          handler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        handler.handle(f)
       }
-    });
+    } : null);
     return this;
   }
   /**
    * Close the client
    */
   public void close() {
-    this.delegate.close();
+    delegate.close();
   }
 }

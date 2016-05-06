@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.UpdateResult;
 
@@ -41,8 +42,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   private final JsonArray in;
   private final int timeout;
 
-  public JDBCUpdate(Vertx vertx, Connection connection, Context context, int timeout, String sql, JsonArray in) {
-    super(vertx, connection, context);
+  public JDBCUpdate(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
+    super(vertx, connection, exec);
     this.sql = sql;
     this.in = in;
     this.timeout = timeout;

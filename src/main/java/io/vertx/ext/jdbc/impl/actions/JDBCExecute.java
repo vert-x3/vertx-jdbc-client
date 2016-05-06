@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -32,8 +33,8 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
   private final String sql;
   private final int timeout;
 
-  public JDBCExecute(Vertx vertx, Connection connection, Context context, int timeout, String sql) {
-    super(vertx, connection, context);
+  public JDBCExecute(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql) {
+    super(vertx, connection, exec);
     this.sql = sql;
     this.timeout = timeout;
   }
