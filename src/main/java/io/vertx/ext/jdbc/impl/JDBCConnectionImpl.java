@@ -17,7 +17,7 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -131,10 +131,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
-    Future<Void> f = Future.future();
-    final Context callbackContext = vertx.getOrCreateContext();
-    context.runOnContext(v -> {
-      f.setHandler(ar -> callbackContext.runOnContext(v2 -> handler.handle(ar)));
+    executor.executeBlocking((Future<Void> f) -> {
       try {
         switch (isolation) {
           case READ_COMMITTED:
@@ -159,17 +156,14 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    });
+    }, handler);
 
     return this;
   }
 
   @Override
   public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
-    Future<TransactionIsolation> f = Future.future();
-    final Context callbackContext = vertx.getOrCreateContext();
-    context.runOnContext(v -> {
-      f.setHandler(ar -> callbackContext.runOnContext(v2 -> handler.handle(ar)));
+    executor.executeBlocking((Future<TransactionIsolation> f) -> {
       try {
         int level = conn.getTransactionIsolation();
 
@@ -196,79 +190,7 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    });
-
-    return this;
-  }
-
-  @Override
-  public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
-    Future<Void> f = Future.future();
-    final Context callbackContext = vertx.getOrCreateContext();
-    context.runOnContext(v -> {
-      f.setHandler(ar -> callbackContext.runOnContext(v2 -> handler.handle(ar)));
-      try {
-        switch (isolation) {
-          case READ_COMMITTED:
-            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            break;
-          case READ_UNCOMMITTED:
-            conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-            break;
-          case REPEATABLE_READ:
-            conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
-            break;
-          case SERIALIZABLE:
-            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            break;
-          case NONE:
-            conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
-            break;
-          default:
-            log.warn("Unknown isolation level " + isolation.name());
-        }
-        f.complete();
-      } catch (SQLException e) {
-        f.fail(e);
-      }
-    });
-
-    return this;
-  }
-
-  @Override
-  public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
-    Future<TransactionIsolation> f = Future.future();
-    final Context callbackContext = vertx.getOrCreateContext();
-    context.runOnContext(v -> {
-      f.setHandler(ar -> callbackContext.runOnContext(v2 -> handler.handle(ar)));
-      try {
-        int level = conn.getTransactionIsolation();
-
-        switch (level) {
-          case Connection.TRANSACTION_READ_COMMITTED:
-            f.complete(TransactionIsolation.READ_COMMITTED);
-            break;
-          case Connection.TRANSACTION_READ_UNCOMMITTED:
-            f.complete(TransactionIsolation.READ_UNCOMMITTED);
-            break;
-          case Connection.TRANSACTION_REPEATABLE_READ:
-            f.complete(TransactionIsolation.REPEATABLE_READ);
-            break;
-          case Connection.TRANSACTION_SERIALIZABLE:
-            f.complete(TransactionIsolation.SERIALIZABLE);
-            break;
-          case Connection.TRANSACTION_NONE:
-            f.complete(TransactionIsolation.NONE);
-            break;
-          default:
-            f.fail("Unknown isolation level " + level);
-            break;
-        }
-      } catch (SQLException e) {
-        f.fail(e);
-      }
-    });
+    }, handler);
 
     return this;
   }
