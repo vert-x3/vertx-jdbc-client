@@ -37,17 +37,23 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private final String sql;
   private final JsonArray in;
   private final JsonArray out;
+  private final int timeout;
 
-  public JDBCCallable(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, JsonArray in, JsonArray out) {
+  public JDBCCallable(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in, JsonArray out) {
     super(vertx, connection, exec);
     this.sql = sql;
     this.in = in;
     this.out = out;
+    this.timeout = timeout;
   }
 
   @Override
   protected io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
     try (CallableStatement statement = conn.prepareCall(sql)) {
+      if (timeout >= 0) {
+        statement.setQueryTimeout(timeout);
+      }
+
       fillStatement(statement, in, out);
 
       boolean retResult = statement.execute();
