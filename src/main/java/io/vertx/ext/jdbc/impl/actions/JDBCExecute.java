@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -30,15 +31,21 @@ import java.sql.Statement;
 public class JDBCExecute extends AbstractJDBCAction<Void> {
 
   private final String sql;
+  private final int timeout;
 
-  public JDBCExecute(Vertx vertx, Connection connection, Context context, String sql) {
-    super(vertx, connection, context);
+  public JDBCExecute(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql) {
+    super(vertx, connection, exec);
     this.sql = sql;
+    this.timeout = timeout;
   }
 
   @Override
   protected Void execute() throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      if (timeout >= 0) {
+        stmt.setQueryTimeout(timeout);
+      }
+
       boolean isResultSet = stmt.execute(sql);
       // If the execute statement happens to return a result set, we should close it in case
       // the connection pool doesn't.

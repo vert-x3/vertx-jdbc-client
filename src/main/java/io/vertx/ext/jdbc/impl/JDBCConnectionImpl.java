@@ -17,12 +17,11 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.*;
@@ -42,70 +41,67 @@ class JDBCConnectionImpl implements SQLConnection {
 
   private final Vertx vertx;
   private final Connection conn;
-  private final Context context;
+  private final WorkerExecutor executor;
 
-  private ClassLoader getClassLoader() {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-    return tccl == null ? getClass().getClassLoader() : tccl;
-  }
+  private int timeout = -1;
 
   public JDBCConnectionImpl(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
-    this.context = ((VertxInternal)vertx).createWorkerContext(false, null, new JsonObject(), getClassLoader());
+    this.executor = ((ContextInternal) vertx.getOrCreateContext()).createWorkerExecutor();
   }
 
   @Override
   public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCAutoCommit(vertx, conn, context, autoCommit).execute(resultHandler);
+    new JDBCAutoCommit(vertx, conn, executor, autoCommit).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCExecute(vertx, conn, context, sql).execute(resultHandler);
+    new JDBCExecute(vertx, conn, executor, timeout, sql).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, conn, context, sql, null).execute(resultHandler);
+    new JDBCQuery(vertx, conn, executor, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, conn, context, sql, params).execute(resultHandler);
+    new JDBCQuery(vertx, conn, executor, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, conn, context, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, executor, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, conn, context, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, executor, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, conn, context, sql, null, null).execute(resultHandler);
+    new JDBCCallable(vertx, conn, executor, timeout, sql, null, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, conn, context, sql, params, outputs).execute(resultHandler);
+    new JDBCCallable(vertx, conn, executor, timeout, sql, params, outputs).execute(resultHandler);
     return this;
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    new JDBCClose(vertx, conn, context).execute(handler);
+    new JDBCClose(vertx, conn, executor).execute(handler);
   }
 
   @Override
@@ -119,13 +115,19 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
-    new JDBCCommit(vertx, conn, context).execute(handler);
+    new JDBCCommit(vertx, conn, executor).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
-    new JDBCRollback(vertx, conn, context).execute(handler);
+    new JDBCRollback(vertx, conn, executor).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection setQueryTimeout(int timeoutInSeconds) {
+    this.timeout = timeoutInSeconds;
     return this;
   }
 

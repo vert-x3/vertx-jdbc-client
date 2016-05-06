@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,8 +28,8 @@ import java.sql.SQLException;
  */
 public class JDBCClose extends AbstractJDBCAction<Void> {
 
-  public JDBCClose(Vertx vertx, Connection conn, Context context) {
-    super(vertx, conn, context);
+  public JDBCClose(Vertx vertx, Connection conn, WorkerExecutor exec) {
+    super(vertx, conn, exec);
   }
 
   @Override
