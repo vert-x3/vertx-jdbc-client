@@ -42,7 +42,7 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
   @Override
   protected Void execute(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
-      if (timeout > 0) {
+      if (timeout >= 0) {
         stmt.setQueryTimeout(timeout);
       }
 

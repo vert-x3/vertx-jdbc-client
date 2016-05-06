@@ -45,7 +45,7 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
   @Override
   protected io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
     try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      if (timeout > 0) {
+      if (timeout >= 0) {
         statement.setQueryTimeout(timeout);
       }
 

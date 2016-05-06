@@ -53,7 +53,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   protected UpdateResult execute(Connection conn) throws SQLException {
     final boolean returKeys = regex.matcher(sql).groupCount() == 2;
     try (PreparedStatement statement = conn.prepareStatement(sql, returKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
-      if (timeout > 0) {
+      if (timeout >= 0) {
         statement.setQueryTimeout(timeout);
       }
 

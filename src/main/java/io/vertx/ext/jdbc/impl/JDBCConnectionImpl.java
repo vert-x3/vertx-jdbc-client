@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
@@ -41,21 +40,14 @@ class JDBCConnectionImpl implements SQLConnection {
 
   private final Vertx vertx;
   private final Connection conn;
-  private final Context context;
   private final WorkerExecutor executor;
 
   private int timeout = -1;
 
-  private ClassLoader getClassLoader() {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-    return tccl == null ? getClass().getClassLoader() : tccl;
-  }
-
   public JDBCConnectionImpl(Vertx vertx, Connection conn) {
     this.vertx = vertx;
     this.conn = conn;
-    this.context = vertx.getOrCreateContext();
-    this.executor = ((ContextInternal)context).createWorkerExecutor();
+    this.executor = ((ContextInternal) vertx.getOrCreateContext()).createWorkerExecutor();
   }
 
   @Override
