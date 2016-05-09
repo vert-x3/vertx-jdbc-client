@@ -16,11 +16,7 @@
 
 package io.vertx.ext.jdbc.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
@@ -29,9 +25,11 @@ import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.TransactionIsolation;
 import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -42,23 +40,18 @@ class JDBCConnectionImpl implements SQLConnection {
 
   private final Vertx vertx;
   private final Connection conn;
-  private final Context context;
   private final WorkerExecutor executor;
   private final PoolMetrics metrics;
   private final Object metric;
 
-  private ClassLoader getClassLoader() {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-    return tccl == null ? getClass().getClassLoader() : tccl;
-  }
+  private int timeout = -1;
 
   public JDBCConnectionImpl(Vertx vertx, Connection conn, PoolMetrics metrics, Object metric) {
     this.vertx = vertx;
     this.conn = conn;
-    this.context = vertx.getOrCreateContext();
-    this.executor = ((ContextInternal)context).createWorkerExecutor();
     this.metrics = metrics;
     this.metric = metric;
+    this.executor = ((ContextInternal) vertx.getOrCreateContext()).createWorkerExecutor();
   }
 
   @Override
@@ -69,43 +62,43 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCExecute(vertx, conn, executor, sql).execute(resultHandler);
+    new JDBCExecute(vertx, conn, executor, timeout, sql).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, conn, executor, sql, null).execute(resultHandler);
+    new JDBCQuery(vertx, conn, executor, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, conn, executor, sql, params).execute(resultHandler);
+    new JDBCQuery(vertx, conn, executor, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, conn, executor, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, executor, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, conn, executor, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, conn, executor, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, conn, executor, sql, null, null).execute(resultHandler);
+    new JDBCCallable(vertx, conn, executor, timeout, sql, null, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, conn, executor, sql, params, outputs).execute(resultHandler);
+    new JDBCCallable(vertx, conn, executor, timeout, sql, params, outputs).execute(resultHandler);
     return this;
   }
 
@@ -135,6 +128,78 @@ class JDBCConnectionImpl implements SQLConnection {
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
     new JDBCRollback(vertx, conn, executor).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection setQueryTimeout(int timeoutInSeconds) {
+    this.timeout = timeoutInSeconds;
+    return this;
+  }
+
+  @Override
+  public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
+    executor.executeBlocking((Future<Void> f) -> {
+      try {
+        switch (isolation) {
+          case READ_COMMITTED:
+            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            break;
+          case READ_UNCOMMITTED:
+            conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+            break;
+          case REPEATABLE_READ:
+            conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            break;
+          case SERIALIZABLE:
+            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            break;
+          case NONE:
+            conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
+            break;
+          default:
+            log.warn("Unknown isolation level " + isolation.name());
+        }
+        f.complete();
+      } catch (SQLException e) {
+        f.fail(e);
+      }
+    }, handler);
+
+    return this;
+  }
+
+  @Override
+  public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
+    executor.executeBlocking((Future<TransactionIsolation> f) -> {
+      try {
+        int level = conn.getTransactionIsolation();
+
+        switch (level) {
+          case Connection.TRANSACTION_READ_COMMITTED:
+            f.complete(TransactionIsolation.READ_COMMITTED);
+            break;
+          case Connection.TRANSACTION_READ_UNCOMMITTED:
+            f.complete(TransactionIsolation.READ_UNCOMMITTED);
+            break;
+          case Connection.TRANSACTION_REPEATABLE_READ:
+            f.complete(TransactionIsolation.REPEATABLE_READ);
+            break;
+          case Connection.TRANSACTION_SERIALIZABLE:
+            f.complete(TransactionIsolation.SERIALIZABLE);
+            break;
+          case Connection.TRANSACTION_NONE:
+            f.complete(TransactionIsolation.NONE);
+            break;
+          default:
+            f.fail("Unknown isolation level " + level);
+            break;
+        }
+      } catch (SQLException e) {
+        f.fail(e);
+      }
+    }, handler);
+
     return this;
   }
 }
