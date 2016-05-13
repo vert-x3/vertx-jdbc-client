@@ -87,7 +87,7 @@ public class JDBCClientImpl implements JDBCClient {
   public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     Context ctx = vertx.getOrCreateContext();
     boolean enabled = metrics != null && metrics.isEnabled();
-    Object metric = enabled ? metrics.taskSubmitted() : null;
+    Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
       Future<SQLConnection> res = Future.future();
@@ -106,12 +106,16 @@ public class JDBCClientImpl implements JDBCClient {
         other important operations from occurring (e.g. async file access)
         */
         Connection conn = ds.getConnection();
+        Object execMetric = null;
         if (metrics != null) {
-          metrics.taskBegin(metric);
+          execMetric = metrics.begin(queueMetric);
         }
-        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn, metrics, metric);
+        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn, metrics, execMetric);
         res.complete(sconn);
       } catch (SQLException e) {
+        if (metrics != null) {
+          metrics.rejected(queueMetric);
+        }
         res.fail(e);
       }
       ctx.runOnContext(v -> res.setHandler(handler));
@@ -156,7 +160,7 @@ public class JDBCClientImpl implements JDBCClient {
 
     public DataSourceHolder(VertxInternal vertx, DataSource ds) {
       this.ds = ds;
-      this.metrics = vertx.metricsSPI().createMetrics(ds, UUID.randomUUID().toString(), -1);
+      this.metrics = vertx.metricsSPI().createMetrics(ds, "datasource", UUID.randomUUID().toString(), -1);
       this.vertx = vertx;
     }
 
@@ -181,7 +185,7 @@ public class JDBCClientImpl implements JDBCClient {
             provider = (DataSourceProvider) clazz.newInstance();
             ds = provider.getDataSource(config);
             int poolSize = provider.maximumPoolSize(ds, config);
-            metrics = vertx.metricsSPI().createMetrics(ds, name, poolSize);
+            metrics = vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize);
             return ds;
           } catch (ClassNotFoundException e) {
             // Next try.
@@ -196,7 +200,7 @@ public class JDBCClientImpl implements JDBCClient {
           provider = (DataSourceProvider) clazz.newInstance();
           ds = provider.getDataSource(config);
           int poolSize = provider.maximumPoolSize(ds, config);
-          metrics = vertx.metricsSPI().createMetrics(ds, name, poolSize);
+          metrics = vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize);
           return ds;
         } catch (ClassNotFoundException | InstantiationException | SQLException | IllegalAccessException e) {
           throw new RuntimeException(e);

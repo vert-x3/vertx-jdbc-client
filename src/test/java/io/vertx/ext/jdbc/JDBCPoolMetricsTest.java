@@ -39,11 +39,12 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
             return true;
           }
           @Override
-          public <P> PoolMetrics<?> createMetrics(P pool, String poolName, int maxPoolSize) {
+          public <P> PoolMetrics<?> createMetrics(P pool, String poolType, String poolName, int maxPoolSize) {
             if (pool instanceof DataSource) {
+              assertEquals("datasource", poolType);
               return new FakeThreadPoolMetrics(poolName, maxPoolSize);
             } else {
-              return super.createMetrics(pool, poolName, maxPoolSize);
+              return super.createMetrics(pool, poolType, poolName, maxPoolSize);
             }
           }
         };
