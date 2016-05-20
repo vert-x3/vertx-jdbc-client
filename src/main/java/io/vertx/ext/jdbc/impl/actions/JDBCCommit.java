@@ -33,7 +33,7 @@ public class JDBCCommit extends AbstractJDBCAction<Void> {
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
+  protected Void execute() throws SQLException {
     conn.commit();
     return null;
   }

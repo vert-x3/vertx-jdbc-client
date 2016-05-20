@@ -30,6 +30,7 @@ import io.vertx.ext.sql.UpdateResult;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -200,6 +201,24 @@ class JDBCConnectionImpl implements SQLConnection {
       }
     }, handler);
 
+    return this;
+  }
+
+  @Override
+  public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, sqlStatements).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, statement, args).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
+    new JDBCBatch(vertx, conn, context, statement, inArgs, outArgs).execute(handler);
     return this;
   }
 }
