@@ -80,6 +80,15 @@ public class BoneCPDataSourceProvider implements DataSourceProvider {
   }
 
   @Override
+  public int maximumPoolSize(DataSource dataSource, JsonObject config) {
+    if (dataSource instanceof BoneCPDataSource) {
+      BoneCPConfig cfg = ((BoneCPDataSource) dataSource).getPool().getConfig();
+      return cfg.getMaxConnectionsPerPartition() * cfg.getPartitionCount();
+    }
+    return -1;
+  }
+
+  @Override
   public void close(DataSource dataSource) throws SQLException {
     if (dataSource instanceof BoneCPDataSource) {
       ((BoneCPDataSource) dataSource).close();

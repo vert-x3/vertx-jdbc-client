@@ -24,6 +24,11 @@ public class TestDSProvider implements DataSourceProvider {
   }
 
   @Override
+  public int maximumPoolSize(DataSource dataSource, JsonObject config) throws SQLException {
+    return -1;
+  }
+
+  @Override
   public void close(DataSource dataSource) throws SQLException {
     if (dataSource instanceof TestDS) {
       instanceCount.decrementAndGet();
