@@ -16,8 +16,8 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
@@ -43,20 +43,20 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   private final List<JsonArray> in;
   private final List<JsonArray> out;
 
-  public JDBCBatch(Vertx vertx, Connection connection, Context context, List<String> sql) {
-    this(vertx, connection, context, Type.STATEMENT, sql, null, null);
+  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, List<String> sql) {
+    this(vertx, connection, exec, Type.STATEMENT, sql, null, null);
   }
 
-  public JDBCBatch(Vertx vertx, Connection connection, Context context, String sql, List<JsonArray> in) {
-    this(vertx, connection, context, Type.PREPARED, Collections.singletonList(sql), in, null);
+  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in) {
+    this(vertx, connection, exec, Type.PREPARED, Collections.singletonList(sql), in, null);
   }
 
-  public JDBCBatch(Vertx vertx, Connection connection, Context context, String sql, List<JsonArray> in, List<JsonArray> out) {
-    this(vertx, connection, context, Type.CALLABLE, Collections.singletonList(sql), in, out);
+  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in, List<JsonArray> out) {
+    this(vertx, connection, exec, Type.CALLABLE, Collections.singletonList(sql), in, out);
   }
 
-  private JDBCBatch(Vertx vertx, Connection connection, Context context, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
-    super(vertx, connection, context);
+  private JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
+    super(vertx, connection, exec);
     this.type = type;
     this.sql = sql;
     this.in = in;

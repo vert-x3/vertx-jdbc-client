@@ -206,19 +206,19 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, conn, context, sqlStatements).execute(handler);
+    new JDBCBatch(vertx, conn, executor, sqlStatements).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, conn, context, statement, args).execute(handler);
+    new JDBCBatch(vertx, conn, executor, statement, args).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, conn, context, statement, inArgs, outArgs).execute(handler);
+    new JDBCBatch(vertx, conn, executor, statement, inArgs, outArgs).execute(handler);
     return this;
   }
 }
