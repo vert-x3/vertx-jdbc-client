@@ -7,9 +7,8 @@ import io.vertx.core.metrics.impl.DummyVertxMetrics;
 import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
-import io.vertx.test.core.ConfigurableMetricsFactory;
 import io.vertx.test.core.VertxTestBase;
-import io.vertx.test.fakemetrics.FakeThreadPoolMetrics;
+import io.vertx.test.fakemetrics.FakePoolMetrics;
 import org.junit.Test;
 
 import javax.sql.DataSource;
@@ -27,10 +26,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JDBCPoolMetricsTest extends VertxTestBase {
 
   private JDBCClient client;
-  private FakeThreadPoolMetrics metrics;
+  private FakePoolMetrics metrics;
 
-  public void setUp() throws Exception {
-    ConfigurableMetricsFactory.delegate = new VertxMetricsFactory() {
+  public void after() throws Exception {
+    if (client != null) {
+      client.close();
+    }
+    super.after();
+  }
+
+  private JDBCClient getClient() {
+    if (client == null) {
+      Map<String, PoolMetrics> metricsMap = FakePoolMetrics.getPoolMetrics();
+      Set<String> keys = new HashSet<>(metricsMap.keySet());
+      client = JDBCClient.createNonShared(vertx, JDBCClientTestBase.config().
+          put("max_pool_size", 10));
+      Set<String> after = new HashSet<>(metricsMap.keySet());
+      after.removeAll(keys);
+      metrics = (FakePoolMetrics) metricsMap.get(after.iterator().next());
+    }
+    return client;
+  }
+
+  @Override
+  protected VertxOptions getOptions() {
+    MetricsOptions options = new MetricsOptions().setEnabled(true);
+    options.setFactory(new VertxMetricsFactory() {
       @Override
       public VertxMetrics metrics(Vertx vertx, VertxOptions options) {
         return new DummyVertxMetrics() {
@@ -42,45 +63,20 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
           public <P> PoolMetrics<?> createMetrics(P pool, String poolType, String poolName, int maxPoolSize) {
             if (pool instanceof DataSource) {
               assertEquals("datasource", poolType);
-              return new FakeThreadPoolMetrics(poolName, maxPoolSize);
+              return new FakePoolMetrics(poolName, maxPoolSize);
             } else {
               return super.createMetrics(pool, poolType, poolName, maxPoolSize);
             }
           }
         };
       }
-    };
-    super.setUp();
-  }
-
-  public void after() throws Exception {
-    if (client != null) {
-      client.close();
-    }
-    super.after();
-  }
-
-  private JDBCClient getClient() {
-    if (client == null) {
-      Map<String, PoolMetrics> metricsMap = FakeThreadPoolMetrics.getThreadPoolMetrics();
-      Set<String> keys = new HashSet<>(metricsMap.keySet());
-      client = JDBCClient.createNonShared(vertx, JDBCClientTestBase.config().
-          put("max_pool_size", 10));
-      Set<String> after = new HashSet<>(metricsMap.keySet());
-      after.removeAll(keys);
-      metrics = (FakeThreadPoolMetrics) metricsMap.get(after.iterator().next());
-    }
-    return client;
-  }
-
-  @Override
-  protected VertxOptions getOptions() {
-    return new VertxOptions().setMetricsOptions(new MetricsOptions().setEnabled(true));
+    });
+    return new VertxOptions().setMetricsOptions(options);
   }
 
   @Test
   public void testLifecycle() {
-    Map<String, PoolMetrics> metricsMap = FakeThreadPoolMetrics.getThreadPoolMetrics();
+    Map<String, PoolMetrics> metricsMap = FakePoolMetrics.getPoolMetrics();
     assertEquals(Collections.emptySet(), metricsMap.keySet());
     client = getClient();
     assertEquals(1, metricsMap.size());
