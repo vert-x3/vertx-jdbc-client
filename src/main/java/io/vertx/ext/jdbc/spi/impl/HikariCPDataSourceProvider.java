@@ -107,7 +107,7 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           config.setValidationTimeout(getLong(entry.getValue()));
           break;
         case "leakDetectionThreshold":
-          config.setLeakDetectionThreshold((Long) entry.getValue());
+          config.setLeakDetectionThreshold(getLong(entry.getValue()));
           break;
         case "dataSource":
           throw new UnsupportedOperationException(entry.getKey());
