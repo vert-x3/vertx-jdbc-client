@@ -54,4 +54,22 @@ public class HikariCPDataSourceProviderTest {
     provider.close(dataSource);
   }
 
+
+  @Test
+  public void testLeakDetectionOfTheHikariCPDataSourceWithLong() throws SQLException {
+    HikariCPDataSourceProvider provider = new HikariCPDataSourceProvider();
+
+    JsonObject configuration = new JsonObject();
+    configuration
+            .put("foo", "bar")
+            .put("jdbcUrl", "jdbc:hsqldb:mem:test?shutdown=true")
+            .put("leakDetectionThreshold", 10000);
+
+    DataSource dataSource = provider.getDataSource(configuration);
+    assertNotNull(dataSource);
+    assertNotNull(dataSource.getConnection());
+
+    provider.close(dataSource);
+  }
+
 }
