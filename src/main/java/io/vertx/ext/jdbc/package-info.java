@@ -116,6 +116,10 @@
  * Clients that share a data source with other client instances are reference counted. Once the last one that references
  * the same data source is closed, the data source will be closed.
  *
+ * === Automatic clean-up in verticles
+ *
+ * If you're creating a clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
+ *
  * == Getting a connection
  *
  * Once you've created a client you use {@link io.vertx.ext.jdbc.JDBCClient#getConnection(io.vertx.core.Handler)} to get

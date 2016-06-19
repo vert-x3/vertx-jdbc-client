@@ -18,7 +18,6 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.BeforeClass;
@@ -26,8 +25,6 @@ import org.junit.BeforeClass;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,8 +32,6 @@ import java.util.logging.Logger;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public abstract class JDBCClientTestBase extends VertxTestBase {
-
-  protected JDBCClient client;
 
   private static final List<String> SQL = new ArrayList<>();
 
@@ -92,23 +87,6 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
         assertTrue(numbers.add(i));
       }
     }
-  }
-
-  protected SQLConnection connection() {
-    CountDownLatch latch = new CountDownLatch(1);
-    AtomicReference<SQLConnection> ref = new AtomicReference<>();
-    client.getConnection(onSuccess(conn -> {
-      ref.set(conn);
-      latch.countDown();
-    }));
-
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-
-    return ref.get();
   }
 
   protected static void setLogLevel(String name, Level level) {

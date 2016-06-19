@@ -41,6 +41,8 @@ import java.util.logging.Level;
  */
 public class JDBCClientTest extends JDBCClientTestBase {
 
+  protected JDBCClient client;
+
   @Before
   public void setUp() throws Exception {
     super.setUp();
@@ -433,5 +435,22 @@ public class JDBCClientTest extends JDBCClientTestBase {
     }
 
     await();
+  }
+
+  protected SQLConnection connection() {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<SQLConnection> ref = new AtomicReference<>();
+    client.getConnection(onSuccess(conn -> {
+      ref.set(conn);
+      latch.countDown();
+    }));
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
+    return ref.get();
   }
 }
