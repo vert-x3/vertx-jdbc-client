@@ -118,7 +118,7 @@
  *
  * === Automatic clean-up in verticles
  *
- * If you're creating a clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
+ * If you're creating clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
  *
  * == Getting a connection
  *
