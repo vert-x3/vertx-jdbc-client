@@ -14,7 +14,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-jdbc-client</artifactId>
-  <version>3.3.0.CR2</version>
+  <version>3.3.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -22,7 +22,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 
 [source,groovy,subs="+attributes"]
 ----
-compile 'io.vertx:vertx-jdbc-client:3.3.0.CR2'
+compile 'io.vertx:vertx-jdbc-client:3.3.0-SNAPSHOT'
 ----
 
 == Creating a the client
@@ -99,6 +99,10 @@ done with it you should close it.
 
 Clients that share a data source with other client instances are reference counted. Once the last one that references
 the same data source is closed, the data source will be closed.
+
+=== Automatic clean-up in verticles
+
+If you're creating a clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
 
 == Getting a connection
 

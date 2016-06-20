@@ -62,6 +62,7 @@ public class JDBCClientImpl implements JDBCClient {
     this.exec = holder.exec();
     this.ds = dataSource;
     this.metrics = holder.metrics;
+    setupCloseHook();
   }
 
   /*
@@ -76,11 +77,19 @@ public class JDBCClientImpl implements JDBCClient {
     this.exec = holder.exec();
     this.ds = holder.ds();
     this.metrics = holder.metrics;
+    setupCloseHook();
+  }
+
+  private void setupCloseHook() {
+    Context ctx = Vertx.currentContext();
+    if (ctx != null && ctx.owner() == vertx) {
+      ctx.addCloseHook(holder::close);
+    }
   }
 
   @Override
   public void close() {
-    holder.close();
+    holder.close(null);
   }
 
   @Override
@@ -224,10 +233,15 @@ public class JDBCClientImpl implements JDBCClient {
       refCount++;
     }
 
-    synchronized void close() {
+    synchronized void close(Handler<AsyncResult<Void>> completionHandler) {
       if (--refCount == 0) {
         if (metrics != null) {
           metrics.close();
+        }
+        Future<Void> f1 = Future.future();
+        Future<Void> f2 = Future.future();
+        if (completionHandler != null) {
+          CompositeFuture.all(f1, f2).<Void>map(f -> null).setHandler(completionHandler);
         }
         if (provider != null) {
           vertx.executeBlocking(future -> {
@@ -237,13 +251,24 @@ public class JDBCClientImpl implements JDBCClient {
             } catch (SQLException e) {
               future.fail(e);
             }
-          }, null);
+          }, f2.completer());
+        } else {
+          f2.complete();
         }
-        if (exec != null) {
-          exec.shutdown();
+        try {
+          if (exec != null) {
+            exec.shutdown();
+          }
+          if (closeRunner != null) {
+            closeRunner.run();
+          }
+          f1.complete();
+        } catch (Throwable t) {
+          f1.fail(t);
         }
-        if (closeRunner != null) {
-          closeRunner.run();
+      } else {
+        if (completionHandler != null) {
+          completionHandler.handle(Future.succeededFuture());
         }
       }
     }
