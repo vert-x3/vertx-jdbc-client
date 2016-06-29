@@ -44,6 +44,19 @@ final class JDBCStatementHelper {
   private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
   private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
 
+  private static final boolean SUPPORT_UUID;
+
+  static {
+    boolean result = false;
+    try {
+      result = Boolean.parseBoolean(System.getProperty("vertx.jdbc.uuid", "false"));
+    } catch (IllegalArgumentException | NullPointerException e) {
+      // ignore
+    }
+
+    SUPPORT_UUID = result;
+  }
+
   private JDBCStatementHelper() {}
 
   public static void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
@@ -262,7 +275,7 @@ final class JDBCStatementHelper {
       }
 
       // sql uuid
-      if (UUID.matcher(value).matches()) {
+      if (SUPPORT_UUID && UUID.matcher(value).matches()) {
         return java.util.UUID.fromString(value);
       }
 

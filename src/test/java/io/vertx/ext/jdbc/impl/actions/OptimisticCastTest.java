@@ -12,6 +12,10 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class OptimisticCastTest {
 
+  static {
+    System.setProperty("vertx.jdbc.uuid", "true");
+  }
+
   @Parameterized.Parameters
   public static Collection<Object[]> generateData() {
     return Arrays.asList(new Object[][]{
