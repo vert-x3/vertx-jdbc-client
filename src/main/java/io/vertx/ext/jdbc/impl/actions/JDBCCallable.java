@@ -16,18 +16,13 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-
-import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
 
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
@@ -39,8 +34,8 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private final JsonArray out;
   private final int timeout;
 
-  public JDBCCallable(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in, JsonArray out) {
-    super(vertx, connection, exec);
+  public JDBCCallable(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in, JsonArray out) {
+    super(vertx, helper, connection, exec);
     this.sql = sql;
     this.in = in;
     this.out = out;
@@ -54,7 +49,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         statement.setQueryTimeout(timeout);
       }
 
-      fillStatement(statement, in, out);
+      helper.fillStatement(statement, in, out);
 
       boolean retResult = statement.execute();
       boolean outResult = out != null && out.size() > 0;
@@ -64,9 +59,9 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         try (ResultSet rs = statement.getResultSet()) {
           if (outResult) {
             // add the registered outputs
-            return asList(rs).setOutput(convertOutputs(statement));
+            return helper.asList(rs).setOutput(convertOutputs(statement));
           } else {
-            return asList(rs);
+            return helper.asList(rs);
           }
         }
       } else {
@@ -92,9 +87,9 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         if (value == null) {
           result.addNull();
         } else if (value instanceof ResultSet) {
-          result.add(asList((ResultSet) value));
+          result.add(helper.asList((ResultSet) value));
         } else {
-          result.add(convertSqlValue(value));
+          result.add(helper.convertSqlValue(value));
         }
       } else {
         result.addNull();

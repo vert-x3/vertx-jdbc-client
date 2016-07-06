@@ -212,8 +212,13 @@
  *
  * There is also an optimistic cast for temporal types (TIME, DATE, TIMESTAMP) and optionally disabled for UUID. UUIDs
  * are supported by many databases but not all. For example MySQL does not support it so the recommended way is to use
- * a VARCHAR(36) column. For other engines set the system property `vertx.jdbc.uuid` to `true`, this way UUID will be
- * handled as native type.
+ * a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled using the client config json as:
+ *
+ * ----
+ * { "UUIDCast": true }
+ * ----
+ *
+ * When this config is present UUIDs will be handled as a native type.
  *
  *
  * == Use as OSGi bundle

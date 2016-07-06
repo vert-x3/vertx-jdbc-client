@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -33,7 +34,7 @@ import static java.time.format.DateTimeFormatter.*;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-final class JDBCStatementHelper {
+public final class JDBCStatementHelper {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCStatementHelper.class);
 
@@ -44,22 +45,17 @@ final class JDBCStatementHelper {
   private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
   private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
 
-  private static final boolean SUPPORT_UUID;
+  private final boolean castUUID;
 
-  static {
-    boolean result = false;
-    try {
-      result = Boolean.parseBoolean(System.getProperty("vertx.jdbc.uuid", "false"));
-    } catch (IllegalArgumentException | NullPointerException e) {
-      // ignore
-    }
-
-    SUPPORT_UUID = result;
+  public JDBCStatementHelper() {
+    this(new JsonObject());
   }
 
-  private JDBCStatementHelper() {}
+  public JDBCStatementHelper(JsonObject config) {
+    this.castUUID = config.getBoolean("castUUID", false);
+  }
 
-  public static void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
+  public void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
     if (in == null) {
       in = EMPTY;
     }
@@ -79,7 +75,7 @@ final class JDBCStatementHelper {
     }
   }
 
-  public static void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
+  public void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
     if (in == null) {
       in = EMPTY;
     }
@@ -135,7 +131,7 @@ final class JDBCStatementHelper {
     }
   }
 
-  public static io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
+  public io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
     ResultSetMetaData metaData = rs.getMetaData();
@@ -162,7 +158,7 @@ final class JDBCStatementHelper {
     return new io.vertx.ext.sql.ResultSet(columnNames, results);
   }
 
-  public static Object convertSqlValue(Object value) throws SQLException {
+  public Object convertSqlValue(Object value) throws SQLException {
     if (value == null) {
       return null;
     }
@@ -242,7 +238,7 @@ final class JDBCStatementHelper {
     return value.toString();
   }
 
-  public static Object optimisticCast(String value) {
+  public Object optimisticCast(String value) {
     if (value == null) {
       return null;
     }
@@ -275,7 +271,7 @@ final class JDBCStatementHelper {
       }
 
       // sql uuid
-      if (SUPPORT_UUID && UUID.matcher(value).matches()) {
+      if (castUUID && UUID.matcher(value).matches()) {
         return java.util.UUID.fromString(value);
       }
 

@@ -16,15 +16,12 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
 import java.sql.ResultSet;
-
-import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -35,8 +32,8 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
   private final JsonArray in;
   private final int timeout;
 
-  public JDBCQuery(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
-    super(vertx, connection, exec);
+  public JDBCQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
+    super(vertx, helper, connection, exec);
     this.sql = sql;
     this.in = in;
     this.timeout = timeout;
@@ -49,10 +46,10 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
         statement.setQueryTimeout(timeout);
       }
 
-      fillStatement(statement, in);
+      helper.fillStatement(statement, in);
 
       try (ResultSet rs = statement.executeQuery()) {
-        return asList(rs);
+        return helper.asList(rs);
       }
     }
   }

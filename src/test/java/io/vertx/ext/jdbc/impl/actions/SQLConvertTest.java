@@ -5,7 +5,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.sql.SQLException;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -13,6 +12,8 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class SQLConvertTest {
+
+  private JDBCStatementHelper helper = new JDBCStatementHelper();
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateData() {
@@ -34,8 +35,8 @@ public class SQLConvertTest {
 
   @Test
   public void testSQLConvert() throws SQLException {
-    Object cast = JDBCStatementHelper.optimisticCast(value);
-    Object convert = JDBCStatementHelper.convertSqlValue(cast);
+    Object cast = helper.optimisticCast(value);
+    Object convert = helper.convertSqlValue(cast);
 
     assertEquals(value, convert);
   }
