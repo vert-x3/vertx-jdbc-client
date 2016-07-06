@@ -37,14 +37,20 @@ public abstract class AbstractJDBCAction<T> {
   protected final Vertx vertx;
   protected final Connection conn;
   protected final WorkerExecutor exec;
+  protected final JDBCStatementHelper helper;
 
   protected AbstractJDBCAction(Vertx vertx, Connection conn, WorkerExecutor exec) {
+    this(vertx, null, conn, exec);
+  }
+
+  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, WorkerExecutor exec) {
     this.vertx = vertx;
     this.conn = conn;
     this.exec = exec;
+    this.helper = helper;
   }
 
-  public void handle(Future<T> future) {
+  private void handle(Future<T> future) {
     try {
       T result = execute();
       future.complete(result);

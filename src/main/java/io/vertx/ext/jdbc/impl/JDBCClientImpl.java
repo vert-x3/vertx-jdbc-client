@@ -23,6 +23,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.sql.SQLConnection;
 
@@ -50,6 +51,10 @@ public class JDBCClientImpl implements JDBCClient {
   private final ExecutorService exec;
   private final DataSource ds;
   private final PoolMetrics metrics;
+  // Helper that can do param and result transforms, its behavior is defined by the
+  // initial config and immutable after that moment. It is safe to reuse since there
+  // is no state involved
+  private final JDBCStatementHelper helper;
 
   /*
   Create client with specific datasource
@@ -62,6 +67,7 @@ public class JDBCClientImpl implements JDBCClient {
     this.exec = holder.exec();
     this.ds = dataSource;
     this.metrics = holder.metrics;
+    this.helper = new JDBCStatementHelper();
     setupCloseHook();
   }
 
@@ -77,6 +83,7 @@ public class JDBCClientImpl implements JDBCClient {
     this.exec = holder.exec();
     this.ds = holder.ds();
     this.metrics = holder.metrics;
+    this.helper = new JDBCStatementHelper(config);
     setupCloseHook();
   }
 
@@ -119,7 +126,7 @@ public class JDBCClientImpl implements JDBCClient {
         if (metrics != null) {
           execMetric = metrics.begin(queueMetric);
         }
-        SQLConnection sconn = new JDBCConnectionImpl(vertx, conn, metrics, execMetric);
+        SQLConnection sconn = new JDBCConnectionImpl(vertx, helper, conn, metrics, execMetric);
         res.complete(sconn);
       } catch (SQLException e) {
         if (metrics != null) {
@@ -167,13 +174,13 @@ public class JDBCClientImpl implements JDBCClient {
     int refCount = 1;
     String name;
 
-    public DataSourceHolder(VertxInternal vertx, DataSource ds) {
+    DataSourceHolder(VertxInternal vertx, DataSource ds) {
       this.ds = ds;
       this.metrics = vertx.metricsSPI().createMetrics(ds, "datasource", UUID.randomUUID().toString(), -1);
       this.vertx = vertx;
     }
 
-    public DataSourceHolder(VertxInternal vertx, JsonObject config, Runnable closeRunner, String name) {
+    DataSourceHolder(VertxInternal vertx, JsonObject config, Runnable closeRunner, String name) {
       this.config = config;
       this.closeRunner = closeRunner;
       this.vertx = vertx;

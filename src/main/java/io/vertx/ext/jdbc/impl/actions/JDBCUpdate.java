@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
 import io.vertx.core.json.JsonArray;
@@ -29,8 +28,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.regex.Pattern;
 
-import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.*;
-
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
@@ -42,8 +39,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   private final JsonArray in;
   private final int timeout;
 
-  public JDBCUpdate(Vertx vertx, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
-    super(vertx, connection, exec);
+  public JDBCUpdate(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
+    super(vertx, helper, connection, exec);
     this.sql = sql;
     this.in = in;
     this.timeout = timeout;
@@ -57,7 +54,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
         statement.setQueryTimeout(timeout);
       }
 
-      fillStatement(statement, in);
+      helper.fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
       JsonArray keys = new JsonArray();
@@ -69,7 +66,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
             while (rs.next()) {
               Object key = rs.getObject(1);
               if (key != null) {
-                keys.add(convertSqlValue(key));
+                keys.add(helper.convertSqlValue(key));
               }
             }
           }

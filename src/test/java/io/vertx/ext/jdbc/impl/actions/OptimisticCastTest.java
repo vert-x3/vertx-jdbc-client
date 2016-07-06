@@ -1,5 +1,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
+import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -11,6 +12,8 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class OptimisticCastTest {
+
+  private JDBCStatementHelper helper = new JDBCStatementHelper(new JsonObject().put("castUUID", true));
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateData() {
@@ -38,6 +41,6 @@ public class OptimisticCastTest {
 
   @Test
   public void testOptimisticCast() {
-    assertEquals(value, expectedType, JDBCStatementHelper.optimisticCast(value).getClass().getName());
+    assertEquals(value, expectedType, helper.optimisticCast(value).getClass().getName());
   }
 }

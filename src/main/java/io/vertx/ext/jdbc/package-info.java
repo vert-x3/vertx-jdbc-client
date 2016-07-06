@@ -200,6 +200,26 @@
  *
  * The behavior may be different when using a different connection pool.
  *
+ * == Data types
+ *
+ * Due to the fact that Vert.x uses JSON as its standard message format there will be many limitations to the data types
+ * accepted by the client. You will get out of the box the standard:
+ *
+ * * null
+ * * boolean
+ * * number
+ * * string
+ *
+ * There is also an optimistic cast for temporal types (TIME, DATE, TIMESTAMP) and optionally disabled for UUID. UUIDs
+ * are supported by many databases but not all. For example MySQL does not support it so the recommended way is to use
+ * a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled using the client config json as:
+ *
+ * ----
+ * { "UUIDCast": true }
+ * ----
+ *
+ * When this config is present UUIDs will be handled as a native type.
+ *
  *
  * == Use as OSGi bundle
  *

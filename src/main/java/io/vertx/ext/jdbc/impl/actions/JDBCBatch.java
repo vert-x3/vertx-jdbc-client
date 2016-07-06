@@ -25,14 +25,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper.fillStatement;
-
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
 
-  enum Type {
+  private enum Type {
     STATEMENT,
     PREPARED,
     CALLABLE
@@ -43,20 +41,20 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   private final List<JsonArray> in;
   private final List<JsonArray> out;
 
-  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, List<String> sql) {
-    this(vertx, connection, exec, Type.STATEMENT, sql, null, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, List<String> sql) {
+    this(vertx, helper, connection, exec, Type.STATEMENT, sql, null, null);
   }
 
-  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in) {
-    this(vertx, connection, exec, Type.PREPARED, Collections.singletonList(sql), in, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in) {
+    this(vertx, helper, connection, exec, Type.PREPARED, Collections.singletonList(sql), in, null);
   }
 
-  public JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in, List<JsonArray> out) {
-    this(vertx, connection, exec, Type.CALLABLE, Collections.singletonList(sql), in, out);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in, List<JsonArray> out) {
+    this(vertx, helper, connection, exec, Type.CALLABLE, Collections.singletonList(sql), in, out);
   }
 
-  private JDBCBatch(Vertx vertx, Connection connection, WorkerExecutor exec, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
-    super(vertx, connection, exec);
+  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
+    super(vertx, helper, connection, exec);
     this.type = type;
     this.sql = sql;
     this.in = in;
@@ -80,7 +78,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
       case PREPARED:
         try (PreparedStatement stmt = conn.prepareStatement(sql.get(0))) {
           for (JsonArray in : this.in) {
-            fillStatement(stmt, in);
+            helper.fillStatement(stmt, in);
             stmt.addBatch();
           }
 
@@ -95,7 +93,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           for (int i = 0; i < Math.max(max_in, max_out); i++) {
             final JsonArray jin = i < max_in ? in.get(i) : null;
             final JsonArray jout = i < max_out ? out.get(i) : null;
-            fillStatement(stmt, jin, jout);
+            helper.fillStatement(stmt, jin, jout);
             stmt.addBatch();
           }
 
