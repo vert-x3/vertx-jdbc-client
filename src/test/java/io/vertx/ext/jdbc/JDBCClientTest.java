@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
@@ -372,6 +373,17 @@ public class JDBCClientTest extends JDBCClientTestBase {
     await();
   }
 
+  @Test
+  public void testSameContext() {
+    Context ctx = vertx.getOrCreateContext();
+    SQLConnection conn = connection(ctx);
+    conn.query("SELECT a FROM blob_table", onSuccess(rs -> {
+      assertSame(Vertx.currentContext(), ctx);
+      testComplete();
+    }));
+    await();
+  }
+
   private void testTx(int inserts, boolean commit) throws Exception {
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     JsonArray params = new JsonArray().addNull().add("smith").add("john").add("2003-03-03");
@@ -438,12 +450,18 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   protected SQLConnection connection() {
+    return connection(vertx.getOrCreateContext());
+  }
+
+  protected SQLConnection connection(Context context) {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<SQLConnection> ref = new AtomicReference<>();
-    client.getConnection(onSuccess(conn -> {
-      ref.set(conn);
-      latch.countDown();
-    }));
+    context.runOnContext(v -> {
+      client.getConnection(onSuccess(conn -> {
+        ref.set(conn);
+        latch.countDown();
+      }));
+    });
 
     try {
       latch.await();

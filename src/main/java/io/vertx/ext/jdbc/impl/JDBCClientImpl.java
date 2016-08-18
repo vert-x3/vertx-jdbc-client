@@ -126,7 +126,7 @@ public class JDBCClientImpl implements JDBCClient {
         if (metrics != null) {
           execMetric = metrics.begin(queueMetric);
         }
-        SQLConnection sconn = new JDBCConnectionImpl(vertx, helper, conn, metrics, execMetric);
+        SQLConnection sconn = new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric);
         res.complete(sconn);
       } catch (SQLException e) {
         if (metrics != null) {

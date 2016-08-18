@@ -49,13 +49,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   private int timeout = -1;
 
-  public JDBCConnectionImpl(Vertx vertx, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric) {
-    this.vertx = vertx;
+  public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric) {
+    this.vertx = context.owner();
     this.helper = helper;
     this.conn = conn;
     this.metrics = metrics;
     this.metric = metric;
-    this.executor = ((ContextInternal) vertx.getOrCreateContext()).createWorkerExecutor();
+    this.executor = ((ContextInternal)context).createWorkerExecutor();
   }
 
   @Override
