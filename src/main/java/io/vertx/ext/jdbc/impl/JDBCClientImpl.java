@@ -144,8 +144,7 @@ public class JDBCClientImpl implements JDBCClient {
       LocalMap<String, DataSourceHolder> map = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
       DataSourceHolder theHolder = map.get(datasourceName);
       if (theHolder == null) {
-        theHolder = new DataSourceHolder((VertxInternal) vertx, config, () -> removeFromMap(map, datasourceName), datasourceName);
-        map.put(datasourceName, theHolder);
+        theHolder = new DataSourceHolder((VertxInternal) vertx, config, map, datasourceName);
       } else {
         theHolder.incRefCount();
       }
@@ -154,37 +153,39 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   private void removeFromMap(LocalMap<String, DataSourceHolder> map, String dataSourceName) {
-    synchronized (vertx) {
-      map.remove(dataSourceName);
-      if (map.isEmpty()) {
-        map.close();
-      }
+    map.remove(dataSourceName);
+    if (map.isEmpty()) {
+      map.close();
     }
   }
 
   private class DataSourceHolder implements Shareable {
 
     private final VertxInternal vertx;
+    private final LocalMap<String, DataSourceHolder> map;
     DataSourceProvider provider;
     JsonObject config;
-    Runnable closeRunner;
     DataSource ds;
     PoolMetrics metrics;
     ExecutorService exec;
-    int refCount = 1;
-    String name;
+    private int refCount = 1;
+    private final String name;
 
     DataSourceHolder(VertxInternal vertx, DataSource ds) {
       this.ds = ds;
       this.metrics = vertx.metricsSPI().createMetrics(ds, "datasource", UUID.randomUUID().toString(), -1);
       this.vertx = vertx;
+      this.map = null;
+      this.name = null;
     }
 
-    DataSourceHolder(VertxInternal vertx, JsonObject config, Runnable closeRunner, String name) {
+    DataSourceHolder(VertxInternal vertx, JsonObject config, LocalMap<String, DataSourceHolder> map, String name) {
       this.config = config;
-      this.closeRunner = closeRunner;
+      this.map = map;
       this.vertx = vertx;
       this.name = name;
+
+      map.put(name, this);
     }
 
     synchronized DataSource ds() {
@@ -236,46 +237,48 @@ public class JDBCClientImpl implements JDBCClient {
       return exec;
     }
 
-    synchronized void incRefCount() {
+    void incRefCount() {
       refCount++;
     }
 
-    synchronized void close(Handler<AsyncResult<Void>> completionHandler) {
-      if (--refCount == 0) {
-        if (metrics != null) {
-          metrics.close();
-        }
-        Future<Void> f1 = Future.future();
-        Future<Void> f2 = Future.future();
-        if (completionHandler != null) {
-          CompositeFuture.all(f1, f2).<Void>map(f -> null).setHandler(completionHandler);
-        }
-        if (provider != null) {
-          vertx.executeBlocking(future -> {
-            try {
-              provider.close(ds);
-              future.complete();
-            } catch (SQLException e) {
-              future.fail(e);
+    void close(Handler<AsyncResult<Void>> completionHandler) {
+      synchronized (vertx) {
+        if (--refCount == 0) {
+          if (metrics != null) {
+            metrics.close();
+          }
+          Future<Void> f1 = Future.future();
+          Future<Void> f2 = Future.future();
+          if (completionHandler != null) {
+            CompositeFuture.all(f1, f2).<Void>map(f -> null).setHandler(completionHandler);
+          }
+          if (provider != null) {
+            vertx.executeBlocking(future -> {
+              try {
+                provider.close(ds);
+                future.complete();
+              } catch (SQLException e) {
+                future.fail(e);
+              }
+            }, f2.completer());
+          } else {
+            f2.complete();
+          }
+          try {
+            if (exec != null) {
+              exec.shutdown();
             }
-          }, f2.completer());
+            if (map != null) {
+              map.remove(name);
+            }
+            f1.complete();
+          } catch (Throwable t) {
+            f1.fail(t);
+          }
         } else {
-          f2.complete();
-        }
-        try {
-          if (exec != null) {
-            exec.shutdown();
+          if (completionHandler != null) {
+            completionHandler.handle(Future.succeededFuture());
           }
-          if (closeRunner != null) {
-            closeRunner.run();
-          }
-          f1.complete();
-        } catch (Throwable t) {
-          f1.fail(t);
-        }
-      } else {
-        if (completionHandler != null) {
-          completionHandler.handle(Future.succeededFuture());
         }
       }
     }
