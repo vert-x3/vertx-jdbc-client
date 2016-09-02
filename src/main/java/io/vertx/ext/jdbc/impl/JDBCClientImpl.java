@@ -152,13 +152,6 @@ public class JDBCClientImpl implements JDBCClient {
     }
   }
 
-  private void removeFromMap(LocalMap<String, DataSourceHolder> map, String dataSourceName) {
-    map.remove(dataSourceName);
-    if (map.isEmpty()) {
-      map.close();
-    }
-  }
-
   private class DataSourceHolder implements Shareable {
 
     private final VertxInternal vertx;
@@ -270,6 +263,9 @@ public class JDBCClientImpl implements JDBCClient {
             }
             if (map != null) {
               map.remove(name);
+              if (map.isEmpty()) {
+                map.close();
+              }
             }
             f1.complete();
           } catch (Throwable t) {
