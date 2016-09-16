@@ -24,9 +24,11 @@ import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
+import io.vertx.rx.java.RxHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import rx.Observable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -162,6 +164,31 @@ public class JDBCClientTest extends JDBCClientTestBase {
         assertEquals(2, cnt.get());
         testComplete();
       });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamRX() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().queryStream(sql, onSuccess(res -> {
+
+      final AtomicInteger cnt = new AtomicInteger(0);
+
+      Observable<JsonArray> observable = RxHelper.toObservable(res);
+      observable.subscribe(
+              // handle one row
+              row -> {
+                assertEquals("doe", row.getString(res.column("lname")));
+                cnt.incrementAndGet();
+              },
+              // it should not fail
+              this::fail,
+              () -> {
+                assertEquals(2, cnt.get());
+                testComplete();
+              });
     }));
 
     await();
