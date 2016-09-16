@@ -203,7 +203,11 @@ public final class JDBCStatementHelper {
         // result might be truncated due to downcasting to int
         return c.getSubString(1, (int) c.length());
       } finally {
-        c.free();
+        try {
+          c.free();
+        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
+          // ignore since it is an optional feature since 1.6 and non existing before 1.6
+        }
       }
     }
 
@@ -213,7 +217,11 @@ public final class JDBCStatementHelper {
         // result might be truncated due to downcasting to int
         return b.getBytes(1, (int) b.length());
       } finally {
-        b.free();
+        try {
+          b.free();
+        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
+          // ignore since it is an optional feature since 1.6 and non existing before 1.6
+        }
       }
     }
 
