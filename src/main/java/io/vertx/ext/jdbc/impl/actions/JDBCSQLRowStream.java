@@ -42,6 +42,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
     private int cols;
     private final AtomicBoolean paused = new AtomicBoolean(false);
+    private final AtomicBoolean ended = new AtomicBoolean(false);
     private final AtomicBoolean stClosed = new AtomicBoolean(false);
     private final AtomicBoolean rsClosed = new AtomicBoolean(false);
 
@@ -104,7 +105,18 @@ class JDBCSQLRowStream implements SQLRowStream {
                     final JsonArray row = res.result();
                     // no more data
                     if (row == null) {
-                        endHandler.handle(null);
+                        // mark as ended if the handler was registered too late
+                        ended.set(true);
+                        // automatically close resources
+                        close(c -> {
+                            if (res.failed()) {
+                                exceptionHandler.handle(c.cause());
+                            } else {
+                                if (endHandler != null) {
+                                    endHandler.handle(null);
+                                }
+                            }
+                        });
                     } else {
                         handler.handle(row);
                         nextRow();
@@ -137,13 +149,12 @@ class JDBCSQLRowStream implements SQLRowStream {
 
     @Override
     public SQLRowStream endHandler(Handler<Void> handler) {
-        this.endHandler = v -> close(res -> {
-            if (res.failed()) {
-                exceptionHandler.handle(res.cause());
-            } else {
-                handler.handle(null);
-            }
-        });
+        this.endHandler = handler;
+        // registration was late but we're already ended, notify
+        if (ended.compareAndSet(true, false)) {
+            // only notify once
+            endHandler.handle(null);
+        }
         return this;
     }
 
