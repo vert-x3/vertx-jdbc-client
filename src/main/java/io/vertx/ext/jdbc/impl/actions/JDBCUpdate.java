@@ -61,7 +61,11 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
       // Create JsonArray of keys
       if (returKeys) {
-        try (ResultSet rs = statement.getGeneratedKeys()) {
+        ResultSet rs = null;
+        try {
+          // the resource might also fail
+          // specially on oracle DBMS
+          rs = statement.getGeneratedKeys();
           if (rs != null) {
             while (rs.next()) {
               Object key = rs.getObject(1);
@@ -72,6 +76,14 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           }
         } catch (SQLException e) {
           // do not crash if no permissions
+        } finally {
+          if (rs != null) {
+            try {
+              rs.close();
+            } catch (SQLException e) {
+              // ignore close error
+            }
+          }
         }
       }
 
