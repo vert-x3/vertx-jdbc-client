@@ -70,7 +70,7 @@ public final class JDBCStatementHelper {
           statement.setObject(i + 1, value);
         }
       } else {
-        statement.setNull(i + 1, Types.NULL);
+        statement.setObject(i + 1, null);
       }
     }
   }
