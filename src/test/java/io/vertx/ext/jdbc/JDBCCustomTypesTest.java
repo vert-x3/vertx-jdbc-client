@@ -71,7 +71,7 @@ public class JDBCCustomTypesTest extends VertxTestBase {
 
   protected static JsonObject config() {
     return new JsonObject()
-        .put("url", "jdbc:h2:mem:test?shutdown=true")
+        .put("url", "jdbc:h2:mem:test2?shutdown=true")
         .put("driver_class", "org.h2.Driver");
   }
 
