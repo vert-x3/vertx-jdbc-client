@@ -1,0 +1,4 @@
+moduleName = vertx-jdbc-module
+moduleVersion = 1.0
+extensionClasses = io.vertx.groovy.ext.jdbc.GroovyExtension
+staticExtensionClasses = io.vertx.groovy.ext.jdbc.GroovyStaticExtension

@@ -3,7 +3,7 @@
 This client allows you to interact with any JDBC compliant database using an asynchronous API from your Vert.x
 application.
 
-The client API is represented with the interface `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html[JDBCClient]`.
+The client API is represented with the interface `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html[JDBCClient]`.
 
 To use this project, add the following dependency to the _dependencies_ section of your build descriptor:
 
@@ -40,14 +40,14 @@ You do this as follows:
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.createShared(vertx, config)
 
 
 ----
 
-The first call to `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html#createShared(io.vertx.core.Vertx,%20io.vertx.core.json.JsonObject)[JDBCClient.createShared]`
+The first call to `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createShared]`
 will actually create the data source, and the specified config will be used.
 
 Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
@@ -58,7 +58,7 @@ You can create a client specifying a data source name as follows
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 
 def client = JDBCClient.createShared(vertx, config, "MyDataSource")
@@ -69,7 +69,7 @@ def client = JDBCClient.createShared(vertx, config, "MyDataSource")
 If different clients are created using the same Vert.x instance and specifying the same data source name, they will
 share the same data source.
 
-The first call to `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html#createShared(io.vertx.core.Vertx,%20io.vertx.core.json.JsonObject)[JDBCClient.createShared]`
+The first call to `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createShared]`
 will actually create the data source, and the specified config will be used.
 
 Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
@@ -82,18 +82,18 @@ interacting with different databases.
 In most cases you will want to share a data source between different client instances.
 However, it's possible you want to create a client instance that doesn't share its data source with any other client.
 
-In that case you can use `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html#createNonShared(io.vertx.core.Vertx,%20io.vertx.core.json.JsonObject)[JDBCClient.createNonShared]`.
+In that case you can use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createNonShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createNonShared]`.
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.createNonShared(vertx, config)
 
 
 ----
 
-This is equivalent to calling `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html#createShared(io.vertx.core.Vertx,%20io.vertx.core.json.JsonObject,%20java.lang.String)[JDBCClient.createShared]`
+This is equivalent to calling `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-java.lang.String-[JDBCClient.createShared]`
 with a unique data source name each time.
 
 === Specifying a data source
@@ -102,7 +102,7 @@ If you already have a pre-existing data source, you can also create the client d
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.create(vertx, dataSource)
 
@@ -123,7 +123,7 @@ If you're creating clients from inside verticles, the clients will be automatica
 
 == Getting a connection
 
-Once you've created a client you use `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClient.html#getConnection(io.vertx.core.Handler)[getConnection]` to get
+Once you've created a client you use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
 a connection.
 
 This will return the connection in the handler when one is ready from the pool.
@@ -153,7 +153,7 @@ client.getConnection({ res ->
 
 ----
 
-The connection is an instance of `link:../../groovydoc/io/vertx/groovy/ext/sql/SQLConnection.html[SQLConnection]` which is a common interface not only used by
+The connection is an instance of `link:../../apidocs/io/vertx/ext/sql/SQLConnection.html[SQLConnection]` which is a common interface not only used by
 the Vert.x JDBC Client.
 
 You can learn how to use it in the http://vertx.io/docs/vertx-sql-common/groovy/[common sql interface] documentation.
@@ -197,7 +197,7 @@ Here's an example of configuring a service:
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def config = [
   url:"jdbc:hsqldb:mem:test?shutdown=true",
