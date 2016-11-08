@@ -215,7 +215,7 @@
  * a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled using the client config json as:
  *
  * ----
- * { "UUIDCast": true }
+ * { "castUUID": true }
  * ----
  *
  * When this config is present UUIDs will be handled as a native type.
