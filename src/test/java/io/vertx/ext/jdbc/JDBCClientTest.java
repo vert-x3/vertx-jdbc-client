@@ -24,9 +24,11 @@ import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
+import io.vertx.rx.java.RxHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import rx.Observable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.logging.Level;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public class JDBCClientTest extends JDBCClientTestBase {
 
@@ -74,6 +77,118 @@ public class JDBCClientTest extends JDBCClientTestBase {
       assertEquals("jane", result1.getString(1));
       assertEquals("doe", result1.getString(2));
       testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStream() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    connection().queryStream(sql, onSuccess(res -> {
+      res.handler(row -> {
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        assertEquals(2, cnt.get());
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamWithParams() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE LNAME = ? ORDER BY ID";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    connection().queryStreamWithParams(sql, new JsonArray().add("doe"), onSuccess(res -> {
+      res.handler(row -> {
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        assertEquals(2, cnt.get());
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamAbort() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().queryStream(sql, onSuccess(res -> {
+      res.handler(row -> {
+        res.close(close -> {
+          testComplete();
+        });
+      }).endHandler(v -> {
+        fail("Should not be called");
+      });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamPauseResume() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    final long[] t = {0, 0};
+    connection().queryStream(sql, onSuccess(res -> {
+      res.handler(row -> {
+        t[cnt.getAndIncrement()] = System.currentTimeMillis();
+        res.pause();
+        vertx.setTimer(1000, v -> {
+          res.resume();
+        });
+      }).endHandler(v -> {
+        assertEquals(2, cnt.get());
+        assertTrue(t[1] - t[0] >= 1000);
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamColumnResolution() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    connection().queryStream(sql, onSuccess(res -> {
+      res.handler(row -> {
+        assertEquals("doe", row.getString(res.column("lname")));
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        assertEquals(2, cnt.get());
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStreamRX() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().queryStream(sql, onSuccess(res -> {
+
+      final AtomicInteger cnt = new AtomicInteger(0);
+
+      Observable<JsonArray> observable = RxHelper.toObservable(res);
+      observable.subscribe(
+              // handle one row
+              row -> {
+                assertEquals("doe", row.getString(res.column("lname")));
+                cnt.incrementAndGet();
+              },
+              // it should not fail
+              this::fail,
+              () -> {
+                assertEquals(2, cnt.get());
+                testComplete();
+              });
     }));
 
     await();

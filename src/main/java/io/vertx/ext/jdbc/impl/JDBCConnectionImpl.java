@@ -23,10 +23,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.impl.actions.*;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.TransactionIsolation;
-import io.vertx.ext.sql.UpdateResult;
+import io.vertx.ext.sql.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -73,6 +70,18 @@ class JDBCConnectionImpl implements SQLConnection {
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
     new JDBCQuery(vertx, helper, conn, executor, timeout, sql, null).execute(resultHandler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
+    new StreamQuery(vertx, helper, conn, executor, timeout, sql, null).execute(handler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
+    new StreamQuery(vertx, helper, conn, executor, timeout, sql, params).execute(handler);
     return this;
   }
 

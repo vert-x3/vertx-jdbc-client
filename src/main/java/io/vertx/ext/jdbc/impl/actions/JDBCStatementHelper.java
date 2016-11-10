@@ -158,7 +158,7 @@ public final class JDBCStatementHelper {
     return new io.vertx.ext.sql.ResultSet(columnNames, results);
   }
 
-  public Object convertSqlValue(Object value) throws SQLException {
+  public static Object convertSqlValue(Object value) throws SQLException {
     if (value == null) {
       return null;
     }
