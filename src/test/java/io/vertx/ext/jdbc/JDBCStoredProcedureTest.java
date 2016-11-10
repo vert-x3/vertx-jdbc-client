@@ -82,7 +82,7 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
 
   protected static JsonObject config() {
     return new JsonObject()
-        .put("url", "jdbc:hsqldb:mem:test?shutdown=true")
+        .put("url", "jdbc:hsqldb:mem:test2?shutdown=true")
         .put("driver_class", "org.hsqldb.jdbcDriver");
   }
 

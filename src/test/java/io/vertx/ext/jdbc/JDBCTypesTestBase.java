@@ -73,7 +73,7 @@ public class JDBCTypesTestBase extends VertxTestBase {
 
   protected static JsonObject config() {
     return new JsonObject()
-      .put("url", "jdbc:derby:memory:myDB;create=true")
+      .put("url", "jdbc:derby:memory:myDB2;create=true")
       .put("driver_class", "org.apache.derby.jdbc.EmbeddedDriver");
   }
 
