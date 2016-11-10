@@ -173,6 +173,17 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testNaturalInsert() {
+    String sql = "INSERT INTO insert_table2 VALUES (1, 'doe', 'john', '2001-01-01');";
+    connection().update(sql, onSuccess(result -> {
+      assertUpdate(result, 1);
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
   public void testInsertWithParameters() {
     final TimeZone tz = TimeZone.getDefault();
     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
