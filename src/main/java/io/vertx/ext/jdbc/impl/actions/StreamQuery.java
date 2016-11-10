@@ -31,50 +31,50 @@ import java.sql.SQLException;
  */
 public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
-    private final String sql;
-    private final JsonArray in;
-    private final int timeout;
+  private final String sql;
+  private final JsonArray in;
+  private final int timeout;
 
-    public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
-        super(vertx, helper, connection, exec);
-        this.sql = sql;
-        this.in = in;
-        this.timeout = timeout;
-    }
+  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
+    super(vertx, helper, connection, exec);
+    this.sql = sql;
+    this.in = in;
+    this.timeout = timeout;
+  }
 
-    @Override
-    protected SQLRowStream execute() throws SQLException {
-        PreparedStatement st = null;
+  @Override
+  protected SQLRowStream execute() throws SQLException {
+    PreparedStatement st = null;
 
-        try {
-            st = conn.prepareStatement(sql);
+    try {
+      st = conn.prepareStatement(sql);
 
-            if (timeout >= 0) {
-                st.setQueryTimeout(timeout);
-            }
+      if (timeout >= 0) {
+        st.setQueryTimeout(timeout);
+      }
 
-            helper.fillStatement(st, in);
-            ResultSet rs = null;
+      helper.fillStatement(st, in);
+      ResultSet rs = null;
 
-            try {
-                rs = st.executeQuery();
-                return new JDBCSQLRowStream(exec, st, rs);
-            } catch (SQLException e) {
-                if (rs != null) {
-                    rs.close();
-                }
-                throw e;
-            }
-        } catch (SQLException e) {
-            if (st != null) {
-                st.close();
-            }
-            throw e;
+      try {
+        rs = st.executeQuery();
+        return new JDBCSQLRowStream(exec, st, rs);
+      } catch (SQLException e) {
+        if (rs != null) {
+          rs.close();
         }
+        throw e;
+      }
+    } catch (SQLException e) {
+      if (st != null) {
+        st.close();
+      }
+      throw e;
     }
+  }
 
-    @Override
-    protected String name() {
-        return "stream";
-    }
+  @Override
+  protected String name() {
+    return "stream";
+  }
 }
