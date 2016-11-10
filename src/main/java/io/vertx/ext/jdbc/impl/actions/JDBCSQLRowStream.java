@@ -40,7 +40,7 @@ class JDBCSQLRowStream implements SQLRowStream {
     private final Statement st;
     private final ResultSet rs;
 
-    private int cols;
+    private final int cols;
     private final AtomicBoolean paused = new AtomicBoolean(false);
     private final AtomicBoolean ended = new AtomicBoolean(false);
     private final AtomicBoolean stClosed = new AtomicBoolean(false);
@@ -55,7 +55,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         this.st = st;
         this.rs = rs;
         cols = rs.getMetaData().getColumnCount();
-        paused.set(false);
+        paused.set(true);
         stClosed.set(false);
         rsClosed.set(false);
     }
@@ -91,8 +91,9 @@ class JDBCSQLRowStream implements SQLRowStream {
 
     @Override
     public SQLRowStream resume() {
-        paused.compareAndSet(true, false);
-        nextRow();
+        if (paused.compareAndSet(true, false)) {
+            nextRow();
+        }
         return this;
     }
 

@@ -40,7 +40,7 @@ You do this as follows:
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.createShared(vertx, config)
 
@@ -58,7 +58,7 @@ You can create a client specifying a data source name as follows
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 
 def client = JDBCClient.createShared(vertx, config, "MyDataSource")
@@ -86,7 +86,7 @@ In that case you can use `link:../../groovydoc/io/vertx/groovy/ext/jdbc/JDBCClie
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.createNonShared(vertx, config)
 
@@ -102,7 +102,7 @@ If you already have a pre-existing data source, you can also create the client d
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def client = JDBCClient.create(vertx, dataSource)
 
@@ -197,7 +197,7 @@ Here's an example of configuring a service:
 
 [source,java]
 ----
-import io.vertx.groovy.ext.jdbc.JDBCClient
+import io.vertx.ext.jdbc.JDBCClient
 
 def config = [
   url:"jdbc:hsqldb:mem:test?shutdown=true",
