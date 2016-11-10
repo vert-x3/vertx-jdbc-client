@@ -34,155 +34,155 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class JDBCSQLRowStream implements SQLRowStream {
 
-    private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
+  private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
 
-    private final WorkerExecutor exec;
-    private final Statement st;
-    private final ResultSet rs;
+  private final WorkerExecutor exec;
+  private final Statement st;
+  private final ResultSet rs;
 
-    private final int cols;
-    private final AtomicBoolean paused = new AtomicBoolean(false);
-    private final AtomicBoolean ended = new AtomicBoolean(false);
-    private final AtomicBoolean stClosed = new AtomicBoolean(false);
-    private final AtomicBoolean rsClosed = new AtomicBoolean(false);
+  private final int cols;
+  private final AtomicBoolean paused = new AtomicBoolean(false);
+  private final AtomicBoolean ended = new AtomicBoolean(false);
+  private final AtomicBoolean stClosed = new AtomicBoolean(false);
+  private final AtomicBoolean rsClosed = new AtomicBoolean(false);
 
-    private Handler<Throwable> exceptionHandler = log::error;
-    private Handler<JsonArray> handler;
-    private Handler<Void> endHandler;
+  private Handler<Throwable> exceptionHandler = log::error;
+  private Handler<JsonArray> handler;
+  private Handler<Void> endHandler;
 
-    JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs) throws SQLException {
-        this.exec = exec;
-        this.st = st;
-        this.rs = rs;
-        cols = rs.getMetaData().getColumnCount();
-        paused.set(true);
-        stClosed.set(false);
-        rsClosed.set(false);
+  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs) throws SQLException {
+    this.exec = exec;
+    this.st = st;
+    this.rs = rs;
+    cols = rs.getMetaData().getColumnCount();
+    paused.set(true);
+    stClosed.set(false);
+    rsClosed.set(false);
+  }
+
+  @Override
+  public int column(String name) {
+    try {
+      return rs.findColumn(name) - 1;
+    } catch (SQLException e) {
+      return -1;
     }
+  }
 
-    @Override
-    public int column(String name) {
-        try {
-            return rs.findColumn(name) - 1;
-        } catch (SQLException e) {
-            return -1;
-        }
+  @Override
+  public SQLRowStream exceptionHandler(Handler<Throwable> handler) {
+    this.exceptionHandler = handler;
+    return this;
+  }
+
+  @Override
+  public SQLRowStream handler(Handler<JsonArray> handler) {
+    this.handler = handler;
+    // start pumping data once the handler is set
+    resume();
+    return this;
+  }
+
+  @Override
+  public SQLRowStream pause() {
+    paused.compareAndSet(false, true);
+    return this;
+  }
+
+  @Override
+  public SQLRowStream resume() {
+    if (paused.compareAndSet(true, false)) {
+      nextRow();
     }
+    return this;
+  }
 
-    @Override
-    public SQLRowStream exceptionHandler(Handler<Throwable> handler) {
-        this.exceptionHandler = handler;
-        return this;
-    }
-
-    @Override
-    public SQLRowStream handler(Handler<JsonArray> handler) {
-        this.handler = handler;
-        // start pumping data once the handler is set
-        resume();
-        return this;
-    }
-
-    @Override
-    public SQLRowStream pause() {
-        paused.compareAndSet(false, true);
-        return this;
-    }
-
-    @Override
-    public SQLRowStream resume() {
-        if (paused.compareAndSet(true, false)) {
-            nextRow();
-        }
-        return this;
-    }
-
-    private void nextRow() {
-        if (!paused.get()) {
-            exec.executeBlocking(this::readRow, res -> {
-                if (res.failed()) {
-                    exceptionHandler.handle(res.cause());
-                } else {
-                    final JsonArray row = res.result();
-                    // no more data
-                    if (row == null) {
-                        // mark as ended if the handler was registered too late
-                        ended.set(true);
-                        // automatically close resources
-                        close(c -> {
-                            if (res.failed()) {
-                                exceptionHandler.handle(c.cause());
-                            } else {
-                                if (endHandler != null) {
-                                    endHandler.handle(null);
-                                }
-                            }
-                        });
-                    } else {
-                        handler.handle(row);
-                        nextRow();
-                    }
-                }
-            });
-        }
-    }
-
-    private void readRow(Future<JsonArray> fut) {
-        try {
-            if (rs.next()) {
-                JsonArray result = new JsonArray();
-                for (int i = 1; i <= cols; i++) {
-                    Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));
-                    if (res != null) {
-                        result.add(res);
-                    } else {
-                        result.addNull();
-                    }
-                }
-                fut.complete(result);
-            } else {
-                fut.complete();
-            }
-        } catch (SQLException e) {
-            fut.fail(e);
-        }
-    }
-
-    @Override
-    public SQLRowStream endHandler(Handler<Void> handler) {
-        this.endHandler = handler;
-        // registration was late but we're already ended, notify
-        if (ended.compareAndSet(true, false)) {
-            // only notify once
-            endHandler.handle(null);
-        }
-        return this;
-    }
-
-    @Override
-    public void close(Handler<AsyncResult<Void>> handler) {
-        // make sure we stop pumping data
-        pause();
-
-        // close the cursor
-        close(rs, rsClosed, res -> {
-            // close the statement
-            close(st, stClosed, handler);
-        });
-    }
-
-    private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {
-        if (lock.compareAndSet(false, true)) {
-            exec.executeBlocking(f -> {
-                try {
-                    closeable.close();
-                    f.complete();
-                } catch (Exception e) {
-                    f.fail(e);
-                }
-            }, handler);
+  private void nextRow() {
+    if (!paused.get()) {
+      exec.executeBlocking(this::readRow, res -> {
+        if (res.failed()) {
+          exceptionHandler.handle(res.cause());
         } else {
-            handler.handle(Future.succeededFuture());
+          final JsonArray row = res.result();
+          // no more data
+          if (row == null) {
+            // mark as ended if the handler was registered too late
+            ended.set(true);
+            // automatically close resources
+            close(c -> {
+              if (res.failed()) {
+                exceptionHandler.handle(c.cause());
+              } else {
+                if (endHandler != null) {
+                  endHandler.handle(null);
+                }
+              }
+            });
+          } else {
+            handler.handle(row);
+            nextRow();
+          }
         }
+      });
     }
+  }
+
+  private void readRow(Future<JsonArray> fut) {
+    try {
+      if (rs.next()) {
+        JsonArray result = new JsonArray();
+        for (int i = 1; i <= cols; i++) {
+          Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));
+          if (res != null) {
+            result.add(res);
+          } else {
+            result.addNull();
+          }
+        }
+        fut.complete(result);
+      } else {
+        fut.complete();
+      }
+    } catch (SQLException e) {
+      fut.fail(e);
+    }
+  }
+
+  @Override
+  public SQLRowStream endHandler(Handler<Void> handler) {
+    this.endHandler = handler;
+    // registration was late but we're already ended, notify
+    if (ended.compareAndSet(true, false)) {
+      // only notify once
+      endHandler.handle(null);
+    }
+    return this;
+  }
+
+  @Override
+  public void close(Handler<AsyncResult<Void>> handler) {
+    // make sure we stop pumping data
+    pause();
+
+    // close the cursor
+    close(rs, rsClosed, res -> {
+      // close the statement
+      close(st, stClosed, handler);
+    });
+  }
+
+  private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {
+    if (lock.compareAndSet(false, true)) {
+      exec.executeBlocking(f -> {
+        try {
+          closeable.close();
+          f.complete();
+        } catch (Exception e) {
+          f.fail(e);
+        }
+      }, handler);
+    } else {
+      handler.handle(Future.succeededFuture());
+    }
+  }
 }
