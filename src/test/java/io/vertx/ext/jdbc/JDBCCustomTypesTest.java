@@ -22,7 +22,6 @@ import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -39,8 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JDBCCustomTypesTest extends VertxTestBase {
 
-  protected JDBCClient client;
-
   private static final List<String> SQL = new ArrayList<>();
 
   static {
@@ -49,30 +46,23 @@ public class JDBCCustomTypesTest extends VertxTestBase {
     SQL.add("insert into t (u) values (random_uuid())");
   }
 
-  @BeforeClass
-  public static void createDb() throws Exception {
-    Connection conn = DriverManager.getConnection(config().getString("url"));
-    for (String sql : SQL) {
-      conn.createStatement().execute(sql);
-    }
-  }
+  private JDBCClient client;
 
   @Before
   public void setUp() throws Exception {
+    JsonObject config = ConfigFactory.createConfigForH2();
+    Connection conn = DriverManager.getConnection(config.getString("url"));
+    for (String sql : SQL) {
+      conn.createStatement().execute(sql);
+    }
     super.setUp();
-    client = JDBCClient.createNonShared(vertx, config());
+    client = JDBCClient.createNonShared(vertx, config);
   }
 
   @After
   public void after() throws Exception {
     client.close();
     super.after();
-  }
-
-  protected static JsonObject config() {
-    return new JsonObject()
-        .put("url", "jdbc:h2:mem:test2?shutdown=true")
-        .put("driver_class", "org.h2.Driver");
   }
 
   @Test
