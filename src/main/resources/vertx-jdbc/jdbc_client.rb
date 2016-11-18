@@ -15,6 +15,22 @@ module VertxJdbc
     def j_del
       @j_del
     end
+    @@j_api_type = Object.new
+    def @@j_api_type.accept?(obj)
+      obj.class == JDBCClient
+    end
+    def @@j_api_type.wrap(obj)
+      JDBCClient.new(obj)
+    end
+    def @@j_api_type.unwrap(obj)
+      obj.j_del
+    end
+    def self.j_api_type
+      @@j_api_type
+    end
+    def self.j_class
+      Java::IoVertxExtJdbc::JDBCClient.java_class
+    end
     #  Create a JDBC client which maintains its own data source.
     # @param [::Vertx::Vertx] vertx the Vert.x instance
     # @param [Hash{String => Object}] config the configuration
@@ -23,7 +39,7 @@ module VertxJdbc
       if vertx.class.method_defined?(:j_del) && config.class == Hash && !block_given?
         return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtJdbc::JDBCClient.java_method(:createNonShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)),::VertxJdbc::JDBCClient)
       end
-      raise ArgumentError, "Invalid arguments when calling create_non_shared(vertx,config)"
+      raise ArgumentError, "Invalid arguments when calling create_non_shared(#{vertx},#{config})"
     end
     #  Create a JDBC client which shares its data source with any other JDBC clients created with the same
     #  data source name
@@ -37,7 +53,7 @@ module VertxJdbc
       elsif vertx.class.method_defined?(:j_del) && config.class == Hash && dataSourceName.class == String && !block_given?
         return ::Vertx::Util::Utils.safe_create(Java::IoVertxExtJdbc::JDBCClient.java_method(:createShared, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class,Java::java.lang.String.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config),dataSourceName),::VertxJdbc::JDBCClient)
       end
-      raise ArgumentError, "Invalid arguments when calling create_shared(vertx,config,dataSourceName)"
+      raise ArgumentError, "Invalid arguments when calling create_shared(#{vertx},#{config},#{dataSourceName})"
     end
     #  Returns a connection that can be used to perform SQL operations on. It's important to remember
     #  to close the connection when you are done, so it is returned to the pool.
