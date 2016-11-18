@@ -21,7 +21,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
-import org.jruby.RubyProcess;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
