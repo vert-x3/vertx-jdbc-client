@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.*;
+
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
@@ -138,8 +140,14 @@ public class CloseTest extends JDBCClientTestBase {
       closeLatch.countDown();
     }));
     awaitLatch(closeLatch);
-    assertTrue(!getConnThread.get(0).isAlive());
-    poolThreads.forEach(t -> assertEquals(t.isAlive(), expectedDsThreadStatus));
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 5000) {
+      if (!getConnThread.get(0).isAlive() && poolThreads.stream().allMatch(t -> t.isAlive() == expectedDsThreadStatus)) {
+        return;
+      }
+      MILLISECONDS.sleep(10);
+    }
+    fail("Timeout waiting for connection threads to be dead");
   }
 
   private List<Thread> findThreads(Predicate<Thread> predicate) {
