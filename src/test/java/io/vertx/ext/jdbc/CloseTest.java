@@ -140,16 +140,14 @@ public class CloseTest extends JDBCClientTestBase {
       closeLatch.countDown();
     }));
     awaitLatch(closeLatch);
-    long start = System.nanoTime();
-    while (true) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 5000) {
       if (!getConnThread.get(0).isAlive() && poolThreads.stream().allMatch(t -> t.isAlive() == expectedDsThreadStatus)) {
-        break;
-      } else if (SECONDS.convert(System.nanoTime() - start, NANOSECONDS) > 5) {
-        fail();
-      } else {
-        MILLISECONDS.sleep(10);
+        return;
       }
+      MILLISECONDS.sleep(10);
     }
+    fail("Timeout waiting for connection threads to be dead");
   }
 
   private List<Thread> findThreads(Predicate<Thread> predicate) {
