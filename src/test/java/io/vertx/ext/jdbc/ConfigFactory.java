@@ -29,7 +29,7 @@ public class ConfigFactory {
 
   public static JsonObject createConfigForH2() {
     return new JsonObject()
-      .put("url", "jdbc:h2:mem:test-" + idGen.incrementAndGet())
+      .put("url", "jdbc:h2:mem:test-" + idGen.incrementAndGet() + ";DB_CLOSE_DELAY=-1")
       .put("driver_class", "org.h2.Driver");
   }
 

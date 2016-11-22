@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,14 +47,18 @@ public class JDBCCustomTypesTest extends VertxTestBase {
     SQL.add("insert into t (u) values (random_uuid())");
   }
 
+  private JsonObject config;
   private JDBCClient client;
 
   @Before
   public void setUp() throws Exception {
-    JsonObject config = ConfigFactory.createConfigForH2();
-    Connection conn = DriverManager.getConnection(config.getString("url"));
-    for (String sql : SQL) {
-      conn.createStatement().execute(sql);
+    config = ConfigFactory.createConfigForH2();
+    try (Connection conn = DriverManager.getConnection(config.getString("url"))) {
+      for (String sql : SQL) {
+        try (Statement statement = conn.createStatement()) {
+          statement.execute(sql);
+        }
+      }
     }
     super.setUp();
     client = JDBCClient.createNonShared(vertx, config);
@@ -62,6 +67,11 @@ public class JDBCCustomTypesTest extends VertxTestBase {
   @After
   public void after() throws Exception {
     client.close();
+    try (Connection conn = DriverManager.getConnection(config.getString("url"))) {
+      try (Statement statement = conn.createStatement()) {
+        statement.execute("SHUTDOWN");
+      }
+    }
     super.after();
   }
 
