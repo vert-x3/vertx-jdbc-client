@@ -160,6 +160,11 @@ class JDBCSQLRowStream implements SQLRowStream {
   }
 
   @Override
+  public void close() {
+    close(null);
+  }
+
+  @Override
   public void close(Handler<AsyncResult<Void>> handler) {
     // make sure we stop pumping data
     pause();
@@ -182,7 +187,9 @@ class JDBCSQLRowStream implements SQLRowStream {
         }
       }, handler);
     } else {
-      handler.handle(Future.succeededFuture());
+      if (handler != null) {
+        handler.handle(Future.succeededFuture());
+      }
     }
   }
 }
