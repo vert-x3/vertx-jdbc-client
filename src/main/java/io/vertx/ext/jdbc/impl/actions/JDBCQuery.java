@@ -47,10 +47,29 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
       }
 
       helper.fillStatement(statement, in);
+      boolean retResult = statement.execute();
 
-      try (ResultSet rs = statement.executeQuery()) {
-        return helper.asList(rs);
+      io.vertx.ext.sql.ResultSet resultSet = null;
+
+      if (retResult) {
+        io.vertx.ext.sql.ResultSet ref = null;
+        // normal return only
+        while (retResult) {
+          try (ResultSet rs = statement.getResultSet()) {
+            // 1st rs
+            if (ref == null) {
+              resultSet = helper.asList(rs);
+              ref = resultSet;
+            } else {
+              ref.setNext(helper.asList(rs));
+              ref = ref.getNext();
+            }
+          }
+          retResult = statement.getMoreResults();
+        }
       }
+
+      return resultSet;
     }
   }
 
