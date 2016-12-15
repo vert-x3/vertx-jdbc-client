@@ -198,7 +198,7 @@ class JDBCSQLRowStream implements SQLRowStream {
   }
 
   @Override
-  public SQLRowStream resultSetClosed(Handler<Void> handler) {
+  public SQLRowStream resultSetClosedHandler(Handler<Void> handler) {
     this.rsClosedHandler = handler;
     return this;
   }

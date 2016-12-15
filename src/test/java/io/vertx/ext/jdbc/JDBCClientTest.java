@@ -87,7 +87,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);
     connection().queryStream(sql, onSuccess(res -> {
-      res.resultSetClosed(v -> {
+      res.resultSetClosedHandler(v -> {
         res.moreResults();
       }).handler(row -> {
         cnt.incrementAndGet();
