@@ -22,10 +22,29 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.Date;
-import java.time.*;
-import java.util.*;
+import java.sql.JDBCType;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import static java.time.format.DateTimeFormatter.*;
@@ -40,7 +59,7 @@ public final class JDBCStatementHelper {
 
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
-  private static final Pattern DATETIME = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$");
+  private static final Pattern DATETIME = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3,9})?Z$");
   private static final Pattern DATE = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}$");
   private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
   private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
@@ -193,7 +212,7 @@ public final class JDBCStatementHelper {
     }
 
     if (value instanceof Timestamp) {
-      return OffsetDateTime.ofInstant(Instant.ofEpochMilli(((java.util.Date) value).getTime()), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
+      return OffsetDateTime.ofInstant(((Timestamp) value).toInstant(), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
     }
 
     // large objects
@@ -275,7 +294,7 @@ public final class JDBCStatementHelper {
       // sql timestamp
       if (DATETIME.matcher(value).matches()) {
         Instant instant = Instant.from(ISO_INSTANT.parse(value));
-        return new Timestamp(instant.toEpochMilli());
+        return Timestamp.from(instant);
       }
 
       // sql uuid
