@@ -38,26 +38,31 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private final WorkerExecutor exec;
   private final Statement st;
-  private final ResultSet rs;
-
-  private final int cols;
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private final AtomicBoolean ended = new AtomicBoolean(false);
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
+  private final AtomicBoolean more = new AtomicBoolean(false);
+
+  private ResultSet rs;
+  private int cols;
 
   private Handler<Throwable> exceptionHandler = log::error;
   private Handler<JsonArray> handler;
   private Handler<Void> endHandler;
+  private Handler<Void> rsClosedHandler;
 
   JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs) throws SQLException {
     this.exec = exec;
     this.st = st;
     this.rs = rs;
+
     cols = rs.getMetaData().getColumnCount();
     paused.set(true);
     stClosed.set(false);
     rsClosed.set(false);
+    // the first rs is populated in the constructor
+    more.set(true);
   }
 
   @Override
@@ -109,15 +114,28 @@ class JDBCSQLRowStream implements SQLRowStream {
             // mark as ended if the handler was registered too late
             ended.set(true);
             // automatically close resources
-            close(c -> {
-              if (res.failed()) {
-                exceptionHandler.handle(c.cause());
-              } else {
-                if (endHandler != null) {
-                  endHandler.handle(null);
+
+            if (rsClosedHandler != null) {
+              // only close the result set and notify
+              close0(c -> {
+                if (res.failed()) {
+                  exceptionHandler.handle(c.cause());
+                } else {
+                  rsClosedHandler.handle(null);
                 }
-              }
-            });
+              });
+            } else {
+              // default behavior close result set + statement
+              close(c -> {
+                if (res.failed()) {
+                  exceptionHandler.handle(c.cause());
+                } else {
+                  if (endHandler != null) {
+                    endHandler.handle(null);
+                  }
+                }
+              });
+            }
           } else {
             handler.handle(row);
             nextRow();
@@ -159,6 +177,13 @@ class JDBCSQLRowStream implements SQLRowStream {
     return this;
   }
 
+  private void close0(Handler<AsyncResult<Void>> handler) {
+    // make sure we stop pumping data
+    pause();
+    // close the cursor
+    close(rs, rsClosed, handler);
+  }
+
   @Override
   public void close() {
     close(null);
@@ -166,14 +191,61 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    // make sure we stop pumping data
-    pause();
-
-    // close the cursor
-    close(rs, rsClosed, res -> {
+    close0(res -> {
       // close the statement
       close(st, stClosed, handler);
     });
+  }
+
+  @Override
+  public SQLRowStream resultSetClosed(Handler<Void> handler) {
+    this.rsClosedHandler = handler;
+    return this;
+  }
+
+  @Override
+  public void moreResults() {
+    if (more.compareAndSet(true, false)) {
+      // pause streaming if rs is not complete
+      pause();
+
+      exec.executeBlocking(this::getNextResultSet, res -> {
+        if (res.failed()) {
+          exceptionHandler.handle(res.cause());
+        } else {
+          if (more.get()) {
+            resume();
+          } else {
+            if (endHandler != null) {
+              endHandler.handle(null);
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private void getNextResultSet(Future<Void> f) {
+    try {
+      // close if not already closed
+      if (rsClosed.compareAndSet(false, true)) {
+        rs.close();
+      }
+      // is there more rs data?
+      if (st.getMoreResults()) {
+        rs = st.getResultSet();
+        cols = rs.getMetaData().getColumnCount();
+        // reset
+        paused.set(true);
+        stClosed.set(false);
+        rsClosed.set(false);
+        more.set(true);
+      }
+
+      f.complete();
+    } catch (SQLException e) {
+      f.fail(e);
+    }
   }
 
   private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {

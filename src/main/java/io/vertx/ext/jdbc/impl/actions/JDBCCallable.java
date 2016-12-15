@@ -54,25 +54,37 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
       boolean retResult = statement.execute();
       boolean outResult = out != null && out.size() > 0;
 
+      io.vertx.ext.sql.ResultSet resultSet = null;
+
       if (retResult) {
+        io.vertx.ext.sql.ResultSet ref = null;
         // normal return only
-        try (ResultSet rs = statement.getResultSet()) {
-          if (outResult) {
-            // add the registered outputs
-            return helper.asList(rs).setOutput(convertOutputs(statement));
-          } else {
-            return helper.asList(rs);
+        while (retResult) {
+          try (ResultSet rs = statement.getResultSet()) {
+            // 1st rs
+            if (ref == null) {
+              resultSet = helper.asList(rs);
+              ref = resultSet;
+            } else {
+              ref.setNext(helper.asList(rs));
+              ref = ref.getNext();
+            }
+            if (outResult) {
+              // add the registered outputs
+              ref.setOutput(convertOutputs(statement));
+            }
           }
+          retResult = statement.getMoreResults();
         }
       } else {
         if (outResult) {
           // only outputs are available
-          return new io.vertx.ext.sql.ResultSet(Collections.emptyList(), Collections.emptyList()).setOutput(convertOutputs(statement));
+          resultSet = new io.vertx.ext.sql.ResultSet(Collections.emptyList(), Collections.emptyList(), null).setOutput(convertOutputs(statement));
         }
       }
 
       // no return
-      return null;
+      return resultSet;
     }
   }
 
@@ -89,7 +101,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         } else if (value instanceof ResultSet) {
           result.add(helper.asList((ResultSet) value));
         } else {
-          result.add(helper.convertSqlValue(value));
+          result.add(JDBCStatementHelper.convertSqlValue(value));
         }
       } else {
         result.addNull();

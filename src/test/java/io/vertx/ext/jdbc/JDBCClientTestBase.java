@@ -36,6 +36,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   private static final List<String> SQL = new ArrayList<>();
 
   static {
+    System.setProperty("textdb.allow_full_path", "true");
     //TODO: Create table with more types for testing
     SQL.add("drop table if exists select_table;");
     SQL.add("drop table if exists insert_table;");
@@ -59,7 +60,6 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    System.setProperty("textdb.allow_full_path", "true");
     Connection conn = DriverManager.getConnection(config().getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);

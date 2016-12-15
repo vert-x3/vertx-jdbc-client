@@ -53,7 +53,7 @@ public class JDBCQueryTimeoutTest extends VertxTestBase {
 
   protected static JsonObject config() {
     return new JsonObject()
-            .put("url", "jdbc:derby:memory:myDB;create=true")
+            .put("url", "jdbc:derby:memory:myDB2;create=true")
             .put("driver_class", "org.apache.derby.jdbc.EmbeddedDriver");
   }
 
@@ -78,6 +78,24 @@ public class JDBCQueryTimeoutTest extends VertxTestBase {
     await();
   }
 
+  @Test
+  public void testMultiSelect() {
+    String sql = "{ call MS() }";
+
+    final SQLConnection conn = connection();
+
+    conn.execute("CREATE PROCEDURE MS() PARAMETER STYLE JAVA LANGUAGE JAVA READS SQL DATA DYNAMIC RESULT SETS 2 EXTERNAL NAME 'io.vertx.ext.jdbc.Functions.multiSelect'", onSuccess(res -> {
+      conn.call(sql, onSuccess(resultSet -> {
+        assertNotNull(resultSet);
+        assertNotNull(resultSet.getNext());
+        testComplete();
+      }));
+
+    }));
+
+
+    await();
+  }
 
   private SQLConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);
