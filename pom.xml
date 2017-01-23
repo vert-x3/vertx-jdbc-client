@@ -6,7 +6,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-ext-parent</artifactId>
-    <version>23</version>
+    <version>24</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -17,6 +17,7 @@
   <properties>
     <stack.version>3.4.0-SNAPSHOT</stack.version>
     <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
+    <codegen.rxjava.deprecated>true</codegen.rxjava.deprecated>
   </properties>
 
   <dependencyManagement>
