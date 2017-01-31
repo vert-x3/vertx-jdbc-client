@@ -21,7 +21,7 @@ var SQLConnection = require('vertx-sql-js/sql_connection');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JJDBCClient = io.vertx.ext.jdbc.JDBCClient;
+var JJDBCClient = Java.type('io.vertx.ext.jdbc.JDBCClient');
 
 /**
  An asynchronous client interface for interacting with a JDBC compliant database
