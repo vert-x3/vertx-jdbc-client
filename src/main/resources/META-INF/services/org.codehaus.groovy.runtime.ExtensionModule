@@ -1,4 +1,0 @@
-moduleName = io.vertx.ext.jdbc.JDBCClient-module
-moduleVersion = 1.0
-extensionClasses = 
-staticExtensionClasses = io.vertx.groovy.ext.jdbc.JDBCClient_GroovyStaticExtension

@@ -14,7 +14,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-jdbc-client</artifactId>
-  <version>3.4.0.Beta1</version>
+  <version>3.4.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -22,7 +22,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 
 [source,groovy,subs="+attributes"]
 ----
-compile 'io.vertx:vertx-jdbc-client:3.4.0.Beta1'
+compile 'io.vertx:vertx-jdbc-client:3.4.0-SNAPSHOT'
 ----
 
 == Creating a the client
@@ -40,8 +40,6 @@ You do this as follows:
 
 [source,java]
 ----
-import io.vertx.ext.jdbc.JDBCClient
-
 
 var client = JDBCClient.createShared(vertx, config)
 
@@ -59,8 +57,6 @@ You can create a client specifying a data source name as follows
 
 [source,java]
 ----
-import io.vertx.ext.jdbc.JDBCClient
-
 
 
 var client = JDBCClient.createShared(vertx, config, "MyDataSource")
@@ -88,8 +84,6 @@ In that case you can use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#c
 
 [source,java]
 ----
-import io.vertx.ext.jdbc.JDBCClient
-
 
 var client = JDBCClient.createNonShared(vertx, config)
 
@@ -105,8 +99,6 @@ If you already have a pre-existing data source, you can also create the client d
 
 [source,java]
 ----
-import io.vertx.ext.jdbc.JDBCClient
-
 
 var client = JDBCClient.create(vertx, dataSource)
 
@@ -134,7 +126,6 @@ This will return the connection in the handler when one is ready from the pool.
 
 [source,java]
 ----
-
 
 // Now do stuff with it:
 
@@ -202,9 +193,6 @@ Here's an example of configuring a service:
 
 [source,java]
 ----
-import io.vertx.ext.jdbc.JDBCClient
-import io.vertx.kotlin.core.json.*
-
 
 var config = json {
   obj(
