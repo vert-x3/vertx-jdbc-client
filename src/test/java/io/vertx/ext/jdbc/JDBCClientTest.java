@@ -94,6 +94,8 @@ public class JDBCClientTest extends JDBCClientTestBase {
       }).endHandler(v -> {
         assertEquals(2, cnt.get());
         testComplete();
+      }).exceptionHandler(t -> {
+        fail(t);
       });
     }));
 
@@ -110,6 +112,8 @@ public class JDBCClientTest extends JDBCClientTestBase {
       }).endHandler(v -> {
         assertEquals(2, cnt.get());
         testComplete();
+      }).exceptionHandler(t -> {
+        fail(t);
       });
     }));
 
@@ -126,6 +130,8 @@ public class JDBCClientTest extends JDBCClientTestBase {
         });
       }).endHandler(v -> {
         fail("Should not be called");
+      }).exceptionHandler(t -> {
+        fail(t);
       });
     }));
 
@@ -148,6 +154,8 @@ public class JDBCClientTest extends JDBCClientTestBase {
         assertEquals(2, cnt.get());
         assertTrue(t[1] - t[0] >= 1000);
         testComplete();
+      }).exceptionHandler(t0 -> {
+        fail(t0);
       });
     }));
 
@@ -165,6 +173,8 @@ public class JDBCClientTest extends JDBCClientTestBase {
       }).endHandler(v -> {
         assertEquals(2, cnt.get());
         testComplete();
+      }).exceptionHandler(t -> {
+        fail(t);
       });
     }));
 

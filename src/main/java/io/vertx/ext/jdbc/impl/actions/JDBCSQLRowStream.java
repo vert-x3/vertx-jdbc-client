@@ -47,7 +47,7 @@ class JDBCSQLRowStream implements SQLRowStream {
   private ResultSet rs;
   private int cols;
 
-  private Handler<Throwable> exceptionHandler = log::error;
+  private Handler<Throwable> exceptionHandler;
   private Handler<JsonArray> handler;
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
@@ -106,7 +106,11 @@ class JDBCSQLRowStream implements SQLRowStream {
     if (!paused.get()) {
       exec.executeBlocking(this::readRow, res -> {
         if (res.failed()) {
-          exceptionHandler.handle(res.cause());
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(res.cause());
+          } else {
+            log.debug(res.cause());
+          }
         } else {
           final JsonArray row = res.result();
           // no more data
@@ -119,7 +123,11 @@ class JDBCSQLRowStream implements SQLRowStream {
               // only close the result set and notify
               close0(c -> {
                 if (res.failed()) {
-                  exceptionHandler.handle(c.cause());
+                  if (exceptionHandler != null) {
+                    exceptionHandler.handle(res.cause());
+                  } else {
+                    log.debug(res.cause());
+                  }
                 } else {
                   rsClosedHandler.handle(null);
                 }
@@ -128,7 +136,11 @@ class JDBCSQLRowStream implements SQLRowStream {
               // default behavior close result set + statement
               close(c -> {
                 if (res.failed()) {
-                  exceptionHandler.handle(c.cause());
+                  if (exceptionHandler != null) {
+                    exceptionHandler.handle(res.cause());
+                  } else {
+                    log.debug(res.cause());
+                  }
                 } else {
                   if (endHandler != null) {
                     endHandler.handle(null);
@@ -211,7 +223,11 @@ class JDBCSQLRowStream implements SQLRowStream {
 
       exec.executeBlocking(this::getNextResultSet, res -> {
         if (res.failed()) {
-          exceptionHandler.handle(res.cause());
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(res.cause());
+          } else {
+            log.debug(res.cause());
+          }
         } else {
           if (more.get()) {
             resume();
