@@ -56,6 +56,10 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     SQL.add("insert into delete_table values (2, 'doe', 'jane', '2002-02-02');");
     SQL.add("create table blob_table (b blob, c clob, a int array default array[]);");
     SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('Hello', clob),  ARRAY[1,2,3])");
+    SQL.add("create table big_table(id int primary key, name varchar(255))");
+    for (int i = 0; i < 200; i++) {
+      SQL.add("insert into big_table values(" + i + ", 'Hello')");
+    }
   }
 
   @BeforeClass

@@ -27,6 +27,10 @@ import io.vertx.ext.sql.SQLRowStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -35,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class JDBCSQLRowStream implements SQLRowStream {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
+  private static final int ACCUMULATOR_SIZE = 128;
 
   private final WorkerExecutor exec;
   private final Statement st;
@@ -43,6 +48,7 @@ class JDBCSQLRowStream implements SQLRowStream {
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
   private final AtomicBoolean more = new AtomicBoolean(false);
+  private final Deque<JsonArray> accumulator = new ArrayDeque<>(ACCUMULATOR_SIZE);
 
   private ResultSet rs;
   private int cols;
@@ -103,8 +109,11 @@ class JDBCSQLRowStream implements SQLRowStream {
   }
 
   private void nextRow() {
+    while (!paused.get() && !accumulator.isEmpty()) {
+      handler.handle(accumulator.pollFirst());
+    }
     if (!paused.get()) {
-      exec.executeBlocking(this::readRow, res -> {
+      exec.executeBlocking(this::readRows, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -112,9 +121,8 @@ class JDBCSQLRowStream implements SQLRowStream {
             log.debug(res.cause());
           }
         } else {
-          final JsonArray row = res.result();
           // no more data
-          if (row == null) {
+          if (accumulator.isEmpty()) {
             // mark as ended if the handler was registered too late
             ended.set(true);
             // automatically close resources
@@ -149,7 +157,6 @@ class JDBCSQLRowStream implements SQLRowStream {
               });
             }
           } else {
-            handler.handle(row);
             nextRow();
           }
         }
@@ -157,9 +164,9 @@ class JDBCSQLRowStream implements SQLRowStream {
     }
   }
 
-  private void readRow(Future<JsonArray> fut) {
+  private void readRows(Future<Void> fut) {
     try {
-      if (rs.next()) {
+      while (accumulator.size() < ACCUMULATOR_SIZE && rs.next()) {
         JsonArray result = new JsonArray();
         for (int i = 1; i <= cols; i++) {
           Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));
@@ -169,10 +176,9 @@ class JDBCSQLRowStream implements SQLRowStream {
             result.addNull();
           }
         }
-        fut.complete(result);
-      } else {
-        fut.complete();
+        accumulator.add(result);
       }
+      fut.complete();
     } catch (SQLException e) {
       fut.fail(e);
     }
