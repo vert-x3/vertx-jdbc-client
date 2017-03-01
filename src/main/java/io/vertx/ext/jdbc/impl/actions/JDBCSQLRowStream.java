@@ -39,16 +39,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class JDBCSQLRowStream implements SQLRowStream {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
-  private static final int ACCUMULATOR_SIZE = 128;
 
   private final WorkerExecutor exec;
   private final Statement st;
+  private final int fetchSize;
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private final AtomicBoolean ended = new AtomicBoolean(false);
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
   private final AtomicBoolean more = new AtomicBoolean(false);
-  private final Deque<JsonArray> accumulator = new ArrayDeque<>(ACCUMULATOR_SIZE);
+  private final Deque<JsonArray> accumulator;
 
   private ResultSet rs;
   private int cols;
@@ -58,11 +58,13 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs) throws SQLException {
+  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs, int fetchSize) throws SQLException {
     this.exec = exec;
     this.st = st;
+    this.fetchSize = fetchSize;
     this.rs = rs;
 
+    accumulator = new ArrayDeque<>(fetchSize);
     cols = rs.getMetaData().getColumnCount();
     paused.set(true);
     stClosed.set(false);
@@ -166,7 +168,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private void readRows(Future<Void> fut) {
     try {
-      while (accumulator.size() < ACCUMULATOR_SIZE && rs.next()) {
+      while (accumulator.size() < fetchSize && rs.next()) {
         JsonArray result = new JsonArray();
         for (int i = 1; i <= cols; i++) {
           Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));

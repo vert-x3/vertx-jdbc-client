@@ -41,17 +41,19 @@ class JDBCConnectionImpl implements SQLConnection {
   private final WorkerExecutor executor;
   private final PoolMetrics metrics;
   private final Object metric;
+  private final int rowStreamFetchSize;
 
   private final JDBCStatementHelper helper;
 
   private int timeout = -1;
 
-  public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric) {
+  public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric, int rowStreamFetchSize) {
     this.vertx = context.owner();
     this.helper = helper;
     this.conn = conn;
     this.metrics = metrics;
     this.metric = metric;
+    this.rowStreamFetchSize = rowStreamFetchSize;
     this.executor = ((ContextInternal)context).createWorkerExecutor();
   }
 
@@ -75,13 +77,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, executor, timeout, sql, null).execute(handler);
+    new StreamQuery(vertx, helper, conn, executor, timeout, rowStreamFetchSize, sql, null).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, executor, timeout, sql, params).execute(handler);
+    new StreamQuery(vertx, helper, conn, executor, timeout, rowStreamFetchSize, sql, params).execute(handler);
     return this;
   }
 
