@@ -111,8 +111,14 @@ class JDBCSQLRowStream implements SQLRowStream {
   }
 
   private void nextRow() {
-    while (!paused.get() && !accumulator.isEmpty()) {
-      handler.handle(accumulator.pollFirst());
+    // here paused.get() act as volatile read / memory barrier and it must be done before the accumulator read
+    // in order to create an happens-before relationship
+    if (!paused.get()) {
+      // here paused.get() guarantees us that stream is open
+      // accumulator should be read after the volatile, so this condition cannot be reordered
+      while (!paused.get() && !accumulator.isEmpty()) {
+        handler.handle(accumulator.pollFirst());
+      }
     }
     if (!paused.get()) {
       exec.executeBlocking(this::readRows, res -> {
@@ -180,6 +186,9 @@ class JDBCSQLRowStream implements SQLRowStream {
         }
         accumulator.add(result);
       }
+      // paused.set() act as volatile store / memory barrier and it must be done after the accumulator write
+      // in order to create an happens-before relationship
+      paused.compareAndSet(false, false);
       fut.complete();
     } catch (SQLException e) {
       fut.fail(e);
