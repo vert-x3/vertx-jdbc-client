@@ -34,12 +34,14 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
   private final String sql;
   private final JsonArray in;
   private final int timeout;
+  private final int rowStreamFetchSize;
 
-  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in) {
+  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, int rowStreamFetchSize, String sql, JsonArray in) {
     super(vertx, helper, connection, exec);
     this.sql = sql;
     this.in = in;
     this.timeout = timeout;
+    this.rowStreamFetchSize = rowStreamFetchSize;
   }
 
   @Override
@@ -58,7 +60,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
       try {
         rs = st.executeQuery();
-        return new JDBCSQLRowStream(exec, st, rs);
+        return new JDBCSQLRowStream(exec, st, rs, rowStreamFetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();

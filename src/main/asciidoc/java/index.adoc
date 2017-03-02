@@ -145,6 +145,8 @@ The following configuration properties generally apply:
 `provider_class`:: The class name of the class actually used to manage the database connections. By default this is
 `io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider` but if you want to use a different provider you can override
 this property and provide your implementation.
+`row_stream_fetch_size`:: The size of `SQLRowStream` internal cache which used to better performance. By default
+it equals to `128`
 
 Assuming the C3P0 implementation is being used (the default), the following extra configuration properties apply:
 

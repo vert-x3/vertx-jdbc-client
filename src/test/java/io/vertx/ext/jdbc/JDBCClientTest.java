@@ -163,6 +163,26 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testBigStream() {
+    String sql = "SELECT * FROM big_table";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    connection().queryStream(sql, onSuccess(res -> {
+      res.resultSetClosedHandler(v -> {
+        res.moreResults();
+      }).handler(row -> {
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        assertEquals(200, cnt.get());
+        testComplete();
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
+
+    await();
+  }
+
+  @Test
   public void testStreamColumnResolution() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);

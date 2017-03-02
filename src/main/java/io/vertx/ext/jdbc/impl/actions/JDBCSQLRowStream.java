@@ -27,6 +27,10 @@ import io.vertx.ext.sql.SQLRowStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -38,11 +42,13 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private final WorkerExecutor exec;
   private final Statement st;
+  private final int fetchSize;
   private final AtomicBoolean paused = new AtomicBoolean(false);
   private final AtomicBoolean ended = new AtomicBoolean(false);
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
   private final AtomicBoolean more = new AtomicBoolean(false);
+  private final Deque<JsonArray> accumulator;
 
   private ResultSet rs;
   private int cols;
@@ -52,11 +58,13 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs) throws SQLException {
+  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs, int fetchSize) throws SQLException {
     this.exec = exec;
     this.st = st;
+    this.fetchSize = fetchSize;
     this.rs = rs;
 
+    accumulator = new ArrayDeque<>(fetchSize);
     cols = rs.getMetaData().getColumnCount();
     paused.set(true);
     stClosed.set(false);
@@ -103,8 +111,17 @@ class JDBCSQLRowStream implements SQLRowStream {
   }
 
   private void nextRow() {
+    // here paused.get() act as volatile read / memory barrier and it must be done before the accumulator read
+    // in order to create an happens-before relationship
     if (!paused.get()) {
-      exec.executeBlocking(this::readRow, res -> {
+      // here paused.get() guarantees us that stream is open
+      // accumulator should be read after the volatile, so this condition cannot be reordered
+      while (!paused.get() && !accumulator.isEmpty()) {
+        handler.handle(accumulator.pollFirst());
+      }
+    }
+    if (!paused.get()) {
+      exec.executeBlocking(this::readRows, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -112,9 +129,8 @@ class JDBCSQLRowStream implements SQLRowStream {
             log.debug(res.cause());
           }
         } else {
-          final JsonArray row = res.result();
           // no more data
-          if (row == null) {
+          if (accumulator.isEmpty()) {
             // mark as ended if the handler was registered too late
             ended.set(true);
             // automatically close resources
@@ -149,7 +165,6 @@ class JDBCSQLRowStream implements SQLRowStream {
               });
             }
           } else {
-            handler.handle(row);
             nextRow();
           }
         }
@@ -157,9 +172,9 @@ class JDBCSQLRowStream implements SQLRowStream {
     }
   }
 
-  private void readRow(Future<JsonArray> fut) {
+  private void readRows(Future<Void> fut) {
     try {
-      if (rs.next()) {
+      while (accumulator.size() < fetchSize && rs.next()) {
         JsonArray result = new JsonArray();
         for (int i = 1; i <= cols; i++) {
           Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));
@@ -169,10 +184,12 @@ class JDBCSQLRowStream implements SQLRowStream {
             result.addNull();
           }
         }
-        fut.complete(result);
-      } else {
-        fut.complete();
+        accumulator.add(result);
       }
+      // paused.set() act as volatile store / memory barrier and it must be done after the accumulator write
+      // in order to create an happens-before relationship
+      paused.compareAndSet(false, false);
+      fut.complete();
     } catch (SQLException e) {
       fut.fail(e);
     }
