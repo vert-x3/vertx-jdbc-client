@@ -44,6 +44,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     SQL.add("drop table if exists update_table;");
     SQL.add("drop table if exists delete_table;");
     SQL.add("drop table if exists blob_table;");
+    SQL.add("drop table if exists big_table;");
     SQL.add("create table select_table (id int, lname varchar(255), fname varchar(255) );");
     SQL.add("insert into select_table values (1, 'doe', 'john');");
     SQL.add("insert into select_table values (2, 'doe', 'jane');");
