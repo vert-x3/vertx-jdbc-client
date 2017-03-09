@@ -17,7 +17,8 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLRowStream;
 
@@ -36,8 +37,8 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
   private final int timeout;
   private final int rowStreamFetchSize;
 
-  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, int rowStreamFetchSize, String sql, JsonArray in) {
-    super(vertx, helper, connection, exec);
+  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, int rowStreamFetchSize, String sql, JsonArray in) {
+    super(vertx, helper, connection, ctx, statementsQueue);
     this.sql = sql;
     this.in = in;
     this.timeout = timeout;
@@ -60,7 +61,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
       try {
         rs = st.executeQuery();
-        return new JDBCSQLRowStream(exec, st, rs, rowStreamFetchSize);
+        return new JDBCSQLRowStream(ctx, statementsQueue, st, rs, rowStreamFetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();

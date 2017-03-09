@@ -19,6 +19,8 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,8 +30,8 @@ import java.sql.SQLException;
  */
 public class JDBCCommit extends AbstractJDBCAction<Void> {
 
-  public JDBCCommit(Vertx vertx, Connection conn, WorkerExecutor exec) {
-    super(vertx, conn, exec);
+  public JDBCCommit(Vertx vertx, Connection conn, ContextInternal ctx, TaskQueue statementsQueue) {
+    super(vertx, conn, ctx, statementsQueue);
   }
 
   @Override

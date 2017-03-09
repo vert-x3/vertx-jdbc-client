@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -38,10 +39,11 @@ class JDBCConnectionImpl implements SQLConnection {
 
   private final Vertx vertx;
   private final Connection conn;
-  private final WorkerExecutor executor;
+  private final ContextInternal ctx;
   private final PoolMetrics metrics;
   private final Object metric;
   private final int rowStreamFetchSize;
+  private final TaskQueue statementsQueue = new TaskQueue();
 
   private final JDBCStatementHelper helper;
 
@@ -54,66 +56,66 @@ class JDBCConnectionImpl implements SQLConnection {
     this.metrics = metrics;
     this.metric = metric;
     this.rowStreamFetchSize = rowStreamFetchSize;
-    this.executor = ((ContextInternal)context).createWorkerExecutor();
+    this.ctx = ((ContextInternal)context);
   }
 
   @Override
   public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCAutoCommit(vertx, conn, executor, autoCommit).execute(resultHandler);
+    new JDBCAutoCommit(vertx, conn, ctx, statementsQueue, autoCommit).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCExecute(vertx, conn, executor, timeout, sql).execute(resultHandler);
+    new JDBCExecute(vertx, conn, ctx, statementsQueue, timeout, sql).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, helper, conn, executor, timeout, sql, null).execute(resultHandler);
+    new JDBCQuery(vertx, helper, conn, ctx, statementsQueue, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, executor, timeout, rowStreamFetchSize, sql, null).execute(handler);
+    new StreamQuery(vertx, helper, conn, ctx, statementsQueue, timeout, rowStreamFetchSize, sql, null).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, executor, timeout, rowStreamFetchSize, sql, params).execute(handler);
+    new StreamQuery(vertx, helper, conn, ctx, statementsQueue, timeout, rowStreamFetchSize, sql, params).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, helper, conn, executor, timeout, sql, params).execute(resultHandler);
+    new JDBCQuery(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, executor, timeout, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, executor, timeout, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, helper, conn, executor, timeout, sql, null, null).execute(resultHandler);
+    new JDBCCallable(vertx, helper, conn, ctx, statementsQueue, timeout, sql, null, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, helper, conn, executor, timeout, sql, params, outputs).execute(resultHandler);
+    new JDBCCallable(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params, outputs).execute(resultHandler);
     return this;
   }
 
@@ -122,7 +124,7 @@ class JDBCConnectionImpl implements SQLConnection {
     if (metrics != null) {
       metrics.end(metric, true);
     }
-    new JDBCClose(vertx, conn, executor).execute(handler);
+    new JDBCClose(vertx, conn, ctx, statementsQueue).execute(handler);
   }
 
   @Override
@@ -136,13 +138,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
-    new JDBCCommit(vertx, conn, executor).execute(handler);
+    new JDBCCommit(vertx, conn, ctx, statementsQueue).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
-    new JDBCRollback(vertx, conn, executor).execute(handler);
+    new JDBCRollback(vertx, conn, ctx, statementsQueue).execute(handler);
     return this;
   }
 
@@ -154,7 +156,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
-    executor.executeBlocking((Future<Void> f) -> {
+    ctx.executeBlocking((Future<Void> f) -> {
       try {
         switch (isolation) {
           case READ_COMMITTED:
@@ -179,14 +181,14 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, handler);
+    }, statementsQueue, handler);
 
     return this;
   }
 
   @Override
   public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
-    executor.executeBlocking((Future<TransactionIsolation> f) -> {
+    ctx.executeBlocking((Future<TransactionIsolation> f) -> {
       try {
         int level = conn.getTransactionIsolation();
 
@@ -213,26 +215,26 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, handler);
+    }, statementsQueue, handler);
 
     return this;
   }
 
   @Override
   public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, executor, sqlStatements).execute(handler);
+    new JDBCBatch(vertx, helper, conn, ctx, statementsQueue, sqlStatements).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, executor, statement, args).execute(handler);
+    new JDBCBatch(vertx, helper, conn, ctx, statementsQueue, statement, args).execute(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, executor, statement, inArgs, outArgs).execute(handler);
+    new JDBCBatch(vertx, helper, conn, ctx, statementsQueue, statement, inArgs, outArgs).execute(handler);
     return this;
   }
 }
