@@ -20,7 +20,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -36,17 +37,19 @@ public abstract class AbstractJDBCAction<T> {
 
   protected final Vertx vertx;
   protected final Connection conn;
-  protected final WorkerExecutor exec;
+  protected final ContextInternal ctx;
+  protected final TaskQueue statementsQueue;
   protected final JDBCStatementHelper helper;
 
-  protected AbstractJDBCAction(Vertx vertx, Connection conn, WorkerExecutor exec) {
-    this(vertx, null, conn, exec);
+  protected AbstractJDBCAction(Vertx vertx, Connection conn, ContextInternal ctx, TaskQueue statementsQueue) {
+    this(vertx, null, conn, ctx, statementsQueue);
   }
 
-  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, WorkerExecutor exec) {
+  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, ContextInternal ctx, TaskQueue statementsQueue) {
     this.vertx = vertx;
     this.conn = conn;
-    this.exec = exec;
+    this.ctx = ctx;
+    this.statementsQueue = statementsQueue;
     this.helper = helper;
   }
 
@@ -60,7 +63,7 @@ public abstract class AbstractJDBCAction<T> {
   }
 
   public void execute(Handler<AsyncResult<T>> resultHandler) {
-    exec.executeBlocking(this::handle, resultHandler);
+    ctx.executeBlocking(this::handle, statementsQueue, resultHandler);
   }
 
   protected abstract T execute() throws SQLException;

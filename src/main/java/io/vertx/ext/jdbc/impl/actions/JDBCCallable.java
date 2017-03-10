@@ -18,6 +18,8 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
@@ -34,8 +36,8 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private final JsonArray out;
   private final int timeout;
 
-  public JDBCCallable(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, int timeout, String sql, JsonArray in, JsonArray out) {
-    super(vertx, helper, connection, exec);
+  public JDBCCallable(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, String sql, JsonArray in, JsonArray out) {
+    super(vertx, helper, connection, ctx, statementsQueue);
     this.sql = sql;
     this.in = in;
     this.out = out;

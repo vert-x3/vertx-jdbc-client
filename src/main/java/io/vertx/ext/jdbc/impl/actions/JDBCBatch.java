@@ -18,6 +18,8 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 
 import java.sql.*;
@@ -41,20 +43,20 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   private final List<JsonArray> in;
   private final List<JsonArray> out;
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, List<String> sql) {
-    this(vertx, helper, connection, exec, Type.STATEMENT, sql, null, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, List<String> sql) {
+    this(vertx, helper, connection, ctx, statementsQueue, Type.STATEMENT, sql, null, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in) {
-    this(vertx, helper, connection, exec, Type.PREPARED, Collections.singletonList(sql), in, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, String sql, List<JsonArray> in) {
+    this(vertx, helper, connection, ctx, statementsQueue, Type.PREPARED, Collections.singletonList(sql), in, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, String sql, List<JsonArray> in, List<JsonArray> out) {
-    this(vertx, helper, connection, exec, Type.CALLABLE, Collections.singletonList(sql), in, out);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, String sql, List<JsonArray> in, List<JsonArray> out) {
+    this(vertx, helper, connection, ctx, statementsQueue, Type.CALLABLE, Collections.singletonList(sql), in, out);
   }
 
-  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, WorkerExecutor exec, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
-    super(vertx, helper, connection, exec);
+  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
+    super(vertx, helper, connection, ctx, statementsQueue);
     this.type = type;
     this.sql = sql;
     this.in = in;

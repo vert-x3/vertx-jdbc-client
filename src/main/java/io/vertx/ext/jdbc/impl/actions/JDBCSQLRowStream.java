@@ -18,7 +18,8 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -28,9 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,7 +39,8 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
 
-  private final WorkerExecutor exec;
+  private final ContextInternal ctx;
+  private final TaskQueue statementsQueue;
   private final Statement st;
   private final int fetchSize;
   private final AtomicBoolean paused = new AtomicBoolean(false);
@@ -58,11 +58,12 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(WorkerExecutor exec, Statement st, ResultSet rs, int fetchSize) throws SQLException {
-    this.exec = exec;
+  JDBCSQLRowStream(ContextInternal ctx, TaskQueue statementsQueue, Statement st, ResultSet rs, int fetchSize) throws SQLException {
+    this.ctx = ctx;
     this.st = st;
     this.fetchSize = fetchSize;
     this.rs = rs;
+    this.statementsQueue = statementsQueue;
 
     accumulator = new ArrayDeque<>(fetchSize);
     cols = rs.getMetaData().getColumnCount();
@@ -121,7 +122,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       }
     }
     if (!paused.get()) {
-      exec.executeBlocking(this::readRows, res -> {
+      ctx.executeBlocking(this::readRows, statementsQueue, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -238,7 +239,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       // pause streaming if rs is not complete
       pause();
 
-      exec.executeBlocking(this::getNextResultSet, res -> {
+      ctx.executeBlocking(this::getNextResultSet, statementsQueue, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -283,14 +284,14 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {
     if (lock.compareAndSet(false, true)) {
-      exec.executeBlocking(f -> {
+      ctx.executeBlocking(f -> {
         try {
           closeable.close();
           f.complete();
         } catch (Exception e) {
           f.fail(e);
         }
-      }, handler);
+      }, statementsQueue, handler);
     } else {
       if (handler != null) {
         handler.handle(Future.succeededFuture());
