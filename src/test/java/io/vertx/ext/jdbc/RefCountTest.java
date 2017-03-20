@@ -26,13 +26,13 @@ public class RefCountTest extends VertxTestBase {
     JDBCClient client3 = JDBCClient.createNonShared(vertx, config);
     assertEquals(3, TestDSProvider.instanceCount.get());
     client1.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 2);
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 2);
     client2.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 1);
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 1);
     client3.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 0);
-    waitUntil(() -> getLocalMap().size() == 0);
-    waitUntil(() -> map != getLocalMap()); // Map has been closed
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 0);
+    assertWaitUntil(() -> getLocalMap().size() == 0);
+    assertWaitUntil(() -> map != getLocalMap()); // Map has been closed
   }
 
   @Test
@@ -57,9 +57,9 @@ public class RefCountTest extends VertxTestBase {
     assertEquals(1, TestDSProvider.instanceCount.get());
     assertEquals(1, map.size());
     client3.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 0);
-    waitUntil(() -> map.size() == 0);
-    waitUntil(() -> map != getLocalMap()); // Map has been closed
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 0);
+    assertWaitUntil(() -> map.size() == 0);
+    assertWaitUntil(() -> map != getLocalMap()); // Map has been closed
   }
 
   @Test
@@ -95,8 +95,8 @@ public class RefCountTest extends VertxTestBase {
     assertEquals(2, TestDSProvider.instanceCount.get());
     assertEquals(2, map.size());
     client3.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 1);
-    waitUntil(() -> map.size() == 1);
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 1);
+    assertWaitUntil(() -> map.size() == 1);
 
     client4.close();
     Thread.sleep(200);
@@ -106,8 +106,8 @@ public class RefCountTest extends VertxTestBase {
     assertEquals(1, TestDSProvider.instanceCount.get());
     assertEquals(1, map.size());
     client6.close();
-    waitUntil(() -> TestDSProvider.instanceCount.get() == 0);
-    waitUntil(() -> map.size() == 0);
-    waitUntil(() -> map != getLocalMap()); // Map has been closed
+    assertWaitUntil(() -> TestDSProvider.instanceCount.get() == 0);
+    assertWaitUntil(() -> map.size() == 0);
+    assertWaitUntil(() -> map != getLocalMap()); // Map has been closed
   }
 }

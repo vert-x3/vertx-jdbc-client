@@ -117,7 +117,7 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
         });
       }));
     }
-    waitUntil(() -> metrics.numberOfRunningTasks() == 10 && metrics.numberOfWaitingTasks() == 1);
+    assertWaitUntil(() -> metrics.numberOfRunningTasks() == 10 && metrics.numberOfWaitingTasks() == 1);
     close.complete(null);
     awaitLatch(closedLatch);
     assertEquals(0, metrics.numberOfWaitingTasks());
