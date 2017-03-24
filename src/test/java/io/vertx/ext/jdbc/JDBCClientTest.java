@@ -227,6 +227,20 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testStreamGetColumns() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().queryStream(sql, onSuccess(res -> {
+      assertTrue(res.columns().contains("ID"));
+      assertTrue(res.columns().contains("FNAME"));
+      assertTrue(res.columns().contains("LNAME"));
+      testComplete();
+    }));
+
+    await();
+  }
+
+
+  @Test
   public void testSelectWithParameters() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE fname = ?";
 
