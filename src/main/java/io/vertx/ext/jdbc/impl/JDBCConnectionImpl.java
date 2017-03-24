@@ -237,4 +237,9 @@ class JDBCConnectionImpl implements SQLConnection {
     new JDBCBatch(vertx, helper, conn, ctx, statementsQueue, statement, inArgs, outArgs).execute(handler);
     return this;
   }
+
+  @Override
+  public Connection nativeConnection() {
+    return conn;
+  }
 }
