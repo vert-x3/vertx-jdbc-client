@@ -239,7 +239,8 @@ class JDBCConnectionImpl implements SQLConnection {
   }
 
   @Override
-  public Connection nativeConnection() {
-    return conn;
+  @SuppressWarnings("unchecked")
+  public <C> C unwrap() {
+    return (C) conn;
   }
 }

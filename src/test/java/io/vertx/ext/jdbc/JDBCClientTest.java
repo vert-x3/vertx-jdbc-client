@@ -61,7 +61,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
 
   @Test
   public void testGetNativeConn() {
-    assertNotNull(connection().nativeConnection());
+    assertNotNull(connection().unwrap());
     testComplete();
   }
 
