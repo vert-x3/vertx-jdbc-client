@@ -60,6 +60,12 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testGetNativeConn() {
+    assertNotNull(connection().unwrap());
+    testComplete();
+  }
+
+  @Test
   public void testSelect() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().query(sql, onSuccess(resultSet -> {

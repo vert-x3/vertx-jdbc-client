@@ -237,4 +237,10 @@ class JDBCConnectionImpl implements SQLConnection {
     new JDBCBatch(vertx, helper, conn, ctx, statementsQueue, statement, inArgs, outArgs).execute(handler);
     return this;
   }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <C> C unwrap() {
+    return (C) conn;
+  }
 }
