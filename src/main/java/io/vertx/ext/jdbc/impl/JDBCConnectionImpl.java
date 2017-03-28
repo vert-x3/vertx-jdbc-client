@@ -97,13 +97,19 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, null, null).execute(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params, null).execute(resultHandler);
+    return this;
+  }
+
+  @Override
+  public SQLConnection updateWithParams(String sql, JsonArray params, List<String> columnNames, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    new JDBCUpdate(vertx, helper, conn, ctx, statementsQueue, timeout, sql, params, columnNames).execute(resultHandler);
     return this;
   }
 

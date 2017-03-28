@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
@@ -28,6 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -40,18 +40,22 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   private final String sql;
   private final JsonArray in;
   private final int timeout;
+  private final List<String> generatedKeyColumns;
 
-  public JDBCUpdate(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, String sql, JsonArray in) {
+  public JDBCUpdate(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, String sql, JsonArray in, List<String> generatedKeyColumns) {
     super(vertx, helper, connection, ctx, statementsQueue);
     this.sql = sql;
     this.in = in;
+    this.generatedKeyColumns = generatedKeyColumns;
     this.timeout = timeout;
   }
 
   @Override
   protected UpdateResult execute() throws SQLException {
-    final boolean returKeys = regex.matcher(sql).groupCount() == 2;
-    try (PreparedStatement statement = conn.prepareStatement(sql, returKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
+    final boolean returnGeneratedKeys = regex.matcher(sql).groupCount() == 2;
+    try (PreparedStatement statement = (generatedKeyColumns != null && generatedKeyColumns.size() > 0)
+      ? conn.prepareStatement(sql, generatedKeyColumns.toArray(new String[0]))
+      : conn.prepareStatement(sql, returnGeneratedKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
       if (timeout >= 0) {
         statement.setQueryTimeout(timeout);
       }
@@ -62,7 +66,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
       JsonArray keys = new JsonArray();
 
       // Create JsonArray of keys
-      if (returKeys) {
+      if (returnGeneratedKeys) {
         ResultSet rs = null;
         try {
           // the resource might also fail
