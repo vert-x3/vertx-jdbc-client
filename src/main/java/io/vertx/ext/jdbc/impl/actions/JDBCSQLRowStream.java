@@ -26,10 +26,10 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.sql.SQLRowStream;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -51,6 +51,8 @@ class JDBCSQLRowStream implements SQLRowStream {
   private final Deque<JsonArray> accumulator;
 
   private ResultSet rs;
+  private ResultSetMetaData metaData;
+  private List<String> columns;
   private int cols;
 
   private Handler<Throwable> exceptionHandler;
@@ -66,7 +68,8 @@ class JDBCSQLRowStream implements SQLRowStream {
     this.statementsQueue = statementsQueue;
 
     accumulator = new ArrayDeque<>(fetchSize);
-    cols = rs.getMetaData().getColumnCount();
+    metaData = rs.getMetaData();
+    cols = metaData.getColumnCount();
     paused.set(true);
     stClosed.set(false);
     rsClosed.set(false);
@@ -81,6 +84,27 @@ class JDBCSQLRowStream implements SQLRowStream {
     } catch (SQLException e) {
       return -1;
     }
+  }
+
+  @Override
+  public List<String> columns() {
+    if (columns == null) {
+      try {
+        if (cols > 0) {
+          final List<String> columns = new ArrayList<>(cols);
+          for (int i = 0; i < cols; i++) {
+            columns.add(i, metaData.getColumnName(i + 1));
+          }
+          this.columns = Collections.unmodifiableList(columns);
+        } else {
+          this.columns = Collections.emptyList();
+        }
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    return columns;
   }
 
   @Override
@@ -268,7 +292,9 @@ class JDBCSQLRowStream implements SQLRowStream {
       // is there more rs data?
       if (st.getMoreResults()) {
         rs = st.getResultSet();
-        cols = rs.getMetaData().getColumnCount();
+        metaData = rs.getMetaData();
+        cols = metaData.getColumnCount();
+        columns = null;
         // reset
         paused.set(true);
         stClosed.set(false);

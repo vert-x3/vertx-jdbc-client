@@ -31,6 +31,7 @@ import org.junit.Test;
 import rx.Observable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -231,6 +232,25 @@ public class JDBCClientTest extends JDBCClientTestBase {
 
     await();
   }
+
+  @Test
+  public void testStreamGetColumns() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    connection().queryStream(sql, onSuccess(res -> {
+      assertEquals(Arrays.asList("ID", "FNAME", "LNAME"), res.columns());
+      // assert the collection is immutable
+      try {
+        res.columns().add("durp!");
+        fail();
+      } catch (RuntimeException e) {
+        // expected!
+      }
+      testComplete();
+    }));
+
+    await();
+  }
+
 
   @Test
   public void testSelectWithParameters() {
