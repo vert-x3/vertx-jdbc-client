@@ -232,6 +232,13 @@ public class JDBCClientTest extends JDBCClientTestBase {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().queryStream(sql, onSuccess(res -> {
       assertEquals(Arrays.asList("ID", "FNAME", "LNAME"), res.columns());
+      // assert the collection is immutable
+      try {
+        res.columns().add("durp!");
+        fail();
+      } catch (RuntimeException e) {
+        // expected!
+      }
       testComplete();
     }));
 
