@@ -52,6 +52,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private ResultSet rs;
   private ResultSetMetaData metaData;
+  private List<String> columns;
   private int cols;
 
   private Handler<Throwable> exceptionHandler;
@@ -87,19 +88,23 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public List<String> columns() {
-    try {
-      if (cols > 0) {
-        final List<String> columns = new ArrayList<>(cols);
-        for (int i = 0; i < cols; i++) {
-          columns.add(i, metaData.getColumnName(i + 1));
+    if (columns == null) {
+      try {
+        if (cols > 0) {
+          final List<String> columns = new ArrayList<>(cols);
+          for (int i = 0; i < cols; i++) {
+            columns.add(i, metaData.getColumnName(i + 1));
+          }
+          this.columns = Collections.unmodifiableList(columns);
+        } else {
+          this.columns = Collections.emptyList();
         }
-        return columns;
-      } else {
-        return Collections.emptyList();
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
       }
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
     }
+
+    return columns;
   }
 
   @Override
@@ -289,6 +294,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         rs = st.getResultSet();
         metaData = rs.getMetaData();
         cols = metaData.getColumnCount();
+        columns = null;
         // reset
         paused.set(true);
         stClosed.set(false);
