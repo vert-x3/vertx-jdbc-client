@@ -31,6 +31,7 @@ import org.junit.Test;
 import rx.Observable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -230,17 +231,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
   public void testStreamGetColumns() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().queryStream(sql, onSuccess(res -> {
-      List<String> columns = res.columns();
-      // check they exist
-      assertTrue(columns.contains("ID"));
-      assertTrue(columns.contains("FNAME"));
-      assertTrue(columns.contains("LNAME"));
-      // check the order is correct
-      assertEquals(0, columns.indexOf("ID"));
-      assertEquals(1, columns.indexOf("FNAME"));
-      assertEquals(2, columns.indexOf("LNAME"));
-      // check that the size is correct
-      assertEquals(3, columns.size());
+      assertEquals(Arrays.asList("ID", "FNAME", "LNAME"), res.columns());
       testComplete();
     }));
 
