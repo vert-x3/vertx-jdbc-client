@@ -230,9 +230,17 @@ public class JDBCClientTest extends JDBCClientTestBase {
   public void testStreamGetColumns() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().queryStream(sql, onSuccess(res -> {
-      assertTrue(res.columns().contains("ID"));
-      assertTrue(res.columns().contains("FNAME"));
-      assertTrue(res.columns().contains("LNAME"));
+      List<String> columns = res.columns();
+      // check they exist
+      assertTrue(columns.contains("ID"));
+      assertTrue(columns.contains("FNAME"));
+      assertTrue(columns.contains("LNAME"));
+      // check the order is correct
+      assertEquals(0, columns.indexOf("ID"));
+      assertEquals(1, columns.indexOf("FNAME"));
+      assertEquals(2, columns.indexOf("LNAME"));
+      // check that the size is correct
+      assertEquals(3, columns.size());
       testComplete();
     }));
 
