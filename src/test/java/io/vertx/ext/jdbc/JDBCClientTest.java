@@ -110,6 +110,29 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testStreamOnClosedConnection() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    final AtomicInteger cnt = new AtomicInteger(0);
+    final SQLConnection conn = connection();
+
+    conn.queryStream(sql, onSuccess(res -> {
+      conn.close();
+
+      res.resultSetClosedHandler(v -> {
+        fail("Should not happen");
+      }).handler(row -> {
+        fail("Should not happen");
+      }).endHandler(v -> {
+        fail("Should not happen");
+      }).exceptionHandler(t -> {
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
+  @Test
   public void testStreamWithParams() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE LNAME = ? ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);
