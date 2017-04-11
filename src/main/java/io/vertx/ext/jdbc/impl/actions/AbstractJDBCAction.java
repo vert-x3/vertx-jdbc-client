@@ -22,32 +22,33 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public abstract class AbstractJDBCAction<T> {
 
-  private static final Logger log = LoggerFactory.getLogger(AbstractJDBCAction.class);
-
   protected final Vertx vertx;
   protected final Connection conn;
+  protected final SQLOptions options;
   protected final ContextInternal ctx;
   protected final TaskQueue statementsQueue;
   protected final JDBCStatementHelper helper;
 
-  protected AbstractJDBCAction(Vertx vertx, Connection conn, ContextInternal ctx, TaskQueue statementsQueue) {
-    this(vertx, null, conn, ctx, statementsQueue);
+  protected AbstractJDBCAction(Vertx vertx, Connection conn, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue) {
+    this(vertx, null, conn, options, ctx, statementsQueue);
   }
 
-  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, ContextInternal ctx, TaskQueue statementsQueue) {
+  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue) {
     this.vertx = vertx;
     this.conn = conn;
+    this.options = options;
     this.ctx = ctx;
     this.statementsQueue = statementsQueue;
     this.helper = helper;
@@ -55,6 +56,9 @@ public abstract class AbstractJDBCAction<T> {
 
   private void handle(Future<T> future) {
     try {
+      // apply connection options
+      applyConnectionOptions();
+      // execute
       T result = execute();
       future.complete(result);
     } catch (SQLException e) {
@@ -69,4 +73,33 @@ public abstract class AbstractJDBCAction<T> {
   protected abstract T execute() throws SQLException;
 
   protected abstract String name();
+
+  void applyStatementOptions(Statement statement) throws SQLException {
+    if (options != null) {
+      if (options.getQueryTimeout() != null) {
+        statement.setQueryTimeout(options.getQueryTimeout());
+      }
+      if (options.getFetchDirection() != null) {
+        statement.setFetchDirection(options.getFetchDirection().getType());
+      }
+      if (options.getFetchSize() != null) {
+        statement.setFetchSize(options.getFetchSize());
+      }
+    }
+  }
+
+  private void applyConnectionOptions() throws SQLException {
+    if (options != null) {
+      if (options.getReadOnly() != null) {
+        conn.setReadOnly(options.getReadOnly());
+      }
+      if (options.getCatalog() != null) {
+        conn.setCatalog(options.getCatalog());
+      }
+      if (options.getSchema() != null) {
+        conn.setSchema(options.getSchema());
+      }
+    }
+  }
+
 }
