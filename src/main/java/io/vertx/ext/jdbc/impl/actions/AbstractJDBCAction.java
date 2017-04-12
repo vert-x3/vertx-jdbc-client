@@ -76,13 +76,13 @@ public abstract class AbstractJDBCAction<T> {
 
   void applyStatementOptions(Statement statement) throws SQLException {
     if (options != null) {
-      if (options.getQueryTimeout() != null) {
+      if (options.getQueryTimeout() > 0) {
         statement.setQueryTimeout(options.getQueryTimeout());
       }
       if (options.getFetchDirection() != null) {
         statement.setFetchDirection(options.getFetchDirection().getType());
       }
-      if (options.getFetchSize() != null) {
+      if (options.getFetchSize() > 0) {
         statement.setFetchSize(options.getFetchSize());
       }
     }
@@ -90,8 +90,8 @@ public abstract class AbstractJDBCAction<T> {
 
   private void applyConnectionOptions() throws SQLException {
     if (options != null) {
-      if (options.getReadOnly() != null) {
-        conn.setReadOnly(options.getReadOnly());
+      if (options.isReadOnly()) {
+        conn.setReadOnly(true);
       }
       if (options.getCatalog() != null) {
         conn.setCatalog(options.getCatalog());

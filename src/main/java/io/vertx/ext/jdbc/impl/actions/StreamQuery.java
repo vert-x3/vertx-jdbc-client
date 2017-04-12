@@ -61,7 +61,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
         final int fetchSize;
 
-        if (options != null && options.getFetchSize() != null) {
+        if (options != null && options.getFetchSize() > 0) {
           fetchSize = options.getFetchSize();
         } else {
           fetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
