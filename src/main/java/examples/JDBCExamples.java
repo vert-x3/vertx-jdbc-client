@@ -4,6 +4,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 
 import javax.sql.DataSource;
@@ -16,26 +17,26 @@ public class JDBCExamples {
 
   public void exampleCreateDefault(Vertx vertx, JsonObject config) {
 
-    JDBCClient client = JDBCClient.createShared(vertx, config);
+    SQLClient client = JDBCClient.createShared(vertx, config);
 
   }
 
   public void exampleCreateDataSourceName(Vertx vertx, JsonObject config) {
 
 
-    JDBCClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
+    SQLClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
 
   }
 
   public void exampleCreateWithDataSource(Vertx vertx, DataSource dataSource) {
 
-    JDBCClient client = JDBCClient.create(vertx, dataSource);
+    SQLClient client = JDBCClient.create(vertx, dataSource);
 
   }
 
   public void exampleCreateNonShared(Vertx vertx, JsonObject config) {
 
-    JDBCClient client = JDBCClient.createNonShared(vertx, config);
+    SQLClient client = JDBCClient.createNonShared(vertx, config);
 
   }
 
@@ -69,7 +70,7 @@ public class JDBCExamples {
       .put("driver_class", "org.hsqldb.jdbcDriver")
       .put("max_pool_size", 30);
 
-    JDBCClient client = JDBCClient.createShared(vertx, config);
+    SQLClient client = JDBCClient.createShared(vertx, config);
 
   }
 }
