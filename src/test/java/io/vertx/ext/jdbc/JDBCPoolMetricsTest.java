@@ -7,6 +7,7 @@ import io.vertx.core.metrics.impl.DummyVertxMetrics;
 import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakemetrics.FakePoolMetrics;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JDBCPoolMetricsTest extends VertxTestBase {
 
-  private JDBCClient client;
+  private SQLClient client;
   private FakePoolMetrics metrics;
 
   public void after() throws Exception {
@@ -35,7 +36,7 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
     super.after();
   }
 
-  private JDBCClient getClient() {
+  private SQLClient getClient() {
     if (client == null) {
       Map<String, PoolMetrics> metricsMap = FakePoolMetrics.getPoolMetrics();
       Set<String> keys = new HashSet<>(metricsMap.keySet());

@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JDBCStoredProcedureTest extends VertxTestBase {
 
-  protected JDBCClient client;
+  protected SQLClient client;
 
   private static final List<String> SQL = new ArrayList<>();
 

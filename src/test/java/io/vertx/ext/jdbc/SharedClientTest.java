@@ -1,6 +1,7 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class SharedClientTest extends JDBCClientTestBase {
         public void run() {
           for (int i = 0;i < iter;i++) {
             count.incrementAndGet();
-            JDBCClient client = JDBCClient.createShared(vertx, config);
+            SQLClient client = JDBCClient.createShared(vertx, config);
             client.close();
           }
         }
