@@ -110,6 +110,11 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   @Override
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    holder.close(completionHandler);
+  }
+
+  @Override
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     Context ctx = vertx.getOrCreateContext();
     boolean enabled = metrics != null && metrics.isEnabled();
