@@ -53,7 +53,7 @@ import static java.time.format.DateTimeFormatter.*;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-public final class JDBCStatementHelper {
+public class JDBCStatementHelper {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCStatementHelper.class);
 
