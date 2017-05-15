@@ -170,6 +170,7 @@
               javax.sql,
               io.vertx.ext.sql*,
               io.vertx.core*,
+              com.mchange.*,
               *;resolution:=optional</Import-Package>
             <Include-Resource>{maven-resources}</Include-Resource>
           </instructions>
