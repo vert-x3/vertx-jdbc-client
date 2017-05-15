@@ -17,18 +17,13 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
-import org.hsqldb.jdbc.JDBCConnection;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JDBCQueryTimeoutTest extends VertxTestBase {
 
-  protected JDBCClient client;
+  protected SQLClient client;
 
   @Before
   public void setUp() throws Exception {

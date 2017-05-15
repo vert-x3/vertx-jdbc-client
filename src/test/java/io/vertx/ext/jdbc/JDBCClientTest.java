@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.rx.java.RxHelper;
@@ -46,7 +47,7 @@ import java.util.logging.Level;
  */
 public class JDBCClientTest extends JDBCClientTestBase {
 
-  protected JDBCClient client;
+  protected SQLClient client;
 
   @Before
   public void setUp() throws Exception {
@@ -58,6 +59,18 @@ public class JDBCClientTest extends JDBCClientTestBase {
   public void after() throws Exception {
     client.close();
     super.after();
+  }
+
+  @Test
+  public void testSqlClientInstance() {
+    assertTrue(client instanceof SQLClient);
+    testComplete();
+  }
+
+  @Test
+  public void testJdbcClientInstance() {
+    assertTrue(client instanceof JDBCClient);
+    testComplete();
   }
 
   @Test

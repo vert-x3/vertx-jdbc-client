@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JDBCBatchTest extends VertxTestBase {
 
-  protected JDBCClient client;
+  protected SQLClient client;
 
   public static void proc() {
     System.out.println("Fake Proc called");

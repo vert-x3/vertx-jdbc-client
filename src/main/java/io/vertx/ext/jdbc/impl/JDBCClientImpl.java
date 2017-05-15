@@ -25,6 +25,7 @@ import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 
 import javax.sql.DataSource;
@@ -109,7 +110,12 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   @Override
-  public JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
+  public void close(Handler<AsyncResult<Void>> completionHandler) {
+    holder.close(completionHandler);
+  }
+
+  @Override
+  public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     Context ctx = vertx.getOrCreateContext();
     boolean enabled = metrics != null && metrics.isEnabled();
     Object queueMetric = enabled ? metrics.submitted() : null;

@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JDBCCustomTXIsolationTest extends VertxTestBase {
 
-  protected JDBCClient client;
+  protected SQLClient client;
 
   @Before
   public void setUp() throws Exception {

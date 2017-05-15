@@ -16,15 +16,12 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
-import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.SQLClient;
 
 import javax.sql.DataSource;
 import java.util.UUID;
@@ -36,7 +33,7 @@ import java.util.UUID;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 @VertxGen
-public interface JDBCClient {
+public interface JDBCClient extends SQLClient {
 
   /**
    * The default data source provider is C3P0
@@ -55,7 +52,7 @@ public interface JDBCClient {
    * @param config  the configuration
    * @return the client
    */
-  static JDBCClient createNonShared(Vertx vertx, JsonObject config) {
+  static SQLClient createNonShared(Vertx vertx, JsonObject config) {
     return new JDBCClientImpl(vertx, config, UUID.randomUUID().toString());
   }
 
@@ -68,7 +65,7 @@ public interface JDBCClient {
    * @param dataSourceName  the data source name
    * @return the client
    */
-  static JDBCClient createShared(Vertx vertx, JsonObject config, String dataSourceName) {
+  static SQLClient createShared(Vertx vertx, JsonObject config, String dataSourceName) {
     return new JDBCClientImpl(vertx, config, dataSourceName);
   }
 
@@ -78,7 +75,7 @@ public interface JDBCClient {
    * @param config  the configuration
    * @return the client
    */
-  static JDBCClient createShared(Vertx vertx, JsonObject config) {
+  static SQLClient createShared(Vertx vertx, JsonObject config) {
     return new JDBCClientImpl(vertx, config, DEFAULT_DS_NAME);
   }
 
@@ -90,21 +87,7 @@ public interface JDBCClient {
    * @return the client
    */
   @GenIgnore
-  static JDBCClient create(Vertx vertx, DataSource dataSource) {
+  static SQLClient create(Vertx vertx, DataSource dataSource) {
     return new JDBCClientImpl(vertx, dataSource);
   }
-
-  /**
-   * Returns a connection that can be used to perform SQL operations on. It's important to remember
-   * to close the connection when you are done, so it is returned to the pool.
-   *
-   * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
-   */
-  @Fluent
-  JDBCClient getConnection(Handler<AsyncResult<SQLConnection>> handler);
-
-  /**
-   * Close the client
-   */
-  void close();
 }

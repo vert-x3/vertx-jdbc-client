@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
@@ -48,7 +49,7 @@ public class JDBCCustomTypesTest extends VertxTestBase {
   }
 
   private JsonObject config;
-  private JDBCClient client;
+  private SQLClient client;
 
   @Before
   public void setUp() throws Exception {
