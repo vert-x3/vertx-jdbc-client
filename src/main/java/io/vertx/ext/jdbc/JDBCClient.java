@@ -52,7 +52,7 @@ public interface JDBCClient extends SQLClient {
    * @param config  the configuration
    * @return the client
    */
-  static SQLClient createNonShared(Vertx vertx, JsonObject config) {
+  static JDBCClient createNonShared(Vertx vertx, JsonObject config) {
     return new JDBCClientImpl(vertx, config, UUID.randomUUID().toString());
   }
 
@@ -65,7 +65,7 @@ public interface JDBCClient extends SQLClient {
    * @param dataSourceName  the data source name
    * @return the client
    */
-  static SQLClient createShared(Vertx vertx, JsonObject config, String dataSourceName) {
+  static JDBCClient createShared(Vertx vertx, JsonObject config, String dataSourceName) {
     return new JDBCClientImpl(vertx, config, dataSourceName);
   }
 
@@ -75,7 +75,7 @@ public interface JDBCClient extends SQLClient {
    * @param config  the configuration
    * @return the client
    */
-  static SQLClient createShared(Vertx vertx, JsonObject config) {
+  static JDBCClient createShared(Vertx vertx, JsonObject config) {
     return new JDBCClientImpl(vertx, config, DEFAULT_DS_NAME);
   }
 
@@ -87,7 +87,7 @@ public interface JDBCClient extends SQLClient {
    * @return the client
    */
   @GenIgnore
-  static SQLClient create(Vertx vertx, DataSource dataSource) {
+  static JDBCClient create(Vertx vertx, DataSource dataSource) {
     return new JDBCClientImpl(vertx, dataSource);
   }
 }

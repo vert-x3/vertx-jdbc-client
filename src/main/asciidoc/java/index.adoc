@@ -40,7 +40,7 @@ You do this as follows:
 
 [source,java]
 ----
-JDBCClient client = JDBCClient.createShared(vertx, config);
+SQLClient client = JDBCClient.createShared(vertx, config);
 ----
 
 The first call to `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-[JDBCClient.createShared]`
@@ -54,7 +54,7 @@ You can create a client specifying a data source name as follows
 
 [source,java]
 ----
-JDBCClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
+SQLClient client = JDBCClient.createShared(vertx, config, "MyDataSource");
 ----
 
 If different clients are created using the same Vert.x instance and specifying the same data source name, they will
@@ -77,7 +77,7 @@ In that case you can use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#c
 
 [source,java]
 ----
-JDBCClient client = JDBCClient.createNonShared(vertx, config);
+SQLClient client = JDBCClient.createNonShared(vertx, config);
 ----
 
 This is equivalent to calling `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#createShared-io.vertx.core.Vertx-io.vertx.core.json.JsonObject-java.lang.String-[JDBCClient.createShared]`
@@ -89,7 +89,7 @@ If you already have a pre-existing data source, you can also create the client d
 
 [source,java]
 ----
-JDBCClient client = JDBCClient.create(vertx, dataSource);
+SQLClient client = JDBCClient.create(vertx, dataSource);
 ----
 
 == Closing the client
@@ -106,7 +106,7 @@ If you're creating clients from inside verticles, the clients will be automatica
 
 == Getting a connection
 
-Once you've created a client you use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
+Once you've created a client you use `link:../../apidocs/io/vertx/ext/sql/SQLClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
 a connection.
 
 This will return the connection in the handler when one is ready from the pool.
@@ -182,7 +182,7 @@ JsonObject config = new JsonObject()
   .put("driver_class", "org.hsqldb.jdbcDriver")
   .put("max_pool_size", 30);
 
-JDBCClient client = JDBCClient.createShared(vertx, config);
+SQLClient client = JDBCClient.createShared(vertx, config);
 ----
 
 Hikari uses a different set of properties:

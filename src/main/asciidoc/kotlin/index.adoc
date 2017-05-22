@@ -119,7 +119,7 @@ If you're creating clients from inside verticles, the clients will be automatica
 
 == Getting a connection
 
-Once you've created a client you use `link:../../apidocs/io/vertx/ext/jdbc/JDBCClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
+Once you've created a client you use `link:../../apidocs/io/vertx/ext/sql/SQLClient.html#getConnection-io.vertx.core.Handler-[getConnection]` to get
 a connection.
 
 This will return the connection in the handler when one is ready from the pool.
