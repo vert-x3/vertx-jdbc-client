@@ -182,7 +182,7 @@ public class JDBCClientImpl implements JDBCClient {
 
     DataSourceHolder(VertxInternal vertx, DataSource ds) {
       this.ds = ds;
-      this.metrics = vertx.metricsSPI().createMetrics(ds, "datasource", UUID.randomUUID().toString(), -1);
+      this.metrics = vertx.metricsSPI() != null ? vertx.metricsSPI().createMetrics(ds, "datasource", UUID.randomUUID().toString(), -1) : null;
       this.vertx = vertx;
       this.map = null;
       this.name = null;
@@ -211,10 +211,7 @@ public class JDBCClientImpl implements JDBCClient {
             provider = (DataSourceProvider) clazz.newInstance();
             ds = provider.getDataSource(config);
             int poolSize = provider.maximumPoolSize(ds, config);
-            VertxMetrics vertxMetrics = vertx.metricsSPI();
-            if (vertxMetrics != null) {
-              metrics = vertxMetrics.createMetrics(ds, "datasource", name, poolSize);
-            }
+            metrics = vertx.metricsSPI() != null ? vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize) : null;
             return ds;
           } catch (ClassNotFoundException e) {
             // Next try.
