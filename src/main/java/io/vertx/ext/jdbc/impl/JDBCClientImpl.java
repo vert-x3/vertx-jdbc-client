@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
+import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
@@ -210,7 +211,10 @@ public class JDBCClientImpl implements JDBCClient {
             provider = (DataSourceProvider) clazz.newInstance();
             ds = provider.getDataSource(config);
             int poolSize = provider.maximumPoolSize(ds, config);
-            metrics = vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize);
+            VertxMetrics vertxMetrics = vertx.metricsSPI();
+            if (vertxMetrics != null) {
+              metrics = vertxMetrics.createMetrics(ds, "datasource", name, poolSize);
+            }
             return ds;
           } catch (ClassNotFoundException e) {
             // Next try.
