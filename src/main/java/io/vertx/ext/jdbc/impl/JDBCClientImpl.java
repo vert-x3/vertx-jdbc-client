@@ -204,6 +204,7 @@ public class JDBCClientImpl implements JDBCClient {
           providerClass = DEFAULT_PROVIDER_CLASS;
         }
 
+        VertxMetrics vertxMetrics = vertx.metricsSPI();
         if (Thread.currentThread().getContextClassLoader() != null) {
           try {
             // Try with the TCCL
@@ -211,7 +212,7 @@ public class JDBCClientImpl implements JDBCClient {
             provider = (DataSourceProvider) clazz.newInstance();
             ds = provider.getDataSource(config);
             int poolSize = provider.maximumPoolSize(ds, config);
-            metrics = vertx.metricsSPI() != null ? vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize) : null;
+            metrics = vertxMetrics != null ? vertxMetrics.createMetrics(ds, "datasource", name, poolSize) : null;
             return ds;
           } catch (ClassNotFoundException e) {
             // Next try.
@@ -226,7 +227,7 @@ public class JDBCClientImpl implements JDBCClient {
           provider = (DataSourceProvider) clazz.newInstance();
           ds = provider.getDataSource(config);
           int poolSize = provider.maximumPoolSize(ds, config);
-          metrics = vertx.metricsSPI().createMetrics(ds, "datasource", name, poolSize);
+          metrics = vertxMetrics != null ? vertxMetrics.createMetrics(ds, "datasource", name, poolSize) : null;
           return ds;
         } catch (ClassNotFoundException | InstantiationException | SQLException | IllegalAccessException e) {
           throw new RuntimeException(e);
