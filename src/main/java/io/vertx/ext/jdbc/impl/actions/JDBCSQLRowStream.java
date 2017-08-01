@@ -226,7 +226,9 @@ class JDBCSQLRowStream implements SQLRowStream {
     // registration was late but we're already ended, notify
     if (ended.compareAndSet(true, false)) {
       // only notify once
-      endHandler.handle(null);
+      if (endHandler != null) {
+        endHandler.handle(null);
+      }
     }
     return this;
   }
