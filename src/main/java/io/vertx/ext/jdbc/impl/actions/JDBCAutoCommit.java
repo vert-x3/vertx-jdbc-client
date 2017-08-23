@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
+import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -29,14 +30,20 @@ import java.sql.SQLException;
 public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
   private boolean autoCommit;
 
-  public JDBCAutoCommit(Vertx vertx, Connection conn, ContextInternal ctx, TaskQueue statementsQueue, boolean autoCommit) {
-    super(vertx, conn, ctx, statementsQueue);
+  public JDBCAutoCommit(Vertx vertx, Connection conn, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, boolean autoCommit) {
+    super(vertx, conn, options, ctx, statementsQueue);
     this.autoCommit = autoCommit;
   }
 
   @Override
   protected Void execute() throws SQLException {
     conn.setAutoCommit(autoCommit);
+    // setting the auto commit to false triggers a new transaction to begin
+    if (!autoCommit) {
+      if (options != null && options.getTransactionIsolation() != null) {
+        conn.setTransactionIsolation(options.getTransactionIsolation().getType());
+      }
+    }
     return null;
   }
 

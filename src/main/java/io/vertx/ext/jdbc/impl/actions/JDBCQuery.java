@@ -17,10 +17,10 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.WorkerExecutor;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.*;
 import java.sql.ResultSet;
@@ -32,21 +32,18 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
 
   private final String sql;
   private final JsonArray in;
-  private final int timeout;
 
-  public JDBCQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, String sql, JsonArray in) {
-    super(vertx, helper, connection, ctx, statementsQueue);
+  public JDBCQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
+    super(vertx, helper, connection, options, ctx, statementsQueue);
     this.sql = sql;
     this.in = in;
-    this.timeout = timeout;
   }
 
   @Override
   protected io.vertx.ext.sql.ResultSet execute() throws SQLException {
     try (PreparedStatement statement = conn.prepareStatement(sql)) {
-      if (timeout >= 0) {
-        statement.setQueryTimeout(timeout);
-      }
+      // apply statement options
+      applyStatementOptions(statement);
 
       helper.fillStatement(statement, in);
       boolean retResult = statement.execute();

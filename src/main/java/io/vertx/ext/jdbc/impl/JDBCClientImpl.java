@@ -28,6 +28,7 @@ import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.SQLOptions;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -45,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 public class JDBCClientImpl implements JDBCClient {
 
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
-  private static final int DEFAULT_ROW_STREAM_FETCH_SIZE = 128;
 
   private final Vertx vertx;
   private final DataSourceHolder holder;
@@ -54,7 +54,6 @@ public class JDBCClientImpl implements JDBCClient {
   private final ExecutorService exec;
   private final DataSource ds;
   private final PoolMetrics metrics;
-  private final int rowStreamFetchSize;
   // Helper that can do param and result transforms, its behavior is defined by the
   // initial config and immutable after that moment. It is safe to reuse since there
   // is no state involved
@@ -72,7 +71,6 @@ public class JDBCClientImpl implements JDBCClient {
     this.ds = dataSource;
     this.metrics = holder.metrics;
     this.helper = new JDBCStatementHelper();
-    this.rowStreamFetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
     setupCloseHook();
   }
 
@@ -89,13 +87,7 @@ public class JDBCClientImpl implements JDBCClient {
     this.ds = holder.ds();
     this.metrics = holder.metrics;
     this.helper = new JDBCStatementHelper(config);
-    this.rowStreamFetchSize = rowStreamFetchSize(config);
     setupCloseHook();
-  }
-
-  private static int rowStreamFetchSize(JsonObject config) {
-    int size = config.getInteger("row_stream_fetch_size", DEFAULT_ROW_STREAM_FETCH_SIZE);
-    return size > 0 ? size : DEFAULT_ROW_STREAM_FETCH_SIZE;
   }
 
   private void setupCloseHook() {
@@ -142,8 +134,8 @@ public class JDBCClientImpl implements JDBCClient {
         if (metrics != null) {
           execMetric = metrics.begin(queueMetric);
         }
-        SQLConnection sconn = new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric, rowStreamFetchSize);
-        res.complete(sconn);
+        // wrap it
+        res.complete(new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric));
       } catch (SQLException e) {
         if (metrics != null) {
           metrics.rejected(queueMetric);

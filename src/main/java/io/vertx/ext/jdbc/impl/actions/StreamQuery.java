@@ -20,6 +20,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.sql.SQLRowStream;
 
 import java.sql.Connection;
@@ -32,17 +33,15 @@ import java.sql.SQLException;
  */
 public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
+  private static final int DEFAULT_ROW_STREAM_FETCH_SIZE = 128;
+
   private final String sql;
   private final JsonArray in;
-  private final int timeout;
-  private final int rowStreamFetchSize;
 
-  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, ContextInternal ctx, TaskQueue statementsQueue, int timeout, int rowStreamFetchSize, String sql, JsonArray in) {
-    super(vertx, helper, connection, ctx, statementsQueue);
+  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
+    super(vertx, helper, connection, options, ctx, statementsQueue);
     this.sql = sql;
     this.in = in;
-    this.timeout = timeout;
-    this.rowStreamFetchSize = rowStreamFetchSize;
   }
 
   @Override
@@ -51,17 +50,24 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
     try {
       st = conn.prepareStatement(sql);
-
-      if (timeout >= 0) {
-        st.setQueryTimeout(timeout);
-      }
+      // apply statement options
+      applyStatementOptions(st);
 
       helper.fillStatement(st, in);
       ResultSet rs = null;
 
       try {
         rs = st.executeQuery();
-        return new JDBCSQLRowStream(ctx, statementsQueue, st, rs, rowStreamFetchSize);
+
+        final int fetchSize;
+
+        if (options != null && options.getFetchSize() > 0) {
+          fetchSize = options.getFetchSize();
+        } else {
+          fetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
+        }
+
+        return new JDBCSQLRowStream(ctx, statementsQueue, st, rs, fetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();
