@@ -20,7 +20,6 @@ public class AgroalCPDataSourceProviderTest {
 
     JsonObject configuration = new JsonObject();
     configuration
-      .put("dataSourceImplementation", "HIKARI")
       .put("jdbcUrl", "jdbc:h2:mem:test?shutdown=true")
       .put("driverClassName", "org.h2.Driver")
       .put("minSize", 1)

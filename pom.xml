@@ -120,13 +120,6 @@
       <version>0.2</version>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>io.agroal</groupId>
-      <artifactId>agroal-hikari</artifactId>
-      <version>0.2</version>
-      <optional>true</optional>
-    </dependency>
-
     <!-- Testing -->
     <dependency>
       <groupId>junit</groupId>
