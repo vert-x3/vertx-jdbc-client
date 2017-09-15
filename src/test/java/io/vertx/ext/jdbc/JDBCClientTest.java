@@ -81,6 +81,88 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testOneOffSimple() {
+    client.execute("SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID", res -> {
+      if (res.failed()) {
+        fail(res.cause());
+      } else {
+        final ResultSet resultSet = res.result();
+
+        assertNotNull(resultSet);
+        assertEquals(2, resultSet.getResults().size());
+        assertEquals("ID", resultSet.getColumnNames().get(0));
+        assertEquals("FNAME", resultSet.getColumnNames().get(1));
+        assertEquals("LNAME", resultSet.getColumnNames().get(2));
+        JsonArray result0 = resultSet.getResults().get(0);
+        assertEquals(1, (int) result0.getInteger(0));
+        assertEquals("john", result0.getString(1));
+        assertEquals("doe", result0.getString(2));
+        JsonArray result1 = resultSet.getResults().get(1);
+        assertEquals(2, (int) result1.getInteger(0));
+        assertEquals("jane", result1.getString(1));
+        assertEquals("doe", result1.getString(2));
+        testComplete();
+      }
+    });
+    await();
+  }
+
+  @Test
+  public void testOneOffSimpleSingle() {
+    client.executeSingle("SELECT ID, FNAME, LNAME FROM select_table WHERE ID = 1", res -> {
+      if (res.failed()) {
+        fail(res.cause());
+      } else {
+        final JsonArray row = res.result();
+
+        assertNotNull(row);
+        assertEquals(1, (int) row.getInteger(0));
+        assertEquals("john", row.getString(1));
+        assertEquals("doe", row.getString(2));
+        testComplete();
+      }
+    });
+    await();
+  }
+
+  @Test
+  public void testOneOffSimpleRow() {
+    client.executeSingleRow("SELECT ID, FNAME, LNAME FROM select_table WHERE ID = 1", res -> {
+      if (res.failed()) {
+        fail(res.cause());
+      } else {
+        final JsonObject row = res.result();
+
+        assertNotNull(row);
+        assertEquals(1, (int) row.getInteger("ID"));
+        assertEquals("john", row.getString("FNAME"));
+        assertEquals("doe", row.getString("LNAME"));
+        testComplete();
+      }
+    });
+    await();
+  }
+
+  @Test
+  public void testOneOffInsert() {
+    client.execute("INSERT INTO select_table (ID, FNAME, LNAME) VALUES (?, ?, ?)", new JsonArray().add(3).add("Paulo").add("Lopes"), res -> {
+      if (res.failed()) {
+        fail(res.cause());
+      } else {
+
+        client.execute("DELETE FROM select_table WHERE ID = ?", new JsonArray().add(3), res2 -> {
+          if (res2.failed()) {
+            fail(res2.cause());
+          } else {
+            testComplete();
+          }
+        });
+      }
+    });
+    await();
+  }
+
+  @Test
   public void testSelect() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().query(sql, onSuccess(resultSet -> {
