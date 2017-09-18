@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
@@ -26,12 +27,11 @@ import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.ext.sql.*;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.UUID;
@@ -45,12 +45,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class JDBCClientImpl implements JDBCClient {
 
+  @FunctionalInterface
+  private interface InContextExec<T> {
+    T execute(Context ctx, Object execMetric, Connection conn) throws SQLException;
+  }
+
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
   private final Vertx vertx;
   private final DataSourceHolder holder;
 
-  // We use this executor to execute getConnection requests
+  // We use this executor to execute getConnectionAndExec requests
   private final ExecutorService exec;
   private final DataSource ds;
   private final PoolMetrics metrics;
@@ -109,12 +114,61 @@ public class JDBCClientImpl implements JDBCClient {
 
   @Override
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
+    return getConnectionAndExec(
+      (ctx, execMetric, conn) ->
+        new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric), false, handler);
+  }
+
+  @Override
+  public JDBCClientImpl query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
+    return queryWithParams(sql, null, resultHandler);
+  }
+
+  @Override
+  public JDBCClientImpl queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
+    return getConnectionAndExec((ctx, execMetric, conn) -> {
+      io.vertx.ext.sql.ResultSet res = null;
+
+      try (PreparedStatement statement = conn.prepareStatement(sql)) {
+        helper.fillStatement(statement, in);
+        boolean retResult = statement.execute();
+        if (retResult) {
+          io.vertx.ext.sql.ResultSet ref = null;
+          // normal return only
+          while (retResult) {
+            try (java.sql.ResultSet rs = statement.getResultSet()) {
+              // 1st rs
+              if (ref == null) {
+                res = helper.asList(rs);
+                ref = res;
+              } else {
+                ref.setNext(helper.asList(rs));
+                ref = ref.getNext();
+              }
+            }
+            retResult = statement.getMoreResults();
+          }
+        }
+      }
+
+      return res;
+    }, true, resultHandler);
+  }
+
+  /**
+   * Gets a connection from the pool.
+   *
+   * @param inContextExec what to run inside the context once the connection is available
+   * @param autoClose if true the connection will be closed after the inContextExec is executed
+   * @param handler a handler to collect the result
+   */
+  private <T> JDBCClientImpl getConnectionAndExec(InContextExec<T> inContextExec, boolean autoClose, Handler<AsyncResult<T>> handler) {
     Context ctx = vertx.getOrCreateContext();
     boolean enabled = metrics != null && metrics.isEnabled();
     Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
-      Future<SQLConnection> res = Future.future();
+      Future<T> res = Future.future();
       try {
         /*
         This can block until a connection is free.
@@ -125,17 +179,33 @@ public class JDBCClientImpl implements JDBCClient {
         deadlocks that might occur there.
         If the *service code* internally blocks waiting for a resource that might be obtained by *user code*, then
         this can cause deadlock, so the service should ensure it never does this, by executing such code
-        (e.g. getConnection) on a different thread to the worker pool.
+        (e.g. getConnectionAndExec) on a different thread to the worker pool.
         We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
         other important operations from occurring (e.g. async file access)
         */
-        Connection conn = ds.getConnection();
+        final T inContextExecResult;
         Object execMetric = null;
-        if (metrics != null) {
-          execMetric = metrics.begin(queueMetric);
+
+        if (autoClose) {
+          try (Connection conn = ds.getConnection()) {
+
+            if (metrics != null) {
+              execMetric = metrics.begin(queueMetric);
+            }
+            inContextExecResult = inContextExec.execute(ctx, execMetric, conn);
+            if (metrics != null) {
+              metrics.end(execMetric, true);
+            }
+          }
+        } else {
+          Connection conn = ds.getConnection();
+          if (metrics != null) {
+            execMetric = metrics.begin(queueMetric);
+          }
+          inContextExecResult = inContextExec.execute(ctx, execMetric, conn);
         }
-        // wrap it
-        res.complete(new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric));
+
+        res.complete(inContextExecResult);
       } catch (SQLException e) {
         if (metrics != null) {
           metrics.rejected(queueMetric);
@@ -144,6 +214,7 @@ public class JDBCClientImpl implements JDBCClient {
       }
       ctx.runOnContext(v -> res.setHandler(handler));
     });
+
     return this;
   }
 
@@ -232,9 +303,9 @@ public class JDBCClientImpl implements JDBCClient {
     synchronized ExecutorService exec() {
       if (exec == null) {
         exec = new ThreadPoolExecutor(1, 1,
-            1000L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
+          1000L, TimeUnit.MILLISECONDS,
+          new LinkedBlockingQueue<>(),
+          (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
       }
       return exec;
     }

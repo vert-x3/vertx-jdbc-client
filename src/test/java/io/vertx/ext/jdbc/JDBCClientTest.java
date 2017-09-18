@@ -104,6 +104,58 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testSelectOneShot() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    client.query(sql, query -> {
+      assertFalse(query.failed());
+      final ResultSet resultSet = query.result();
+      assertNotNull(resultSet);
+      assertEquals(2, resultSet.getResults().size());
+      assertEquals("ID", resultSet.getColumnNames().get(0));
+      assertEquals("FNAME", resultSet.getColumnNames().get(1));
+      assertEquals("LNAME", resultSet.getColumnNames().get(2));
+      JsonArray result0 = resultSet.getResults().get(0);
+      assertEquals(1, (int) result0.getInteger(0));
+      assertEquals("john", result0.getString(1));
+      assertEquals("doe", result0.getString(2));
+      JsonArray result1 = resultSet.getResults().get(1);
+      assertEquals(2, (int) result1.getInteger(0));
+      assertEquals("jane", result1.getString(1));
+      assertEquals("doe", result1.getString(2));
+      testComplete();
+    });
+
+    await();
+  }
+
+  @Test
+  public void testSelectOneShotFail() {
+    String sql = "SELECTA ID, FNAME, LNAME FROM select_table ORDER BY ID";
+    client.query(sql, query -> {
+      assertTrue(query.failed());
+      testComplete();
+    });
+
+    await();
+  }
+
+  @Test
+  public void testSelectOneShotSingle() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE ID = 2";
+    client.querySingle(sql, query -> {
+      assertFalse(query.failed());
+      final JsonArray row = query.result();
+      assertNotNull(row);
+      assertEquals(2, (int) row.getInteger(0));
+      assertEquals("jane", row.getString(1));
+      assertEquals("doe", row.getString(2));
+      testComplete();
+    });
+
+    await();
+  }
+
+  @Test
   public void testStream() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);
