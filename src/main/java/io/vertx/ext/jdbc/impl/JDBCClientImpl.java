@@ -33,6 +33,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -152,6 +153,21 @@ public class JDBCClientImpl implements JDBCClient {
       }
 
       return res;
+    }, true, resultHandler);
+  }
+
+  @Override
+  public JDBCClientImpl update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    return updateWithParams(sql, null, resultHandler);
+  }
+
+  @Override
+  public JDBCClientImpl updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    return getConnectionAndExec((ctx, execMetric, conn) -> {
+      try (PreparedStatement statement = conn.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+        helper.fillStatement(statement, in);
+        return new UpdateResult(statement.executeUpdate(), null);
+      }
     }, true, resultHandler);
   }
 
