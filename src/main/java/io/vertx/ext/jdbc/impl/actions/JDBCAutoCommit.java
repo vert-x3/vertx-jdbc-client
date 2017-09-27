@@ -35,7 +35,7 @@ public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
+  public Void execute(Connection conn) throws SQLException {
     conn.setAutoCommit(autoCommit);
     // setting the auto commit to false triggers a new transaction to begin
     if (!autoCommit) {

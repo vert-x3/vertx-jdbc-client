@@ -33,7 +33,7 @@ public class JDBCRollback extends AbstractJDBCAction<Void> {
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
+  public Void execute(Connection conn) throws SQLException {
     conn.rollback();
     return null;
   }

@@ -38,7 +38,7 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
   }
 
   @Override
-  protected Void execute(Connection conn) throws SQLException {
+  public Void execute(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
       // apply statement options
       applyStatementOptions(stmt);

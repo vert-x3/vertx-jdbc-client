@@ -66,7 +66,7 @@ public abstract class AbstractJDBCAction<T> {
     ctx.executeBlocking(future -> handle(conn, future), statementsQueue, resultHandler);
   }
 
-  protected abstract T execute(Connection conn) throws SQLException;
+  public abstract T execute(Connection conn) throws SQLException;
 
   protected abstract String name();
 

@@ -81,7 +81,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
   }
 
   @Override
-  protected UpdateResult execute(Connection conn) throws SQLException {
+  public UpdateResult execute(Connection conn) throws SQLException {
     try (PreparedStatement statement = prepareStatement(conn)) {
       // apply statement options
       applyStatementOptions(statement);

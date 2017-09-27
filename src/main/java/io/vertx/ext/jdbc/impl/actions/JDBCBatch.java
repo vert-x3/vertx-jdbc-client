@@ -63,7 +63,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   }
 
   @Override
-  protected List<Integer> execute(Connection conn) throws SQLException {
+  public List<Integer> execute(Connection conn) throws SQLException {
     final int[] result;
 
     switch (type) {

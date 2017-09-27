@@ -36,13 +36,13 @@ import java.util.List;
  */
 class JDBCConnectionImpl implements SQLConnection {
 
-  private static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
+  static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
 
   private final Vertx vertx;
-  private final Connection conn;
+  final Connection conn;
   private final ContextInternal ctx;
   private final PoolMetrics metrics;
-  private final Object metric;
+  final Object metric;
   private final TaskQueue statementsQueue = new TaskQueue();
 
   private final JDBCStatementHelper helper;

@@ -47,7 +47,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
   }
 
   @Override
-  protected SQLRowStream execute(Connection conn) throws SQLException {
+  public SQLRowStream execute(Connection conn) throws SQLException {
     PreparedStatement st = null;
 
     try {

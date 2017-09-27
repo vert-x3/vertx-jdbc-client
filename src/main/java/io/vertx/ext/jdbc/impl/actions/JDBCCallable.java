@@ -42,7 +42,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   }
 
   @Override
-  protected io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
+  public io.vertx.ext.sql.ResultSet execute(Connection conn) throws SQLException {
     try (CallableStatement statement = conn.prepareCall(sql)) {
       // apply statement options
       applyStatementOptions(statement);
