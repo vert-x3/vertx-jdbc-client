@@ -35,42 +35,38 @@ import java.sql.Statement;
 public abstract class AbstractJDBCAction<T> {
 
   protected final Vertx vertx;
-  protected final Connection conn;
   protected final SQLOptions options;
   protected final ContextInternal ctx;
-  protected final TaskQueue statementsQueue;
   protected final JDBCStatementHelper helper;
 
-  protected AbstractJDBCAction(Vertx vertx, Connection conn, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue) {
-    this(vertx, null, conn, options, ctx, statementsQueue);
+  protected AbstractJDBCAction(Vertx vertx, SQLOptions options, ContextInternal ctx) {
+    this(vertx, null, options, ctx);
   }
 
-  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, Connection conn, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue) {
+  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx) {
     this.vertx = vertx;
-    this.conn = conn;
     this.options = options;
     this.ctx = ctx;
-    this.statementsQueue = statementsQueue;
     this.helper = helper;
   }
 
-  private void handle(Future<T> future) {
+  private void handle(Connection conn, Future<T> future) {
     try {
       // apply connection options
-      applyConnectionOptions();
+      applyConnectionOptions(conn);
       // execute
-      T result = execute();
+      T result = execute(conn);
       future.complete(result);
     } catch (SQLException e) {
       future.fail(e);
     }
   }
 
-  public void execute(Handler<AsyncResult<T>> resultHandler) {
-    ctx.executeBlocking(this::handle, statementsQueue, resultHandler);
+  public void execute(Connection conn, TaskQueue statementsQueue, Handler<AsyncResult<T>> resultHandler) {
+    ctx.executeBlocking(future -> handle(conn, future), statementsQueue, resultHandler);
   }
 
-  protected abstract T execute() throws SQLException;
+  protected abstract T execute(Connection conn) throws SQLException;
 
   protected abstract String name();
 
@@ -88,7 +84,7 @@ public abstract class AbstractJDBCAction<T> {
     }
   }
 
-  private void applyConnectionOptions() throws SQLException {
+  private void applyConnectionOptions(Connection conn) throws SQLException {
     if (options != null) {
       if (options.isReadOnly()) {
         conn.setReadOnly(true);

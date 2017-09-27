@@ -18,7 +18,6 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 
@@ -43,20 +42,20 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   private final List<JsonArray> in;
   private final List<JsonArray> out;
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, List<String> sql) {
-    this(vertx, helper, connection, options, ctx, statementsQueue, Type.STATEMENT, sql, null, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, List<String> sql) {
+    this(vertx, helper, options, ctx, Type.STATEMENT, sql, null, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, List<JsonArray> in) {
-    this(vertx, helper, connection, options, ctx, statementsQueue, Type.PREPARED, Collections.singletonList(sql), in, null);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in) {
+    this(vertx, helper, options, ctx, Type.PREPARED, Collections.singletonList(sql), in, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, List<JsonArray> in, List<JsonArray> out) {
-    this(vertx, helper, connection, options, ctx, statementsQueue, Type.CALLABLE, Collections.singletonList(sql), in, out);
+  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in, List<JsonArray> out) {
+    this(vertx, helper, options, ctx, Type.CALLABLE, Collections.singletonList(sql), in, out);
   }
 
-  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
-    super(vertx, helper, connection, options, ctx, statementsQueue);
+  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
+    super(vertx, helper, options, ctx);
     this.type = type;
     this.sql = sql;
     this.in = in;
@@ -64,7 +63,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   }
 
   @Override
-  protected List<Integer> execute() throws SQLException {
+  protected List<Integer> execute(Connection conn) throws SQLException {
     final int[] result;
 
     switch (type) {

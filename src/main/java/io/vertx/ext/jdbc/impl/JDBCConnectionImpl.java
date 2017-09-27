@@ -66,61 +66,61 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCAutoCommit(vertx, conn, options, ctx, statementsQueue, autoCommit).execute(resultHandler);
+    new JDBCAutoCommit(vertx, options, ctx, autoCommit).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCExecute(vertx, conn, options, ctx, statementsQueue, sql).execute(resultHandler);
+    new JDBCExecute(vertx, options, ctx, sql).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, helper, conn, options, ctx, statementsQueue, sql, null).execute(resultHandler);
+    new JDBCQuery(vertx, helper, options, ctx, sql, null).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, options, ctx, statementsQueue, sql, null).execute(handler);
+    new StreamQuery(vertx, helper, options, ctx, statementsQueue, sql, null).execute(conn, statementsQueue,  handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(vertx, helper, conn, options, ctx, statementsQueue, sql, params).execute(handler);
+    new StreamQuery(vertx, helper, options, ctx, statementsQueue, sql, params).execute(conn, statementsQueue,  handler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(vertx, helper, conn, options, ctx, statementsQueue, sql, params).execute(resultHandler);
+    new JDBCQuery(vertx, helper, options, ctx, sql, params).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, options, ctx, statementsQueue, sql, null).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, options, ctx, sql, null).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(vertx, helper, conn, options, ctx, statementsQueue, sql, params).execute(resultHandler);
+    new JDBCUpdate(vertx, helper, options, ctx, sql, params).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, helper, conn, options, ctx, statementsQueue, sql, null, null).execute(resultHandler);
+    new JDBCCallable(vertx, helper, options, ctx, sql, null, null).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(vertx, helper, conn, options, ctx, statementsQueue, sql, params, outputs).execute(resultHandler);
+    new JDBCCallable(vertx, helper, options, ctx, sql, params, outputs).execute(conn, statementsQueue, resultHandler);
     return this;
   }
 
@@ -129,7 +129,7 @@ class JDBCConnectionImpl implements SQLConnection {
     if (metrics != null) {
       metrics.end(metric, true);
     }
-    new JDBCClose(vertx, conn, options, ctx, statementsQueue).execute(handler);
+    new JDBCClose(vertx, options, ctx).execute(conn, statementsQueue, handler);
   }
 
   @Override
@@ -143,13 +143,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
-    new JDBCCommit(vertx, conn, options, ctx, statementsQueue).execute(handler);
+    new JDBCCommit(vertx, options, ctx).execute(conn, statementsQueue,  handler);
     return this;
   }
 
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
-    new JDBCRollback(vertx, conn, options, ctx, statementsQueue).execute(handler);
+    new JDBCRollback(vertx, options, ctx).execute(conn, statementsQueue,  handler);
     return this;
   }
 
@@ -174,19 +174,19 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, options, ctx, statementsQueue, sqlStatements).execute(handler);
+    new JDBCBatch(vertx, helper, options, ctx, sqlStatements).execute(conn, statementsQueue,  handler);
     return this;
   }
 
   @Override
   public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, options, ctx, statementsQueue, statement, args).execute(handler);
+    new JDBCBatch(vertx, helper, options, ctx, statement, args).execute(conn, statementsQueue,  handler);
     return this;
   }
 
   @Override
   public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(vertx, helper, conn, options, ctx, statementsQueue, statement, inArgs, outArgs).execute(handler);
+    new JDBCBatch(vertx, helper, options, ctx, statement, inArgs, outArgs).execute(conn, statementsQueue,  handler);
     return this;
   }
 

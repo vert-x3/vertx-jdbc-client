@@ -37,15 +37,17 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
   private final String sql;
   private final JsonArray in;
+  private final TaskQueue statementsQueue;
 
-  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, Connection connection, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
-    super(vertx, helper, connection, options, ctx, statementsQueue);
+  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
+    super(vertx, helper, options, ctx);
     this.sql = sql;
     this.in = in;
+    this.statementsQueue = statementsQueue;
   }
 
   @Override
-  protected SQLRowStream execute() throws SQLException {
+  protected SQLRowStream execute(Connection conn) throws SQLException {
     PreparedStatement st = null;
 
     try {
@@ -67,7 +69,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
           fetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
         }
 
-        return new JDBCSQLRowStream(ctx, statementsQueue, st, rs, fetchSize);
+        return new JDBCSQLRowStream(ctx, this.statementsQueue, st, rs, fetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();
