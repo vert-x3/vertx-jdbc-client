@@ -17,18 +17,18 @@
 package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.ext.sql.*;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -108,13 +108,67 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   @Override
-  public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    Context ctx = vertx.getOrCreateContext();
+  public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, null), resultHandler);
+    return this;
+  }
+
+  @Override
+  public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, in), resultHandler);
+    return this;
+  }
+
+  @Override
+  public JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, null), resultHandler);
+    return this;
+  }
+
+  @Override
+  public JDBCClient queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, in), resultHandler);
+    return this;
+  }
+
+  private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
+    getConnection(ctx, ar1 -> {
+      Future<T> fut = Future.future();
+      fut.setHandler(ar2 -> vertx.runOnContext(v -> handler.handle(ar2)));
+      if (ar1.succeeded()) {
+        JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
+        try {
+          T result = action.execute(conn.conn);
+          fut.complete(result);
+        } catch (Exception e) {
+          fut.fail(e);
+        } finally {
+          if (metrics != null) {
+            metrics.end(conn.metric, true);
+          }
+          try {
+            conn.conn.close();
+          } catch (Exception e) {
+            JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
+          }
+        }
+      } else {
+        fut.fail(ar1.cause());
+      }
+    });
+  }
+
+  private void getConnection(Context ctx, Handler<AsyncResult<SQLConnection>> handler) {
     boolean enabled = metrics != null && metrics.isEnabled();
     Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
       Future<SQLConnection> res = Future.future();
+      res.setHandler(handler);
       try {
         /*
         This can block until a connection is free.
@@ -142,8 +196,13 @@ public class JDBCClientImpl implements JDBCClient {
         }
         res.fail(e);
       }
-      ctx.runOnContext(v -> res.setHandler(handler));
     });
+  }
+
+  @Override
+  public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
+    Context ctx = vertx.getOrCreateContext();
+    getConnection(ctx, ar -> ctx.runOnContext(v -> handler.handle(ar)));
     return this;
   }
 
