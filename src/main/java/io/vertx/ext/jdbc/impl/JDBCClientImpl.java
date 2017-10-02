@@ -19,21 +19,16 @@ package io.vertx.ext.jdbc.impl;
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.JDBCExecute;
-import io.vertx.ext.jdbc.impl.actions.JDBCQuery;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.ext.sql.*;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -113,9 +108,16 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   @Override
-  public JDBCClient execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
+  public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCExecute(vertx, null, ctx, sql), resultHandler);
+    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, null), resultHandler);
+    return this;
+  }
+
+  @Override
+  public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 
@@ -123,6 +125,13 @@ public class JDBCClientImpl implements JDBCClient {
   public JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
     ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, null), resultHandler);
+    return this;
+  }
+
+  @Override
+  public JDBCClient queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 

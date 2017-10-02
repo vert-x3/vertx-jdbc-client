@@ -16,15 +16,11 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
-import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLClient;
 
 import javax.sql.DataSource;
@@ -94,10 +90,4 @@ public interface JDBCClient extends SQLClient {
   static JDBCClient create(Vertx vertx, DataSource dataSource) {
     return new JDBCClientImpl(vertx, dataSource);
   }
-
-  @Fluent
-  JDBCClient execute(String sql, Handler<AsyncResult<Void>> resultHandler);
-
-  @Fluent
-  JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 }

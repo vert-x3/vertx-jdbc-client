@@ -106,7 +106,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
   @Test
   public void testSelectOneShot() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
-    ((JDBCClient)client).query(sql, query -> {
+    client.query(sql, query -> {
       assertFalse(query.failed());
       final ResultSet resultSet = query.result();
       assertNotNull(resultSet);
@@ -131,8 +131,24 @@ public class JDBCClientTest extends JDBCClientTestBase {
   @Test
   public void testSelectOneShotFail() {
     String sql = "SELECTA ID, FNAME, LNAME FROM select_table ORDER BY ID";
-    ((JDBCClient)client).query(sql, query -> {
+    client.query(sql, query -> {
       assertTrue(query.failed());
+      testComplete();
+    });
+
+    await();
+  }
+
+  @Test
+  public void testSelectOneShotSingle() {
+    String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE ID = 2";
+    client.querySingle(sql, query -> {
+      assertFalse(query.failed());
+      final JsonArray row = query.result();
+      assertNotNull(row);
+      assertEquals(2, (int) row.getInteger(0));
+      assertEquals("jane", row.getString(1));
+      assertEquals("doe", row.getString(2));
       testComplete();
     });
 
