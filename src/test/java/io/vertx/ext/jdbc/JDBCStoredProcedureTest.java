@@ -132,6 +132,17 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
     await();
   }
 
+  @Test
+  public void testReturnIds() {
+    connection().update("insert into customers(firstname, lastname) values('Paulo', 'Lopes')", onSuccess(updateResult -> {
+      assertNotNull(updateResult);
+      assertNotNull(updateResult.getKeys());
+      assertTrue(updateResult.getKeys().size() > 0);
+      testComplete();
+    }));
+    await();
+  }
+
   private SQLConnection connection() {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<SQLConnection> ref = new AtomicReference<>();
