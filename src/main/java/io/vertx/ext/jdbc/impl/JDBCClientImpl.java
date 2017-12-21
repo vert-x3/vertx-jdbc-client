@@ -183,17 +183,35 @@ public class JDBCClientImpl implements JDBCClient {
         We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
         other important operations from occurring (e.g. async file access)
         */
-        Connection conn = ds.getConnection();
-        Object execMetric = null;
-        if (metrics != null) {
-          execMetric = metrics.begin(queueMetric);
+        try {
+          Object execMetric = null;
+          if (metrics != null) {
+            execMetric = metrics.begin(queueMetric);
+          } catch (Exception e) {
+            if (metrics != null) {
+              metrics.rejected(queueMetric);
+            }
+          }
+        }
+        Connection conn = null;
+        try {
+          conn = ds.getConnection();
+        } catch (Exception e) {
+          res.fail(e);
+          return;
         }
         // wrap it
-        res.complete(new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric));
-      } catch (SQLException e) {
-        if (metrics != null) {
-          metrics.rejected(queueMetric);
+        try {
+          res.complete(new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric));
+        } catch (Exception e) {
+          if (conn != null) {
+            try {
+              conn.close();
+            } catch(Exception e) {}
+          }
+          res.fail(e);
         }
+      } catch (Exception e) {        
         res.fail(e);
       }
     });
