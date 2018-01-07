@@ -44,6 +44,9 @@ public class C3P0DataSourceProvider implements DataSourceProvider {
     Integer maxStatements = config.getInteger("max_statements");
     Integer maxStatementsPerConnection = config.getInteger("max_statements_per_connection");
     Integer maxIdleTime = config.getInteger("max_idle_time");
+    Integer acquireRetryAttempts = config.getInteger("acquire_retry_attempts");
+    Integer acquireRetryDelay = config.getInteger("acquire_retry_delay");
+    Boolean breakAfterAcquireFailure = config.getBoolean("break_after_acquire_failure");
 
     // If you want to configure any other C3P0 properties you can add a file c3p0.properties to the classpath
     ComboPooledDataSource cpds = new ComboPooledDataSource();
@@ -78,6 +81,15 @@ public class C3P0DataSourceProvider implements DataSourceProvider {
     }
     if (maxIdleTime != null) {
       cpds.setMaxIdleTime(maxIdleTime);
+    }
+    if(acquireRetryAttempts != null){
+      cpds.setAcquireRetryAttempts(acquireRetryAttempts);
+    }
+    if(acquireRetryDelay != null){
+      cpds.setAcquireRetryDelay(acquireRetryDelay);
+    }
+    if(breakAfterAcquireFailure != null){
+      cpds.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
     }
     return cpds;
   }
