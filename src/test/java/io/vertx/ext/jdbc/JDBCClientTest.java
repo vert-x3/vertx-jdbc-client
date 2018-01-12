@@ -129,6 +129,18 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testSelectOneContext() {
+    Context context = vertx.getOrCreateContext();
+    context.runOnContext(v -> {
+      client.query("VALUES (CURRENT_TIMESTAMP)", onSuccess(query -> {
+        assertEquals(context, vertx.getOrCreateContext());
+        testComplete();
+      }));
+    });
+    await();
+  }
+
+  @Test
   public void testSelectOneShotFail() {
     String sql = "SELECTA ID, FNAME, LNAME FROM select_table ORDER BY ID";
     client.query(sql, query -> {

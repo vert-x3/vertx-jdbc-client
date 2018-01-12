@@ -16,7 +16,12 @@
 
 package io.vertx.ext.jdbc.impl;
 
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
@@ -26,9 +31,15 @@ import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.impl.actions.*;
+import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
+import io.vertx.ext.jdbc.impl.actions.JDBCQuery;
+import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCUpdate;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.*;
+import io.vertx.ext.sql.ResultSet;
+import io.vertx.ext.sql.SQLClient;
+import io.vertx.ext.sql.SQLConnection;
+import io.vertx.ext.sql.UpdateResult;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -138,7 +149,7 @@ public class JDBCClientImpl implements JDBCClient {
   private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
     getConnection(ctx, ar1 -> {
       Future<T> fut = Future.future();
-      fut.setHandler(ar2 -> vertx.runOnContext(v -> handler.handle(ar2)));
+      fut.setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
       if (ar1.succeeded()) {
         JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
         try {
