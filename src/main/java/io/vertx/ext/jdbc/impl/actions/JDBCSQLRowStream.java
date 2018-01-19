@@ -29,7 +29,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -115,9 +119,10 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public SQLRowStream handler(Handler<JsonArray> handler) {
-    this.handler = handler;
-    // start pumping data once the handler is set
-    resume();
+    if ((this.handler = handler) != null) {
+      // start pumping data once the handler is set
+      resume();
+    }
     return this;
   }
 
