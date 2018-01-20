@@ -2,6 +2,7 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.docgen.Source;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.SQLClient;
@@ -13,6 +14,7 @@ import javax.sql.DataSource;
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
+@Source
 public class JDBCExamples {
 
   public void exampleCreateDefault(Vertx vertx, JsonObject config) {
