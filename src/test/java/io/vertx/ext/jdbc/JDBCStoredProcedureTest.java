@@ -133,6 +133,47 @@ public class JDBCStoredProcedureTest extends VertxTestBase {
   }
 
   @Test
+  public void testStoredProcedure4() {
+    client.callWithParams("{call times2(?)}", new JsonArray().add(2), new JsonArray().add("INTEGER"), onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(0, resultSet.getResults().size());
+      assertEquals(new Integer(4), resultSet.getOutput().getInteger(0));
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStoredProcedure5() {
+    client.callWithParams("{call time__s2(?)}", new JsonArray().add(2), new JsonArray().add("INTEGER"), onFailure(t -> {
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStoredProcedure6() {
+    client.callWithParams("{call an_hour_before()}", null, null, onSuccess(resultSet -> {
+      assertNotNull(resultSet);
+      assertEquals(1, resultSet.getResults().size());
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
+  public void testStoredProcedure7() {
+    client.callWithParams("{call an_hour_____before()}", null, null, onFailure(t -> {
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
   public void testReturnIds() {
     connection().update("insert into customers(firstname, lastname) values('Paulo', 'Lopes')", onSuccess(updateResult -> {
       assertNotNull(updateResult);
