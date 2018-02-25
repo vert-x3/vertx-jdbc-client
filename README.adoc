@@ -5,9 +5,4 @@ image:https://vertx.ci.cloudbees.com/buildStatus/icon?job=vert.x3-jdbc-client["B
 This provides an asynchronous interface around a JDBC datasource so you can access data in any
 database for which there is a JDBC driver.
 
-Please see the in source asciidoc documentation or the main documentation on the web-site for a full description:
-
-* Web-site docs
-* link:src/main/asciidoc/java/index.adoc[Java in-source docs]
-* link:src/main/asciidoc/js/index.adoc[JavaScript in-source docs]
-* link:src/main/asciidoc/groovy/index.adoc[Groovy in-source docs]
+Please see the in link:src/main/asciidoc/index.adoc[source] documentation or the main documentation on the http://vertx.io/docs/#data_access[web-site] for a full description:
