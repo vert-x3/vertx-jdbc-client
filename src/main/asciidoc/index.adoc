@@ -147,7 +147,7 @@ Assuming the C3P0 implementation is being used (the default), the following extr
 `max_idle_time`:: number of seconds after which an idle connection will be closed - default is `0` (never expire).
 `acquire_retry_attempts`:: number of times to try to acquire a new connection before giving up - default is `30`.
 `acquire_retry_delay`:: time in milliseconds between retry attempt - default is `1000`.
-`break_after_acquire_failure`:: if true, a pooled DataSource will declare itself broken and be permanently closed if a connection cannot be obtained from the database after making acquire_retry_attempts to acquire one - default is `false`.
+`break_after_acquire_failure`:: if true, a pooled `DataSource` will declare itself broken and be permanently closed if a connection cannot be obtained from the database after making acquire_retry_attempts to acquire one - default is `false`.
 
 Other Connection Pool providers are:
 
