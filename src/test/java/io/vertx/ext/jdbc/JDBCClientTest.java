@@ -21,11 +21,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.SQLOptions;
-import io.vertx.ext.sql.UpdateResult;
+import io.vertx.ext.sql.*;
 import io.vertx.rx.java.RxHelper;
 import org.junit.After;
 import org.junit.Before;
@@ -78,6 +74,66 @@ public class JDBCClientTest extends JDBCClientTestBase {
   public void testGetNativeConn() {
     assertNotNull(connection().unwrap());
     testComplete();
+  }
+
+  private SQLClient checker() {
+    return new CloseConnectionChecker(client, v -> {
+      System.out.println("connection closed");
+      testComplete();
+    });
+  }
+
+  @Test
+  public void testOneShotStream1() {
+    final AtomicInteger cnt = new AtomicInteger(0);
+    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
+      res.resultSetClosedHandler(v -> {
+        res.moreResults();
+      }).handler(row -> {
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        assertEquals(200, cnt.get());
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
+    await();
+  }
+
+  @Test
+  public void testOneShotStream2() {
+    final AtomicInteger cnt = new AtomicInteger(0);
+    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
+      res.resultSetClosedHandler(v -> {
+        res.close();
+      }).handler(row -> {
+        cnt.incrementAndGet();
+      }).endHandler(v -> {
+        fail(new RuntimeException("wrong state"));
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
+    await();
+  }
+
+  @Test
+  public void testOneShotStream3() {
+    final AtomicInteger cnt = new AtomicInteger(0);
+    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
+      res.resultSetClosedHandler(v -> {
+        fail(new RuntimeException("wrong state"));
+      }).handler(row -> {
+        if(cnt.incrementAndGet() > 100) {
+          res.close();
+        }
+      }).endHandler(v -> {
+        fail(new RuntimeException());
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
+    await();
   }
 
   @Test
