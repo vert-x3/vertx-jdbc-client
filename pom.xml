@@ -15,7 +15,6 @@
   <properties>
     <stack.version>3.6.0-SNAPSHOT</stack.version>
     <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
-    <codegen.rxjava.deprecated>true</codegen.rxjava.deprecated>
   </properties>
 
   <dependencyManagement>
