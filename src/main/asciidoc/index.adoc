@@ -12,8 +12,8 @@ To use this project, add the following dependency to the _dependencies_ section 
 [source,xml,subs="+attributes"]
 ----
 <dependency>
-  <groupId>${maven.groupId}</groupId>
-  <artifactId>${maven.artifactId}</artifactId>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-jdbc-client</artifactId>
   <version>${maven.version}</version>
 </dependency>
 ----
@@ -22,7 +22,7 @@ To use this project, add the following dependency to the _dependencies_ section 
 
 [source,groovy,subs="+attributes"]
 ----
-compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
+compile 'io.vertx:vertx-jdbc-client:${maven.version}'
 ----
 
 == Creating a the client
