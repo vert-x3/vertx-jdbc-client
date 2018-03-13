@@ -46,11 +46,6 @@
       <artifactId>vertx-docgen</artifactId>
       <optional>true</optional>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codetrans</artifactId>
-      <optional>true</optional>
-    </dependency>
 
     <dependency>
       <!-- this dependency is aligned with the vert.x core one do avoid dependencies to get another version -->
