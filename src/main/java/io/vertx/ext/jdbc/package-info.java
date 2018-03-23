@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-@ModuleGen(name = "vertx-jdbc", groupPackage = "io.vertx")
+@ModuleGen(name = "vertx-jdbc-client", groupPackage = "io.vertx")
 package io.vertx.ext.jdbc;
 
 import io.vertx.codegen.annotations.ModuleGen;
