@@ -1,6 +1,5 @@
 package io.vertx.ext.jdbc;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
@@ -54,19 +53,19 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
     MetricsOptions options = new MetricsOptions().setEnabled(true);
     options.setFactory(new VertxMetricsFactory() {
       @Override
-      public VertxMetrics metrics(Vertx vertx, VertxOptions options) {
+      public VertxMetrics metrics(VertxOptions options) {
         return new DummyVertxMetrics() {
           @Override
           public boolean isEnabled() {
             return true;
           }
           @Override
-          public <P> PoolMetrics<?> createMetrics(P pool, String poolType, String poolName, int maxPoolSize) {
-            if (pool instanceof DataSource) {
+          public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
+            if (poolType.equals("datasource")) {
               assertEquals("datasource", poolType);
               return new FakePoolMetrics(poolName, maxPoolSize);
             } else {
-              return super.createMetrics(pool, poolType, poolName, maxPoolSize);
+              return super.createPoolMetrics(poolType, poolName, maxPoolSize);
             }
           }
         };
