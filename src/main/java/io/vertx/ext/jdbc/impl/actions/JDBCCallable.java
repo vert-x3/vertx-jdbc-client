@@ -97,7 +97,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         if (value == null) {
           result.addNull();
         } else if (value instanceof ResultSet) {
-          result.add(helper.asList((ResultSet) value));
+          result.add(helper.asList((ResultSet) value).toJson());
         } else {
           result.add(JDBCStatementHelper.convertSqlValue(value));
         }
