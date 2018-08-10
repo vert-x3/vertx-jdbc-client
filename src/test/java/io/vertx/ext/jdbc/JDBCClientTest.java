@@ -17,15 +17,12 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.Context;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
-import io.vertx.ext.sql.SQLOptions;
-import io.vertx.ext.sql.UpdateResult;
+import io.vertx.ext.sql.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
@@ -87,40 +85,34 @@ public class JDBCClientTest extends JDBCClientTestBase {
 
   @Test
   public void testOneShotStream1() {
-    final AtomicInteger cnt = new AtomicInteger(0);
-    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
-      res.resultSetClosedHandler(v -> {
-        res.moreResults();
-      }).handler(row -> {
-        cnt.incrementAndGet();
-      }).endHandler(v -> {
-        assertEquals(200, cnt.get());
-      }).exceptionHandler(t -> {
-        fail(t);
-      });
-    }));
-    await();
+    testOneShotStream1(res -> null);
   }
 
   @Test
   public void testOneShotStream2() {
+    testOneShotStream1(res -> v -> res.moreResults());
+  }
+
+  @Test
+  public void testOneShotStream3() {
+    testOneShotStream1(res -> v -> res.close());
+  }
+
+  private void testOneShotStream1(Function<SQLRowStream, Handler<Void>> h) {
     final AtomicInteger cnt = new AtomicInteger(0);
     checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
-      res.resultSetClosedHandler(v -> {
-        res.close();
-      }).handler(row -> {
-        cnt.incrementAndGet();
-      }).endHandler(v -> {
-        fail(new RuntimeException("wrong state"));
-      }).exceptionHandler(t -> {
-        fail(t);
-      });
+      res.resultSetClosedHandler(h.apply(res))
+        .handler(row -> {
+          cnt.incrementAndGet();
+        }).endHandler(v -> {
+        assertEquals(200, cnt.get());
+      }).exceptionHandler(this::fail);
     }));
     await();
   }
 
   @Test
-  public void testOneShotStream3() {
+  public void testOneShotStream4() {
     final AtomicInteger cnt = new AtomicInteger(0);
     checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
       res.resultSetClosedHandler(v -> {
