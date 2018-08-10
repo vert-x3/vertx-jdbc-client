@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -297,17 +298,39 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
-  public void testStreamPauseResume() {
+  public void testStreamPauseResumeFlowControl() {
+    testStreamFlowControl(stream -> {
+    }, stream -> {
+      stream.pause();
+      vertx.setTimer(1000, v -> {
+        stream.resume();
+      });
+    });
+  }
+
+  @Test
+  public void testStreamFetchFlowControl() {
+    AtomicBoolean paused = new AtomicBoolean();
+    testStreamFlowControl(stream -> {
+      stream.pause();
+      stream.fetch(1);
+    }, stream -> {
+      assertFalse(paused.getAndSet(true));
+      vertx.setTimer(1000, v -> {
+        paused.set(false);
+        stream.fetch(1);
+      });
+    });
+  }
+
+  public void testStreamFlowControl(Handler<SQLRowStream> initHandler, Handler<SQLRowStream> dataHandler) {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);
     final long[] t = {0, 0};
     connection().queryStream(sql, onSuccess(res -> {
       res.handler(row -> {
         t[cnt.getAndIncrement()] = System.currentTimeMillis();
-        res.pause();
-        vertx.setTimer(1000, v -> {
-          res.resume();
-        });
+        dataHandler.handle(res);
       }).endHandler(v -> {
         assertEquals(2, cnt.get());
         assertTrue(t[1] - t[0] >= 1000);
@@ -315,6 +338,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
       }).exceptionHandler(t0 -> {
         fail(t0);
       });
+      initHandler.handle(res);
     }));
 
     await();

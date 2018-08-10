@@ -23,16 +23,16 @@ import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.queue.Queue;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.sql.SQLRowStream;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,12 +47,11 @@ class JDBCSQLRowStream implements SQLRowStream {
   private final TaskQueue statementsQueue;
   private final Statement st;
   private final int fetchSize;
-  private final AtomicBoolean paused = new AtomicBoolean(false);
+  private final Queue<JsonArray> pending;
   private final AtomicBoolean ended = new AtomicBoolean(false);
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
   private final AtomicBoolean more = new AtomicBoolean(false);
-  private final Deque<JsonArray> accumulator;
 
   private ResultSet rs;
   private ResultSetMetaData metaData;
@@ -60,7 +59,6 @@ class JDBCSQLRowStream implements SQLRowStream {
   private int cols;
 
   private Handler<Throwable> exceptionHandler;
-  private Handler<JsonArray> handler;
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
@@ -70,15 +68,24 @@ class JDBCSQLRowStream implements SQLRowStream {
     this.fetchSize = fetchSize;
     this.rs = rs;
     this.statementsQueue = statementsQueue;
+    this.pending = Queue.<JsonArray>queue(ctx, fetchSize)
+      .writableHandler(v -> readBatch())
+      .emptyHandler(v -> checkEndHandler());
 
-    accumulator = new ArrayDeque<>(fetchSize);
     metaData = rs.getMetaData();
     cols = metaData.getColumnCount();
-    paused.set(true);
     stClosed.set(false);
     rsClosed.set(false);
     // the first rs is populated in the constructor
     more.set(true);
+  }
+
+  private void checkEndHandler() {
+    if (ended.get() && pending.isEmpty()) {
+      if (endHandler != null) {
+        endHandler.handle(null);
+      }
+    }
   }
 
   @Override
@@ -119,122 +126,105 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public SQLRowStream handler(Handler<JsonArray> handler) {
-    if ((this.handler = handler) != null) {
-      // start pumping data once the handler is set
-      resume();
+    pending.handler(handler);
+    if (handler != null && pending.isWritable()) {
+      readBatch();
     }
     return this;
   }
 
   @Override
   public SQLRowStream pause() {
-    paused.compareAndSet(false, true);
+    pending.pause();
+    return this;
+  }
+
+  @Override
+  public ReadStream<JsonArray> fetch(long amount) {
+    pending.take(amount);
     return this;
   }
 
   @Override
   public SQLRowStream resume() {
-    if (paused.compareAndSet(true, false)) {
-      nextRow();
-    }
+    pending.resume();
     return this;
   }
 
-  private void nextRow() {
-    // here paused.get() act as volatile read / memory barrier and it must be done before the accumulator read
-    // in order to create an happens-before relationship
-    if (!paused.get()) {
-      // here paused.get() guarantees us that stream is open
-      // accumulator should be read after the volatile, so this condition cannot be reordered
-      while (!paused.get() && !accumulator.isEmpty()) {
-        handler.handle(accumulator.pollFirst());
-      }
-    }
-    if (!paused.get()) {
-      ctx.executeBlocking(this::readRows, statementsQueue, res -> {
-        if (res.failed()) {
-          if (exceptionHandler != null) {
-            exceptionHandler.handle(res.cause());
-          } else {
-            log.debug(res.cause());
+  private void readBatch() {
+    if (!rsClosed.get()) {
+      ctx.<List<JsonArray>>executeBlocking(fut -> {
+        try {
+          List<JsonArray> rows = new ArrayList<>(fetchSize);
+          for (int i = 0;i < fetchSize && rs.next();i++) {
+            JsonArray result = new JsonArray();
+            for (int j = 1; j <= cols; j++) {
+              Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(j));
+              if (res != null) {
+                result.add(res);
+              } else {
+                result.addNull();
+              }
+            }
+            rows.add(result);
+          }
+          fut.complete(rows);
+        } catch (SQLException e) {
+          fut.fail(e);
+        }
+      }, statementsQueue, ar -> {
+        if (ar.succeeded()) {
+          List<JsonArray> rows = ar.result();
+          if (rows.isEmpty()) {
+            empty(null);
+          } else if (pending.addAll(rows)) {
+            readBatch();
           }
         } else {
-          // no more data
-          if (accumulator.isEmpty()) {
-            // mark as ended if the handler was registered too late
-            ended.set(true);
-            // automatically close resources
-
-            if (rsClosedHandler != null) {
-              // only close the result set and notify
-              close0(c -> {
-                if (res.failed()) {
-                  if (exceptionHandler != null) {
-                    exceptionHandler.handle(res.cause());
-                  } else {
-                    log.debug(res.cause());
-                  }
-                } else {
-                  rsClosedHandler.handle(null);
-                }
-              });
-            } else {
-              // default behavior close result set + statement
-              close(c -> {
-                if (res.failed()) {
-                  if (exceptionHandler != null) {
-                    exceptionHandler.handle(res.cause());
-                  } else {
-                    log.debug(res.cause());
-                  }
-                } else {
-                  if (endHandler != null) {
-                    endHandler.handle(null);
-                  }
-                }
-              });
-            }
-          } else {
-            nextRow();
-          }
+          empty(ar.cause());
         }
       });
     }
   }
 
-  private void readRows(Future<Void> fut) {
-    try {
-      while (accumulator.size() < fetchSize && rs.next()) {
-        JsonArray result = new JsonArray();
-        for (int i = 1; i <= cols; i++) {
-          Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(i));
-          if (res != null) {
-            result.add(res);
+  private void empty(Throwable err) {
+    // mark as ended if the handler was registered too late
+    ended.set(true);
+    // automatically close resources
+
+    if (rsClosedHandler != null) {
+      // only close the result set and notify
+      close0(c -> {
+        if (err != null) {
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(err);
           } else {
-            result.addNull();
+            log.debug(err);
           }
+        } else {
+          rsClosedHandler.handle(null);
         }
-        accumulator.add(result);
-      }
-      // paused.set() act as volatile store / memory barrier and it must be done after the accumulator write
-      // in order to create an happens-before relationship
-      paused.compareAndSet(false, false);
-      fut.complete();
-    } catch (SQLException e) {
-      fut.fail(e);
+      });
+    } else {
+      // default behavior close result set + statement
+      close(c -> {
+        if (err != null) {
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(err);
+          } else {
+            log.debug(err);
+          }
+        } else {
+          checkEndHandler();
+        }
+      });
     }
   }
 
   @Override
   public SQLRowStream endHandler(Handler<Void> handler) {
     this.endHandler = handler;
-    // registration was late but we're already ended, notify
-    if (ended.compareAndSet(true, false)) {
-      // only notify once
-      if (endHandler != null) {
-        endHandler.handle(null);
-      }
-    }
+    checkEndHandler();
     return this;
   }
 
@@ -303,7 +293,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         cols = metaData.getColumnCount();
         columns = null;
         // reset
-        paused.set(true);
+        // paused.set(true);
         stClosed.set(false);
         rsClosed.set(false);
         more.set(true);
