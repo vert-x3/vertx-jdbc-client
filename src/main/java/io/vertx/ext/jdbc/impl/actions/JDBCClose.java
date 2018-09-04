@@ -29,8 +29,8 @@ import java.sql.SQLException;
  */
 public class JDBCClose extends AbstractJDBCAction<Void> {
 
-  private final PoolMetrics metrics;
-  private final Object metric;
+  private final PoolMetrics metrics; // the pool metrics
+  private final Object metric;       // the resource managed by the pool metrics
 
   public JDBCClose(Vertx vertx, SQLOptions options, ContextInternal ctx, PoolMetrics metrics, Object metric) {
     super(vertx, options, ctx);
