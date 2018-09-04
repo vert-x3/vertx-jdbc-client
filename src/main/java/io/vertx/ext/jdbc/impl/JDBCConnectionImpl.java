@@ -126,10 +126,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    if (metrics != null) {
-      metrics.end(metric, true);
-    }
-    new JDBCClose(vertx, options, ctx).execute(conn, statementsQueue, handler);
+    new JDBCClose(vertx, options, ctx, metrics, metric).execute(conn, statementsQueue, handler);
   }
 
   @Override
