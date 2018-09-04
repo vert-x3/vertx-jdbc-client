@@ -96,7 +96,11 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
       conn.close(onSuccess(v -> {
         assertEquals(0, metrics.numberOfWaitingTasks());
         assertEquals(0, metrics.numberOfRunningTasks());
-        testComplete();
+        conn.close(ar -> {
+          assertEquals(0, metrics.numberOfWaitingTasks());
+          assertEquals(0, metrics.numberOfRunningTasks());
+          testComplete();
+        });
       }));
     }));
     await();
