@@ -16,33 +16,33 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.sql.SQLOptions;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JDBCClose extends AbstractJDBCAction<Void> {
+  private final PoolMetrics poolMetrics;
+  final Object metric;
 
-  private final PoolMetrics metrics; // the pool metrics
-  private final Object metric;       // the resource managed by the pool metrics
 
-  public JDBCClose(Vertx vertx, SQLOptions options, ContextInternal ctx, PoolMetrics metrics, Object metric) {
+  public JDBCClose(Vertx vertx, SQLOptions options, ContextInternal ctx, PoolMetrics poolMetrics, Object metric) {
     super(vertx, options, ctx);
-    this.metrics = metrics;
+    this.poolMetrics = poolMetrics;
     this.metric = metric;
   }
 
   @Override
   public Void execute(Connection conn) throws SQLException {
     if (!conn.isClosed()) {
-      if (metrics != null) {
-        metrics.end(metric, true);
+      if (poolMetrics != null) {
+        poolMetrics.end(metric, true);
       }
       conn.close();
     }

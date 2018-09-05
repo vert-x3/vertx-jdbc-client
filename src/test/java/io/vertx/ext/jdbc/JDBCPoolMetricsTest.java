@@ -1,5 +1,15 @@
 package io.vertx.ext.jdbc;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.Test;
+
 import io.vertx.core.VertxOptions;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
@@ -9,16 +19,6 @@ import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakemetrics.FakePoolMetrics;
-import org.junit.Test;
-
-import javax.sql.DataSource;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -92,15 +92,11 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
     client.getConnection(onSuccess(conn -> {
       assertEquals(0, metrics.numberOfWaitingTasks());
       assertEquals(1, metrics.numberOfRunningTasks());
-      conn.close(onSuccess(v -> {
+      conn.close(asyncResult -> {
         assertEquals(0, metrics.numberOfWaitingTasks());
         assertEquals(0, metrics.numberOfRunningTasks());
-        conn.close(ar -> {
-          assertEquals(0, metrics.numberOfWaitingTasks());
-          assertEquals(0, metrics.numberOfRunningTasks());
-          testComplete();
-        });
-      }));
+        testComplete();
+      });
     }));
     await();
   }
