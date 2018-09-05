@@ -31,6 +31,7 @@ public class JDBCClose extends AbstractJDBCAction<Void> {
   private final PoolMetrics poolMetrics;
   final Object metric;
 
+
   public JDBCClose(Vertx vertx, SQLOptions options, ContextInternal ctx, PoolMetrics poolMetrics, Object metric) {
     super(vertx, options, ctx);
     this.poolMetrics = poolMetrics;
