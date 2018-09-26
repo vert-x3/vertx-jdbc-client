@@ -39,7 +39,6 @@ public class AgroalCPDataSourceProvider implements DataSourceProvider {
         .reapTimeout(Duration.ofMillis(config.getLong("connectionReapTimeout", 0L)))
         .leakTimeout(Duration.ofMillis(config.getLong("connectionLeakTimeout", 0L)))
         .connectionFactoryConfiguration( cf -> cf
-          .driverClassName(config.getString("driverClassName"))
           .jdbcUrl(config.getString("jdbcUrl"))
           .principal(new NamePrincipal(config.getString("principal")))
           .credential(new SimplePassword(config.getString("credential")))
