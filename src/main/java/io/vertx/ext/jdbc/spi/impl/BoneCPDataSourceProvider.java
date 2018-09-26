@@ -30,7 +30,9 @@ import java.util.Map;
 
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
+ * @deprecated BoneCP has been deprecated upstream, please use other Connection Pool
  */
+@Deprecated
 public class BoneCPDataSourceProvider implements DataSourceProvider {
 
   private static final Logger log = LoggerFactory.getLogger(BoneCPDataSourceProvider.class);
