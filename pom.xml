@@ -142,8 +142,6 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>io.vertx.ext.jdbc;version=${project.version},
-              io.vertx.groovy.ext.jdbc;version=${project.version},
-              io.vertx.rxjava.ext.jdbc;version=${project.version},
               io.vertx.ext.jdbc.spi;version=${project.version}
             </Export-Package>
             <Import-Package>
