@@ -219,6 +219,17 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testInsertOneShot() {
+    String sql = "INSERT INTO insert_table (FNAME, LNAME) VALUES (?,?)";
+    client.updateWithParams(sql, new JsonArray().add("Paulo").add("Lopes"), onSuccess(result -> {
+      assertUpdate(result, 1, true);
+      testComplete();
+    }));
+
+    await();
+  }
+
+  @Test
   public void testStream() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     final AtomicInteger cnt = new AtomicInteger(0);
