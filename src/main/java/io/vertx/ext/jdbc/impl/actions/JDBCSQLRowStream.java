@@ -104,7 +104,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         if (cols > 0) {
           final List<String> columns = new ArrayList<>(cols);
           for (int i = 0; i < cols; i++) {
-            columns.add(i, metaData.getColumnName(i + 1));
+            columns.add(i, metaData.getColumnLabel(i + 1));
           }
           this.columns = Collections.unmodifiableList(columns);
         } else {
