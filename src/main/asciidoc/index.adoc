@@ -148,7 +148,7 @@ Assuming the C3P0 implementation is being used (the default), the following extr
 
 Other Connection Pool providers are:
 
-* BoneCP
+* BoneCP (**DEPRECATED** you should avoid this pool as it has been deprecated upstream)
 * Hikari
 
 Similar to C3P0 they can be configured by passing the configuration values on the JSON config object. For the special
