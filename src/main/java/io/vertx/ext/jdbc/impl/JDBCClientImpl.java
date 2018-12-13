@@ -146,30 +146,27 @@ public class JDBCClientImpl implements JDBCClient {
     return this;
   }
 
-private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
+  private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
     getConnection(ctx, ar1 -> {
       Future<T> fut = Future.future();
       fut.setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
       if (ar1.succeeded()) {
         JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
-        ctx.executeBlocking(r->{
-          try {
-            T result = action.execute(conn.conn);
-            fut.complete(result);
-          } catch (Exception e) {
-            fut.fail(e);
-          } finally {
-            if (metrics != null) {
-              metrics.end(conn.metric, true);
-            }
-            try {
-              conn.conn.close();
-            } catch (Exception e) {
-              JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
-            }
+        try {
+          T result = action.execute(conn.conn);
+          fut.complete(result);
+        } catch (Exception e) {
+          fut.fail(e);
+        } finally {
+          if (metrics != null) {
+            metrics.end(conn.metric, true);
           }
-        },b->{
-        });
+          try {
+            conn.conn.close();
+          } catch (Exception e) {
+            JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
+          }
+        }
       } else {
         fut.fail(ar1.cause());
       }
@@ -304,7 +301,7 @@ private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handle
 
     synchronized ExecutorService exec() {
       if (exec == null) {
-        exec = new ThreadPoolExecutor(1, 1,
+        exec = new ThreadPoolExecutor(20, 300,
             1000L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(),
             (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
