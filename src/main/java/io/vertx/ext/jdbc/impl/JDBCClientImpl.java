@@ -301,7 +301,7 @@ public class JDBCClientImpl implements JDBCClient {
 
     synchronized ExecutorService exec() {
       if (exec == null) {
-        exec = new ThreadPoolExecutor(1, 1,
+        exec = new ThreadPoolExecutor(20, 300,
             1000L, TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(),
             (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
