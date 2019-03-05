@@ -18,8 +18,8 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.Array;
