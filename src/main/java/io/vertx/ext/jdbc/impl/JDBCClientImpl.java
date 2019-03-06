@@ -332,7 +332,7 @@ public class JDBCClientImpl implements JDBCClient {
               } catch (SQLException e) {
                 future.fail(e);
               }
-            }, f2.completer());
+            }, f2);
           } else {
             f2.complete();
           }
