@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.sql.SQLException;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
 
 /**
  * @author Thomas Segismont
@@ -52,7 +52,9 @@ public class C3P0DataSourceProviderTest extends VertxTestBase {
       testComplete();
     });
     client.getConnection(ar -> {
-      fail("Should not get invoked");
+      if (ar.succeeded()) {
+        fail("Should not succeed");
+      }
     });
     await();
   }

@@ -174,7 +174,7 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   private void getConnection(Context ctx, Handler<AsyncResult<SQLConnection>> handler) {
-    boolean enabled = metrics != null && metrics.isEnabled();
+    boolean enabled = metrics != null;
     Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
@@ -332,7 +332,7 @@ public class JDBCClientImpl implements JDBCClient {
               } catch (SQLException e) {
                 future.fail(e);
               }
-            }, f2.completer());
+            }, f2);
           } else {
             f2.complete();
           }

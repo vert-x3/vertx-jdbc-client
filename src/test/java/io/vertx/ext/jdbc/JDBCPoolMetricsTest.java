@@ -56,10 +56,6 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
       public VertxMetrics metrics(VertxOptions options) {
         return new DummyVertxMetrics() {
           @Override
-          public boolean isEnabled() {
-            return true;
-          }
-          @Override
           public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
             if (poolType.equals("datasource")) {
               assertEquals("datasource", poolType);

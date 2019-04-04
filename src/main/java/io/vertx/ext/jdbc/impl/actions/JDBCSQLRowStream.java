@@ -21,10 +21,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.queue.Queue;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.ext.sql.SQLRowStream;
 
 import java.sql.ResultSet;
@@ -47,7 +47,7 @@ class JDBCSQLRowStream implements SQLRowStream {
   private final TaskQueue statementsQueue;
   private final Statement st;
   private final int fetchSize;
-  private final Queue<JsonArray> pending;
+  private final InboundBuffer<JsonArray> pending;
   private final AtomicBoolean ended = new AtomicBoolean(false);
   private final AtomicBoolean stClosed = new AtomicBoolean(false);
   private final AtomicBoolean rsClosed = new AtomicBoolean(false);
@@ -68,8 +68,8 @@ class JDBCSQLRowStream implements SQLRowStream {
     this.fetchSize = fetchSize;
     this.rs = rs;
     this.statementsQueue = statementsQueue;
-    this.pending = Queue.<JsonArray>queue(ctx, fetchSize)
-      .writableHandler(v -> readBatch())
+    this.pending = new InboundBuffer<JsonArray>(ctx, fetchSize)
+      .drainHandler(v -> readBatch())
       .emptyHandler(v -> checkEndHandler());
 
     metaData = rs.getMetaData();
@@ -104,7 +104,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         if (cols > 0) {
           final List<String> columns = new ArrayList<>(cols);
           for (int i = 0; i < cols; i++) {
-            columns.add(i, metaData.getColumnName(i + 1));
+            columns.add(i, metaData.getColumnLabel(i + 1));
           }
           this.columns = Collections.unmodifiableList(columns);
         } else {
@@ -141,7 +141,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public ReadStream<JsonArray> fetch(long amount) {
-    pending.take(amount);
+    pending.fetch(amount);
     return this;
   }
 
@@ -177,7 +177,7 @@ class JDBCSQLRowStream implements SQLRowStream {
           List<JsonArray> rows = ar.result();
           if (rows.isEmpty()) {
             empty(null);
-          } else if (pending.addAll(rows)) {
+          } else if (pending.write(rows)) {
             readBatch();
           }
         } else {
