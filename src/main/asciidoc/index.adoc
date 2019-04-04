@@ -148,12 +148,12 @@ Assuming the C3P0 implementation is being used (the default), the following extr
 
 Other Connection Pool providers are:
 
-* BoneCP (**DEPRECATED** you should avoid this pool as it has been deprecated upstream)
 * Hikari
+* Agroal
 
 Similar to C3P0 they can be configured by passing the configuration values on the JSON config object. For the special
 case where you do not want to deploy your app as a fat jar but run with a vert.x distribution, then it is recommented
-to use BoneCP if you have no write permissions to add the JDBC driver to the vert.x lib directory and are passing it
+to use Agroal if you have no write permissions to add the JDBC driver to the vert.x lib directory and are passing it
 using the `-cp` command line flag.
 
 If you want to configure any other C3P0 properties, you can add a file `c3p0.properties` to the classpath.
@@ -173,8 +173,8 @@ Hikari uses a different set of properties:
 * `username` for the login (`password` for the password)
 
 Refer to the https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby[Hikari documentation]
-for further details. Also refer to the http://www.jolbox.com/configuration.html[BoneCP documentation]
-to configure BoneCP.
+for further details. Also refer to the https://agroal.github.io/[Agroal documentation]
+to configure Agroal.
 
 == JDBC Drivers
 
