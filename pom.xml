@@ -10,10 +10,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>vertx-jdbc-client</artifactId>
-  <version>3.7.1</version>
+  <version>3.7.2-SNAPSHOT</version>
 
   <properties>
-    <stack.version>3.7.1</stack.version>
+    <stack.version>3.7.2-SNAPSHOT</stack.version>
     <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
   </properties>
 
