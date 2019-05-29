@@ -152,7 +152,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
-    ctx.executeBlocking((Future<TransactionIsolation> f) -> {
+    ctx.executeBlocking((Promise<TransactionIsolation> f) -> {
       try {
         TransactionIsolation txIsolation = TransactionIsolation.from(conn.getTransactionIsolation());
 
@@ -189,7 +189,7 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
-    ctx.executeBlocking((Future<Void> f) -> {
+    ctx.executeBlocking((Promise<Void> f) -> {
       try {
         conn.setTransactionIsolation(isolation.getType());
         f.complete(null);

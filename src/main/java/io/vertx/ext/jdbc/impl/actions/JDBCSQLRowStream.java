@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
@@ -280,7 +281,7 @@ class JDBCSQLRowStream implements SQLRowStream {
     }
   }
 
-  private void getNextResultSet(Future<Void> f) {
+  private void getNextResultSet(Promise<Void> f) {
     try {
       // close if not already closed
       if (rsClosed.compareAndSet(false, true)) {
