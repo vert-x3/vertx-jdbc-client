@@ -179,8 +179,8 @@ public class JDBCClientImpl implements JDBCClient {
     Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
-      Future<SQLConnection> res = Future.future();
-      res.setHandler(handler);
+      Promise<SQLConnection> res = Promise.promise();
+      res.future().setHandler(handler);
       try {
         /*
         This can block until a connection is free.
@@ -320,10 +320,10 @@ public class JDBCClientImpl implements JDBCClient {
           if (metrics != null) {
             metrics.close();
           }
-          Future<Void> f1 = Future.future();
-          Future<Void> f2 = Future.future();
+          Promise<Void> f1 = Promise.promise();
+          Promise<Void> f2 = Promise.promise();
           if (completionHandler != null) {
-            CompositeFuture.all(f1, f2).<Void>map(f -> null).setHandler(completionHandler);
+            CompositeFuture.all(f1.future(), f2.future()).<Void>map(f -> null).setHandler(completionHandler);
           }
           if (provider != null) {
             vertx.executeBlocking(future -> {
