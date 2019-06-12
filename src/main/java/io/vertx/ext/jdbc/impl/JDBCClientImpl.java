@@ -21,6 +21,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
@@ -148,15 +149,15 @@ public class JDBCClientImpl implements JDBCClient {
 
   private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
     getConnection(ctx, ar1 -> {
-      Future<T> fut = Future.future();
-      fut.setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
+      Promise<T> promise = Promise.promise();
+      promise.future().setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
       if (ar1.succeeded()) {
         JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
         try {
           T result = action.execute(conn.conn);
-          fut.complete(result);
+          promise.complete(result);
         } catch (Exception e) {
-          fut.fail(e);
+          promise.fail(e);
         } finally {
           if (metrics != null) {
             metrics.end(conn.metric, true);
@@ -168,7 +169,7 @@ public class JDBCClientImpl implements JDBCClient {
           }
         }
       } else {
-        fut.fail(ar1.cause());
+        promise.fail(ar1.cause());
       }
     });
   }
@@ -178,8 +179,8 @@ public class JDBCClientImpl implements JDBCClient {
     Object queueMetric = enabled ? metrics.submitted() : null;
     PoolMetrics metrics = enabled ? this.metrics : null;
     exec.execute(() -> {
-      Future<SQLConnection> res = Future.future();
-      res.setHandler(handler);
+      Promise<SQLConnection> res = Promise.promise();
+      res.future().setHandler(handler);
       try {
         /*
         This can block until a connection is free.
@@ -319,10 +320,10 @@ public class JDBCClientImpl implements JDBCClient {
           if (metrics != null) {
             metrics.close();
           }
-          Future<Void> f1 = Future.future();
-          Future<Void> f2 = Future.future();
+          Promise<Void> f1 = Promise.promise();
+          Promise<Void> f2 = Promise.promise();
           if (completionHandler != null) {
-            CompositeFuture.all(f1, f2).<Void>map(f -> null).setHandler(completionHandler);
+            CompositeFuture.all(f1.future(), f2.future()).<Void>map(f -> null).setHandler(completionHandler);
           }
           if (provider != null) {
             vertx.executeBlocking(future -> {

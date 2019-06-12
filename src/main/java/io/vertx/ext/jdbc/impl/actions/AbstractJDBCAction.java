@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
@@ -50,7 +51,7 @@ public abstract class AbstractJDBCAction<T> {
     this.helper = helper;
   }
 
-  private void handle(Connection conn, Future<T> future) {
+  private void handle(Connection conn, Promise<T> future) {
     try {
       // apply connection options
       applyConnectionOptions(conn);

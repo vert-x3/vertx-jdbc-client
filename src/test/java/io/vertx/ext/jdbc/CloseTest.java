@@ -28,7 +28,7 @@ public class CloseTest extends JDBCClientTestBase {
 
   public static class NonSharedClientVerticle extends AbstractVerticle {
     @Override
-    public void start(io.vertx.core.Future<Void> f) throws Exception {
+    public void start(io.vertx.core.Promise<Void> f) throws Exception {
       SQLClient client = JDBCClient.createNonShared(vertx, theConfig);
       String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
       client.getConnection(ar1 -> {
@@ -64,7 +64,7 @@ public class CloseTest extends JDBCClientTestBase {
 
   public static class SharedClientVerticle extends AbstractVerticle {
     @Override
-    public void start(io.vertx.core.Future<Void> f) throws Exception {
+    public void start(io.vertx.core.Promise<Void> f) throws Exception {
       SQLClient client = JDBCClient.createShared(vertx, theConfig);
       String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
       client.getConnection(ar1 -> {
@@ -102,7 +102,7 @@ public class CloseTest extends JDBCClientTestBase {
 
   public static class ProvidedDataSourceVerticle extends AbstractVerticle {
     @Override
-    public void start(io.vertx.core.Future<Void> f) throws Exception {
+    public void start(io.vertx.core.Promise<Void> f) throws Exception {
       SQLClient client = JDBCClient.create(vertx, ds);
       String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
       client.getConnection(ar1 -> {
