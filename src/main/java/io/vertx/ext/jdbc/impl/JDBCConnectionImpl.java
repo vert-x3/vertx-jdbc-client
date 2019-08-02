@@ -41,7 +41,7 @@ class JDBCConnectionImpl implements SQLConnection {
   private final Vertx vertx;
   final Connection conn;
   private final ContextInternal ctx;
-  private final PoolMetrics metrics;
+  final PoolMetrics metrics;
   final Object metric;
   private final TaskQueue statementsQueue = new TaskQueue();
 
