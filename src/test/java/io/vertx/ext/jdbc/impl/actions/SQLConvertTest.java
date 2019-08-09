@@ -1,5 +1,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
+import com.mysql.cj.core.util.Base64Decoder;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,10 +10,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static java.time.format.DateTimeFormatter.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -21,7 +19,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class SQLConvertTest {
 
-  private JsonObject config = new JsonObject().put("castUUID", true);
+  private JsonObject config = new JsonObject().put("castUUID", true).put("castBase64", true);
 
   private JDBCStatementHelper helper = new JDBCStatementHelper(config);
 
@@ -38,6 +36,7 @@ public class SQLConvertTest {
     params.add(new Object[]{dateTime.toLocalDate().toString(), java.sql.Date.class});
 
     params.add(new Object[]{"f47ac10b-58cc-4372-a567-0e02b2c3d479", UUID.class});
+    params.add(new Object[]{"Dyu+lY5vAxJhM8UCCOtk7w==", byte[].class});
 
     return params;
   }
@@ -56,6 +55,10 @@ public class SQLConvertTest {
     assertThat(cast, instanceOf(expectedSqlType));
 
     Object convert = JDBCStatementHelper.convertSqlValue(cast);
-    assertEquals(value, convert);
+    if ( convert instanceof byte[] ) {
+      assertArrayEquals(Base64.getDecoder().decode(value), (byte[])convert);
+    } else {
+      assertEquals(value, convert);
+    }
   }
 }

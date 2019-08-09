@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class OptimisticCastTest {
 
-  private JDBCStatementHelper helper = new JDBCStatementHelper(new JsonObject().put("castUUID", true));
+  private JDBCStatementHelper helper = new JDBCStatementHelper(new JsonObject().put("castUUID", true).put("castBase64", true));
 
   @Parameterized.Parameters
   public static Collection<Object[]> generateData() {
@@ -23,6 +23,7 @@ public class OptimisticCastTest {
         {"2016-03-16", "java.sql.Date"},
         {"2016-03-16T16:00:00Z", "java.sql.Timestamp"},
         {"f47ac10b-58cc-4372-a567-0e02b2c3d479", "java.util.UUID"},
+        {"Dyu+lY5vAxJhM8UCCOtk7w==", "[B"},
         // bad variations
         {"2016-03-16T16:00:00", "java.lang.String"},
         {"24:00:00", "java.lang.String"},
