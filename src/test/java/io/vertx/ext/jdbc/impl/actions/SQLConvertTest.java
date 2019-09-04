@@ -1,6 +1,5 @@
 package io.vertx.ext.jdbc.impl.actions;
 
-import com.mysql.cj.core.util.Base64Decoder;
 import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
