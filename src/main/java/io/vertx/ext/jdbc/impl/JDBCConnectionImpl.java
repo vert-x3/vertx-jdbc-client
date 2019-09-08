@@ -19,9 +19,9 @@ package io.vertx.ext.jdbc.impl;
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.*;
@@ -41,7 +41,7 @@ class JDBCConnectionImpl implements SQLConnection {
   private final Vertx vertx;
   final Connection conn;
   private final ContextInternal ctx;
-  private final PoolMetrics metrics;
+  final PoolMetrics metrics;
   final Object metric;
   private final TaskQueue statementsQueue = new TaskQueue();
 

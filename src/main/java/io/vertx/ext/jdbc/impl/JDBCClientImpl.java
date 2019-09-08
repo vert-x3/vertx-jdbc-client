@@ -16,19 +16,11 @@
 
 package io.vertx.ext.jdbc.impl;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.shareddata.LocalMap;
-import io.vertx.core.shareddata.Shareable;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -45,6 +37,7 @@ import io.vertx.ext.sql.UpdateResult;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -59,45 +52,46 @@ public class JDBCClientImpl implements JDBCClient {
 
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
-  private final Vertx vertx;
-  private final DataSourceHolder holder;
-
-  // We use this executor to execute getConnection requests
-  private final ExecutorService exec;
-  private final DataSource ds;
-  private final PoolMetrics metrics;
+  private final VertxInternal vertx;
+  private final String datasourceName;
+  private final JsonObject config;
+  private final Map<String, DataSourceHolder> holders;
   // Helper that can do param and result transforms, its behavior is defined by the
   // initial config and immutable after that moment. It is safe to reuse since there
   // is no state involved
   private final JDBCStatementHelper helper;
 
-  /*
-  Create client with specific datasource
+  private boolean closed;
+
+  /**
+   * Create client with specific datasource.
    */
   public JDBCClientImpl(Vertx vertx, DataSource dataSource) {
     Objects.requireNonNull(vertx);
     Objects.requireNonNull(dataSource);
-    this.vertx = vertx;
-    this.holder = new DataSourceHolder((VertxInternal) vertx, dataSource);
-    this.exec = holder.exec();
-    this.ds = dataSource;
-    this.metrics = holder.metrics;
+    this.vertx = (VertxInternal) vertx;
+    datasourceName = UUID.randomUUID().toString();
+    config = null;
+    holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
+    DataSourceHolder holder = new DataSourceHolder(dataSource, createExecutor(), createMetrics(datasourceName, -1));
+    holders.put(datasourceName, holder);
     this.helper = new JDBCStatementHelper();
     setupCloseHook();
   }
 
-  /*
-  Create client with shared datasource
+  /**
+   * Create client with shared datasource.
    */
   public JDBCClientImpl(Vertx vertx, JsonObject config, String datasourceName) {
     Objects.requireNonNull(vertx);
     Objects.requireNonNull(config);
     Objects.requireNonNull(datasourceName);
-    this.vertx = vertx;
-    this.holder = lookupHolder(datasourceName, config);
-    this.exec = holder.exec();
-    this.ds = holder.ds();
-    this.metrics = holder.metrics;
+    this.vertx = (VertxInternal) vertx;
+    this.datasourceName = datasourceName;
+    this.config = config;
+    holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
+    DataSourceProvider provider = createProvider();
+    holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(provider) : h.increment());
     this.helper = new JDBCStatementHelper(config);
     setupCloseHook();
   }
@@ -105,49 +99,77 @@ public class JDBCClientImpl implements JDBCClient {
   private void setupCloseHook() {
     Context ctx = Vertx.currentContext();
     if (ctx != null && ctx.owner() == vertx) {
-      ctx.addCloseHook(holder::close);
+      ctx.addCloseHook(this::close);
     }
   }
 
   @Override
   public void close() {
-    holder.close(null);
+    close(null);
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> completionHandler) {
-    holder.close(completionHandler);
+    if (raiseCloseFlag()) {
+      do {
+        DataSourceHolder current = holders.get(datasourceName);
+        DataSourceHolder next = current.decrement();
+        if (next.refCount == 0) {
+          if (holders.remove(datasourceName, current)) {
+            if (current.dataSource != null) {
+              doClose(current, completionHandler);
+              return;
+            }
+            break;
+          }
+        } else if (holders.replace(datasourceName, current, next)) {
+          break;
+        }
+      } while (true);
+    }
+    if (completionHandler != null) {
+      completionHandler.handle(Future.succeededFuture());
+    }
+  }
+
+
+  private synchronized boolean raiseCloseFlag() {
+    if (!closed) {
+      closed = true;
+      return true;
+    }
+    return false;
   }
 
   @Override
   public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal ctx = vertx.getOrCreateContext();
     executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal ctx = vertx.getOrCreateContext();
     executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal ctx = vertx.getOrCreateContext();
     executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
-    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
+    ContextInternal ctx = vertx.getOrCreateContext();
     executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 
-  private <T> void executeDirect(Context ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
+  private <T> void executeDirect(ContextInternal ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
     getConnection(ctx, ar1 -> {
       Promise<T> promise = Promise.promise();
       promise.future().setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
@@ -159,8 +181,8 @@ public class JDBCClientImpl implements JDBCClient {
         } catch (Exception e) {
           promise.fail(e);
         } finally {
-          if (metrics != null) {
-            metrics.end(conn.metric, true);
+          if (conn.metrics != null) {
+            conn.metrics.end(conn.metric, true);
           }
           try {
             conn.conn.close();
@@ -174,189 +196,163 @@ public class JDBCClientImpl implements JDBCClient {
     });
   }
 
-  private void getConnection(Context ctx, Handler<AsyncResult<SQLConnection>> handler) {
-    boolean enabled = metrics != null;
-    Object queueMetric = enabled ? metrics.submitted() : null;
-    PoolMetrics metrics = enabled ? this.metrics : null;
-    exec.execute(() -> {
-      Promise<SQLConnection> res = Promise.promise();
-      res.future().setHandler(handler);
-      try {
-        /*
-        This can block until a connection is free.
-        We don't want to do that while running on a worker as we can enter a deadlock situation as the worker
-        might have obtained a connection, and won't release it until it is run again
-        There is a general principle here:
-        *User code* should be executed on a worker and can potentially block, it's up to the *user* to deal with
-        deadlocks that might occur there.
-        If the *service code* internally blocks waiting for a resource that might be obtained by *user code*, then
-        this can cause deadlock, so the service should ensure it never does this, by executing such code
-        (e.g. getConnection) on a different thread to the worker pool.
-        We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
-        other important operations from occurring (e.g. async file access)
-        */
-        Connection conn = ds.getConnection();
-        Object execMetric = null;
-        if (metrics != null) {
-          execMetric = metrics.begin(queueMetric);
-        }
-        // wrap it
-        res.complete(new JDBCConnectionImpl(ctx, helper, conn, metrics, execMetric));
-      } catch (SQLException e) {
-        if (metrics != null) {
-          metrics.rejected(queueMetric);
-        }
-        res.fail(e);
+  private void getConnection(ContextInternal ctx, Handler<AsyncResult<SQLConnection>> handler) {
+    getDataSourceHolder(ctx, ar -> {
+      if (ar.succeeded()) {
+        DataSourceHolder holder = ar.result();
+        boolean enabled = holder.metrics != null;
+        Object queueMetric = enabled ? holder.metrics.submitted() : null;
+        holder.exec.execute(() -> {
+          Promise<SQLConnection> res = Promise.promise();
+          res.future().setHandler(handler);
+          try {
+            /*
+             * This can block until a connection is free.
+             * We don't want to do that while running on a worker as we can enter a deadlock situation as the worker
+             * might have obtained a connection, and won't release it until it is run again
+             * There is a general principle here:
+             * *User code* should be executed on a worker and can potentially block, it's up to the *user* to deal with
+             * deadlocks that might occur there.
+             * If the *service code* internally blocks waiting for a resource that might be obtained by *user code*, then
+             * this can cause deadlock, so the service should ensure it never does this, by executing such code
+             * (e.g. getConnection) on a different thread to the worker pool.
+             * We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
+             * other important operations from occurring (e.g. async file access)
+             */
+            Connection conn = holder.dataSource.getConnection();
+            Object execMetric = enabled ? holder.metrics.begin(queueMetric) : null;
+            // wrap it
+            res.complete(new JDBCConnectionImpl(ctx, helper, conn, holder.metrics, execMetric));
+          } catch (SQLException e) {
+            if (enabled) {
+              holder.metrics.rejected(queueMetric);
+            }
+            res.fail(e);
+          }
+        });
+      } else {
+        handler.handle(Future.failedFuture(ar.cause()));
       }
     });
   }
 
+  private synchronized void getDataSourceHolder(ContextInternal ctx, Handler<AsyncResult<DataSourceHolder>> handler) {
+    if (closed) {
+      handler.handle(Future.failedFuture("Client is closed"));
+    } else {
+      DataSourceHolder holder = holders.get(datasourceName);
+      if (holder.dataSource != null) {
+        handler.handle(Future.succeededFuture(holder));
+      } else {
+        ctx.executeBlocking(promise -> {
+          createDataSource(promise);
+        }, holder.creationQueue, handler);
+      }
+    }
+  }
+
+  private void createDataSource(Promise<DataSourceHolder> promise) {
+    DataSourceHolder current = holders.get(datasourceName);
+    if (current == null) {
+      promise.fail("Client closed while connecting");
+      return;
+    }
+    if (current.dataSource != null) {
+      promise.complete(current);
+      return;
+    }
+    DataSourceProvider provider = current.provider;
+    DataSource dataSource;
+    int poolSize;
+    try {
+      dataSource = provider.getDataSource(config);
+      poolSize = provider.maximumPoolSize(dataSource, config);
+    } catch (SQLException e) {
+      promise.fail(e);
+      return;
+    }
+    ExecutorService exec = createExecutor();
+    PoolMetrics metrics = createMetrics(datasourceName, poolSize);
+    current = holders.compute(datasourceName, (k, h) -> h == null ? null : h.created(dataSource, exec, metrics));
+    if (current != null) {
+      promise.complete(current);
+    } else {
+      if (metrics != null) {
+        metrics.close();
+      }
+      exec.shutdown();
+      try {
+        provider.close(dataSource);
+      } catch (SQLException ignored) {
+      }
+      promise.fail("Client closed while connecting");
+    }
+  }
+
   @Override
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    Context ctx = vertx.getOrCreateContext();
+    ContextInternal ctx = vertx.getOrCreateContext();
     getConnection(ctx, ar -> ctx.runOnContext(v -> handler.handle(ar)));
     return this;
   }
 
-  private DataSourceHolder lookupHolder(String datasourceName, JsonObject config) {
-    synchronized (vertx) {
-      LocalMap<String, DataSourceHolder> map = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
-      DataSourceHolder theHolder = map.get(datasourceName);
-      if (theHolder == null) {
-        theHolder = new DataSourceHolder((VertxInternal) vertx, config, map, datasourceName);
-      } else {
-        theHolder.incRefCount();
+  private DataSourceProvider createProvider() {
+    String providerClass = config.getString("provider_class");
+    if (providerClass == null) {
+      providerClass = JDBCClient.DEFAULT_PROVIDER_CLASS;
+    }
+
+    if (Thread.currentThread().getContextClassLoader() != null) {
+      try {
+        // Try with the TCCL
+        Class clazz = Thread.currentThread().getContextClassLoader().loadClass(providerClass);
+        return (DataSourceProvider) clazz.newInstance();
+      } catch (ClassNotFoundException e) {
+        // Next try.
+      } catch (InstantiationException | IllegalAccessException e) {
+        throw new RuntimeException(e);
       }
-      return theHolder;
+    }
+
+    try {
+      // Try with the classloader of the current class.
+      Class clazz = this.getClass().getClassLoader().loadClass(providerClass);
+      return (DataSourceProvider) clazz.newInstance();
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  private class DataSourceHolder implements Shareable {
+  private PoolMetrics createMetrics(String poolName, int maxPoolSize) {
+    VertxMetrics metricsSPI = vertx.metricsSPI();
+    return metricsSPI != null ? metricsSPI.createPoolMetrics("datasource", poolName, maxPoolSize) : null;
+  }
 
-    private final VertxInternal vertx;
-    private final LocalMap<String, DataSourceHolder> map;
-    DataSourceProvider provider;
-    JsonObject config;
-    DataSource ds;
-    PoolMetrics metrics;
-    ExecutorService exec;
-    private int refCount = 1;
-    private final String name;
+  private ExecutorService createExecutor() {
+    return new ThreadPoolExecutor(1, 1,
+      1000L, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<>(),
+      (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
+  }
 
-    DataSourceHolder(VertxInternal vertx, DataSource ds) {
-      this.ds = ds;
-      this.metrics = vertx.metricsSPI() != null ? vertx.metricsSPI().createPoolMetrics("datasource", UUID.randomUUID().toString(), -1) : null;
-      this.vertx = vertx;
-      this.map = null;
-      this.name = null;
+  private void doClose(DataSourceHolder holder, Handler<AsyncResult<Void>> completionHandler) {
+    if (holder.metrics != null) {
+      holder.metrics.close();
     }
-
-    DataSourceHolder(VertxInternal vertx, JsonObject config, LocalMap<String, DataSourceHolder> map, String name) {
-      this.config = config;
-      this.map = map;
-      this.vertx = vertx;
-      this.name = name;
-
-      map.put(name, this);
-    }
-
-    synchronized DataSource ds() {
-      if (ds == null) {
-        String providerClass = config.getString("provider_class");
-        if (providerClass == null) {
-          providerClass = DEFAULT_PROVIDER_CLASS;
+    vertx.<Void>executeBlocking(promise -> {
+      try {
+        if (holder.provider != null) {
+          holder.provider.close(holder.dataSource);
         }
-
-        VertxMetrics vertxMetrics = vertx.metricsSPI();
-        if (Thread.currentThread().getContextClassLoader() != null) {
-          try {
-            // Try with the TCCL
-            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(providerClass);
-            provider = (DataSourceProvider) clazz.newInstance();
-            ds = provider.getDataSource(config);
-            int poolSize = provider.maximumPoolSize(ds, config);
-            metrics = vertxMetrics != null ? vertxMetrics.createPoolMetrics( "datasource", name, poolSize) : null;
-            return ds;
-          } catch (ClassNotFoundException e) {
-            // Next try.
-          } catch (InstantiationException | SQLException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-          }
-        }
-
-        try {
-          // Try with the classloader of the current class.
-          Class clazz = this.getClass().getClassLoader().loadClass(providerClass);
-          provider = (DataSourceProvider) clazz.newInstance();
-          ds = provider.getDataSource(config);
-          int poolSize = provider.maximumPoolSize(ds, config);
-          metrics = vertxMetrics != null ? vertxMetrics.createPoolMetrics( "datasource", name, poolSize) : null;
-          return ds;
-        } catch (ClassNotFoundException | InstantiationException | SQLException | IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
+        promise.complete();
+      } catch (SQLException e) {
+        promise.fail(e);
       }
-
-      return ds;
-    }
-
-    synchronized ExecutorService exec() {
-      if (exec == null) {
-        exec = new ThreadPoolExecutor(1, 1,
-            1000L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            (r -> new Thread(r, "vertx-jdbc-service-get-connection-thread")));
+    }, false, ar -> {
+      holder.exec.shutdown();
+      if (completionHandler != null) {
+        completionHandler.handle(Future.succeededFuture());
       }
-      return exec;
-    }
-
-    void incRefCount() {
-      refCount++;
-    }
-
-    void close(Handler<AsyncResult<Void>> completionHandler) {
-      synchronized (vertx) {
-        if (--refCount == 0) {
-          if (metrics != null) {
-            metrics.close();
-          }
-          Promise<Void> f1 = Promise.promise();
-          Promise<Void> f2 = Promise.promise();
-          if (completionHandler != null) {
-            CompositeFuture.all(f1.future(), f2.future()).<Void>map(f -> null).setHandler(completionHandler);
-          }
-          if (provider != null) {
-            vertx.executeBlocking(future -> {
-              try {
-                provider.close(ds);
-                future.complete();
-              } catch (SQLException e) {
-                future.fail(e);
-              }
-            }, f2);
-          } else {
-            f2.complete();
-          }
-          try {
-            if (exec != null) {
-              exec.shutdown();
-            }
-            if (map != null) {
-              map.remove(name);
-              if (map.isEmpty()) {
-                map.close();
-              }
-            }
-            f1.complete();
-          } catch (Throwable t) {
-            f1.fail(t);
-          }
-        } else {
-          if (completionHandler != null) {
-            completionHandler.handle(Future.succeededFuture());
-          }
-        }
-      }
-    }
+    });
   }
 }
