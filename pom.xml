@@ -14,7 +14,6 @@
 
   <properties>
     <stack.version>4.0.0-SNAPSHOT</stack.version>
-    <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -116,46 +115,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-          </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>${maven-bundle-plugin.version}</version>
-        <extensions>true</extensions>
-        <inherited>true</inherited>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>io.vertx.ext.jdbc;version=${project.version},
-              io.vertx.ext.jdbc.spi;version=${project.version}
-            </Export-Package>
-            <Import-Package>
-              javax.sql,
-              io.vertx.ext.sql*,
-              io.vertx.core*,
-              *;resolution:=optional</Import-Package>
-            <Include-Resource>{maven-resources}</Include-Resource>
-          </instructions>
-        </configuration>
-        <executions>
-          <execution>
-            <id>bundle-manifest</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>
