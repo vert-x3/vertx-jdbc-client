@@ -48,8 +48,4 @@ public class JDBCClose extends AbstractJDBCAction<Void> {
     return null;
   }
 
-  @Override
-  protected String name() {
-    return "close";
-  }
 }

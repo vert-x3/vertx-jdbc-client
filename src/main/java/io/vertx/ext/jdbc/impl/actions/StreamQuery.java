@@ -83,8 +83,4 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
     }
   }
 
-  @Override
-  protected String name() {
-    return "stream";
-  }
 }

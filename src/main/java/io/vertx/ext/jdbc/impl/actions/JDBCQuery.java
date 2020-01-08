@@ -72,8 +72,4 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
     }
   }
 
-  @Override
-  protected String name() {
-    return "query";
-  }
 }

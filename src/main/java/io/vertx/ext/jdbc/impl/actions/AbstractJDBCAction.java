@@ -65,8 +65,6 @@ public abstract class AbstractJDBCAction<T> {
 
   public abstract T execute(Connection conn) throws SQLException;
 
-  protected abstract String name();
-
   void applyStatementOptions(Statement statement) throws SQLException {
     if (options != null) {
       if (options.getQueryTimeout() > 0) {

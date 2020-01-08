@@ -129,8 +129,4 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
     }
   }
 
-  @Override
-  protected String name() {
-    return "update";
-  }
 }
