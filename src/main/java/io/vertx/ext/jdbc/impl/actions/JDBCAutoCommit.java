@@ -45,8 +45,4 @@ public class JDBCAutoCommit extends AbstractJDBCAction<Void> {
     return null;
   }
 
-  @Override
-  protected String name() {
-    return "autoCommit";
-  }
 }

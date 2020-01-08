@@ -122,8 +122,4 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
     return list;
   }
 
-  @Override
-  protected String name() {
-    return "batch";
-  }
 }

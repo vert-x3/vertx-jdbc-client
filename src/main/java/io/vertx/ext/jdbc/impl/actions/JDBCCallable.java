@@ -110,8 +110,4 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
     return result;
   }
 
-  @Override
-  protected String name() {
-    return "callable";
-  }
 }

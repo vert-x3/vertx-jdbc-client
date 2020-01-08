@@ -37,8 +37,4 @@ public class JDBCRollback extends AbstractJDBCAction<Void> {
     return null;
   }
 
-  @Override
-  protected String name() {
-    return "rollback";
-  }
 }

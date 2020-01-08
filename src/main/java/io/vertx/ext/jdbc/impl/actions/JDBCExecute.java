@@ -56,8 +56,4 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
     }
   }
 
-  @Override
-  protected String name() {
-    return "execute";
-  }
 }
