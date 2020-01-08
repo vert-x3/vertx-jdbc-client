@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
@@ -39,8 +38,8 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
   private final JsonArray in;
   private final TaskQueue statementsQueue;
 
-  public StreamQuery(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
-    super(vertx, helper, options, ctx);
+  public StreamQuery(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
+    super(helper, options, ctx);
     this.sql = sql;
     this.in = in;
     this.statementsQueue = statementsQueue;

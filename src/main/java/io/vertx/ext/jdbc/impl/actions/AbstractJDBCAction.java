@@ -17,10 +17,8 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.ext.sql.SQLOptions;
@@ -35,17 +33,15 @@ import java.sql.Statement;
  */
 public abstract class AbstractJDBCAction<T> {
 
-  protected final Vertx vertx;
   protected final SQLOptions options;
   protected final ContextInternal ctx;
   protected final JDBCStatementHelper helper;
 
-  protected AbstractJDBCAction(Vertx vertx, SQLOptions options, ContextInternal ctx) {
-    this(vertx, null, options, ctx);
+  protected AbstractJDBCAction(SQLOptions options, ContextInternal ctx) {
+    this(null, options, ctx);
   }
 
-  protected AbstractJDBCAction(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx) {
-    this.vertx = vertx;
+  protected AbstractJDBCAction(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx) {
     this.options = options;
     this.ctx = ctx;
     this.helper = helper;

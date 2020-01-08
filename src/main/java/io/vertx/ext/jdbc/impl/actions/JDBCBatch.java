@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
@@ -42,20 +41,20 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
   private final List<JsonArray> in;
   private final List<JsonArray> out;
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, List<String> sql) {
-    this(vertx, helper, options, ctx, Type.STATEMENT, sql, null, null);
+  public JDBCBatch(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, List<String> sql) {
+    this(helper, options, ctx, Type.STATEMENT, sql, null, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in) {
-    this(vertx, helper, options, ctx, Type.PREPARED, Collections.singletonList(sql), in, null);
+  public JDBCBatch(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in) {
+    this(helper, options, ctx, Type.PREPARED, Collections.singletonList(sql), in, null);
   }
 
-  public JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in, List<JsonArray> out) {
-    this(vertx, helper, options, ctx, Type.CALLABLE, Collections.singletonList(sql), in, out);
+  public JDBCBatch(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, List<JsonArray> in, List<JsonArray> out) {
+    this(helper, options, ctx, Type.CALLABLE, Collections.singletonList(sql), in, out);
   }
 
-  private JDBCBatch(Vertx vertx, JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
-    super(vertx, helper, options, ctx);
+  private JDBCBatch(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, Type type, List<String> sql, List<JsonArray> in, List<JsonArray> out) {
+    super(helper, options, ctx);
     this.type = type;
     this.sql = sql;
     this.in = in;

@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.sql.SQLOptions;
 
@@ -28,8 +27,8 @@ import java.sql.SQLException;
  */
 public class JDBCCommit extends AbstractJDBCAction<Void> {
 
-  public JDBCCommit(Vertx vertx, SQLOptions options, ContextInternal ctx) {
-    super(vertx, options, ctx);
+  public JDBCCommit(SQLOptions options, ContextInternal ctx) {
+    super(options, ctx);
   }
 
   @Override
