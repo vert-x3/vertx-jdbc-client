@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.sql.SQLOptions;
@@ -32,8 +31,8 @@ public class JDBCClose extends AbstractJDBCAction<Void> {
   private final PoolMetrics metrics; // the pool metrics
   private final Object metric;       // the resource managed by the pool metrics
 
-  public JDBCClose(Vertx vertx, SQLOptions options, ContextInternal ctx, PoolMetrics metrics, Object metric) {
-    super(vertx, options, ctx);
+  public JDBCClose(SQLOptions options, ContextInternal ctx, PoolMetrics metrics, Object metric) {
+    super(options, ctx);
     this.metrics = metrics;
     this.metric = metric;
   }

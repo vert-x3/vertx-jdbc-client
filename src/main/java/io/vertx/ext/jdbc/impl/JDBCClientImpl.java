@@ -144,28 +144,28 @@ public class JDBCClientImpl implements JDBCClient {
   @Override
   public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, null), resultHandler);
+    executeDirect(ctx, new JDBCUpdate(helper, null, ctx, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCUpdate(vertx, helper, null, ctx, sql, in), resultHandler);
+    executeDirect(ctx, new JDBCUpdate(helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, null), resultHandler);
+    executeDirect(ctx, new JDBCQuery(helper, null, ctx, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCQuery(vertx, helper, null, ctx, sql, in), resultHandler);
+    executeDirect(ctx, new JDBCQuery(helper, null, ctx, sql, in), resultHandler);
     return this;
   }
 
