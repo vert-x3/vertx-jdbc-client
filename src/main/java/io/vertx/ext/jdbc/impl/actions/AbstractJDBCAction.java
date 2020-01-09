@@ -16,11 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
 import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;
@@ -34,38 +29,20 @@ import java.sql.Statement;
 public abstract class AbstractJDBCAction<T> {
 
   protected final SQLOptions options;
-  protected final ContextInternal ctx;
   protected final JDBCStatementHelper helper;
 
-  protected AbstractJDBCAction(SQLOptions options, ContextInternal ctx) {
-    this(null, options, ctx);
+  protected AbstractJDBCAction(SQLOptions options) {
+    this(null, options);
   }
 
-  protected AbstractJDBCAction(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx) {
+  protected AbstractJDBCAction(JDBCStatementHelper helper, SQLOptions options) {
     this.options = options;
-    this.ctx = ctx;
     this.helper = helper;
-  }
-
-  private void handle(Connection conn, Promise<T> future) {
-    try {
-      // apply connection options
-      applyConnectionOptions(conn);
-      // execute
-      T result = execute(conn);
-      future.complete(result);
-    } catch (SQLException e) {
-      future.fail(e);
-    }
-  }
-
-  public void execute(Connection conn, TaskQueue statementsQueue, Handler<AsyncResult<T>> resultHandler) {
-    ctx.executeBlocking(future -> handle(conn, future), statementsQueue, resultHandler);
   }
 
   public abstract T execute(Connection conn) throws SQLException;
 
-  void applyStatementOptions(Statement statement) throws SQLException {
+  protected void applyStatementOptions(Statement statement) throws SQLException {
     if (options != null) {
       if (options.getQueryTimeout() > 0) {
         statement.setQueryTimeout(options.getQueryTimeout());
@@ -75,20 +52,6 @@ public abstract class AbstractJDBCAction<T> {
       }
       if (options.getFetchSize() > 0) {
         statement.setFetchSize(options.getFetchSize());
-      }
-    }
-  }
-
-  private void applyConnectionOptions(Connection conn) throws SQLException {
-    if (options != null) {
-      if (options.isReadOnly()) {
-        conn.setReadOnly(true);
-      }
-      if (options.getCatalog() != null) {
-        conn.setCatalog(options.getCatalog());
-      }
-      if (options.getSchema() != null) {
-        conn.setSchema(options.getSchema());
       }
     }
   }

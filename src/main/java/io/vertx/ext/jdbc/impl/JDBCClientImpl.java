@@ -143,112 +143,82 @@ public class JDBCClientImpl implements JDBCClient {
 
   @Override
   public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCUpdate(helper, null, ctx, sql, null), resultHandler);
+    executeDirect(new JDBCUpdate(helper, null, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCUpdate(helper, null, ctx, sql, in), resultHandler);
+    executeDirect(new JDBCUpdate(helper, null, sql, in), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCQuery(helper, null, ctx, sql, null), resultHandler);
+    executeDirect(new JDBCQuery(helper, null, sql, null), resultHandler);
     return this;
   }
 
   @Override
   public JDBCClient queryWithParams(String sql, JsonArray in, Handler<AsyncResult<ResultSet>> resultHandler) {
-    ContextInternal ctx = vertx.getOrCreateContext();
-    executeDirect(ctx, new JDBCQuery(helper, null, ctx, sql, in), resultHandler);
+    executeDirect(new JDBCQuery(helper, null, sql, in), resultHandler);
     return this;
   }
 
-  private <T> void executeDirect(ContextInternal ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
-    getConnection(ctx, ar1 -> {
-      Promise<T> promise = Promise.promise();
-      promise.future().setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
-      if (ar1.succeeded()) {
-        JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
+  private <T> void executeDirect(AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
+    getConnection().flatMap(sqlConnection -> {
+      JDBCConnectionImpl conn = (JDBCConnectionImpl) sqlConnection;
+      return conn.schedule(action).onComplete(v -> conn.close());
+    }).setHandler(handler);
+  }
+
+  private Future<SQLConnection> getConnection() {
+    ContextInternal ctx = vertx.getOrCreateContext();
+    return getDataSourceHolder(ctx).flatMap(holder -> {
+      Promise<SQLConnection> res = ctx.promise();
+      boolean enabled = holder.metrics != null;
+      Object queueMetric = enabled ? holder.metrics.submitted() : null;
+      holder.exec.execute(() -> {
         try {
-          T result = action.execute(conn.conn);
-          promise.complete(result);
-        } catch (Exception e) {
-          promise.fail(e);
-        } finally {
-          if (conn.metrics != null) {
-            conn.metrics.end(conn.metric, true);
+          /*
+           * This can block until a connection is free.
+           * We don't want to do that while running on a worker as we can enter a deadlock situation as the worker
+           * might have obtained a connection, and won't release it until it is run again
+           * There is a general principle here:
+           * *User code* should be executed on a worker and can potentially block, it's up to the *user* to deal with
+           * deadlocks that might occur there.
+           * If the *service code* internally blocks waiting for a resource that might be obtained by *user code*, then
+           * this can cause deadlock, so the service should ensure it never does this, by executing such code
+           * (e.g. getConnection) on a different thread to the worker pool.
+           * We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
+           * other important operations from occurring (e.g. async file access)
+           */
+          Connection conn = holder.dataSource.getConnection();
+          Object execMetric = enabled ? holder.metrics.begin(queueMetric) : null;
+          // wrap it
+          res.complete(new JDBCConnectionImpl(ctx, helper, conn, holder.metrics, execMetric));
+        } catch (SQLException e) {
+          if (enabled) {
+            holder.metrics.rejected(queueMetric);
           }
-          try {
-            conn.conn.close();
-          } catch (Exception e) {
-            JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
-          }
+          res.fail(e);
         }
-      } else {
-        promise.fail(ar1.cause());
-      }
+      });
+      return res.future();
     });
   }
 
-  private void getConnection(ContextInternal ctx, Handler<AsyncResult<SQLConnection>> handler) {
-    getDataSourceHolder(ctx, ar -> {
-      if (ar.succeeded()) {
-        DataSourceHolder holder = ar.result();
-        boolean enabled = holder.metrics != null;
-        Object queueMetric = enabled ? holder.metrics.submitted() : null;
-        holder.exec.execute(() -> {
-          Promise<SQLConnection> res = Promise.promise();
-          res.future().setHandler(handler);
-          try {
-            /*
-             * This can block until a connection is free.
-             * We don't want to do that while running on a worker as we can enter a deadlock situation as the worker
-             * might have obtained a connection, and won't release it until it is run again
-             * There is a general principle here:
-             * *User code* should be executed on a worker and can potentially block, it's up to the *user* to deal with
-             * deadlocks that might occur there.
-             * If the *service code* internally blocks waiting for a resource that might be obtained by *user code*, then
-             * this can cause deadlock, so the service should ensure it never does this, by executing such code
-             * (e.g. getConnection) on a different thread to the worker pool.
-             * We don't want to use the vert.x internal pool for this as the threads might end up all blocked preventing
-             * other important operations from occurring (e.g. async file access)
-             */
-            Connection conn = holder.dataSource.getConnection();
-            Object execMetric = enabled ? holder.metrics.begin(queueMetric) : null;
-            // wrap it
-            res.complete(new JDBCConnectionImpl(ctx, helper, conn, holder.metrics, execMetric));
-          } catch (SQLException e) {
-            if (enabled) {
-              holder.metrics.rejected(queueMetric);
-            }
-            res.fail(e);
-          }
-        });
-      } else {
-        handler.handle(Future.failedFuture(ar.cause()));
-      }
-    });
-  }
-
-  private synchronized void getDataSourceHolder(ContextInternal ctx, Handler<AsyncResult<DataSourceHolder>> handler) {
+  private synchronized Future<DataSourceHolder> getDataSourceHolder(ContextInternal ctx) {
     if (closed) {
-      handler.handle(Future.failedFuture("Client is closed"));
-    } else {
-      DataSourceHolder holder = holders.get(datasourceName);
-      if (holder.dataSource != null) {
-        handler.handle(Future.succeededFuture(holder));
-      } else {
-        ctx.executeBlocking(promise -> {
-          createDataSource(promise);
-        }, holder.creationQueue, handler);
-      }
+      return ctx.failedFuture("Client is closed");
     }
+    DataSourceHolder holder = holders.get(datasourceName);
+    if (holder.dataSource != null) {
+      return ctx.succeededFuture(holder);
+    }
+    return ctx.executeBlocking(promise -> {
+      createDataSource(promise);
+    }, holder.creationQueue);
   }
 
   private void createDataSource(Promise<DataSourceHolder> promise) {
@@ -291,8 +261,7 @@ public class JDBCClientImpl implements JDBCClient {
 
   @Override
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    ContextInternal ctx = vertx.getOrCreateContext();
-    getConnection(ctx, ar -> ctx.runOnContext(v -> handler.handle(ar)));
+    getConnection().setHandler(handler);
     return this;
   }
 

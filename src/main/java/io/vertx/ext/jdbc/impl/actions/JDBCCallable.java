@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 
@@ -35,8 +34,8 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private final JsonArray in;
   private final JsonArray out;
 
-  public JDBCCallable(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, JsonArray in, JsonArray out) {
-    super(helper, options, ctx);
+  public JDBCCallable(JDBCStatementHelper helper, SQLOptions options, String sql, JsonArray in, JsonArray out) {
+    super(helper, options);
     this.sql = sql;
     this.in = in;
     this.out = out;
