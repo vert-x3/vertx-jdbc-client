@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.sql.UpdateResult;
@@ -34,8 +33,8 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
 
   private boolean generateKeys;
 
-  public JDBCUpdate(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, JsonArray in) {
-    super(helper, options, ctx);
+  public JDBCUpdate(JDBCStatementHelper helper, SQLOptions options, String sql, JsonArray in) {
+    super(helper, options);
     this.sql = sql;
     this.in = in;
   }

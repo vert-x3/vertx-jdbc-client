@@ -18,7 +18,6 @@ package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
@@ -36,21 +35,18 @@ import java.util.List;
  */
 class JDBCConnectionImpl implements SQLConnection {
 
-  static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
+  private static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
 
-  private final Vertx vertx;
-  final Connection conn;
+  private final Connection conn;
   private final ContextInternal ctx;
-  final PoolMetrics metrics;
-  final Object metric;
-  private final TaskQueue statementsQueue = new TaskQueue();
+  private final PoolMetrics metrics;
+  private final Object metric;
 
   private final JDBCStatementHelper helper;
 
   private SQLOptions options;
 
   public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric) {
-    this.vertx = context.owner();
     this.helper = helper;
     this.conn = conn;
     this.metrics = metrics;
@@ -59,74 +55,78 @@ class JDBCConnectionImpl implements SQLConnection {
   }
 
   @Override
-  public SQLConnection setOptions(SQLOptions options) {
+  public synchronized SQLConnection setOptions(SQLOptions options) {
     this.options = options;
     return this;
   }
 
+  private synchronized SQLOptions getOptions() {
+    return options;
+  }
+
   @Override
   public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCAutoCommit(options, ctx, autoCommit).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCAutoCommit(getOptions(), autoCommit)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    new JDBCExecute(options, ctx, sql).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCExecute(getOptions(), sql)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(helper, options, ctx, sql, null).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCQuery(helper, getOptions(), sql, null)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(helper, options, ctx, statementsQueue, sql, null).execute(conn, statementsQueue, handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, sql, null)).setHandler(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    new StreamQuery(helper, options, ctx, statementsQueue, sql, params).execute(conn, statementsQueue, handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, sql, params)).setHandler(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCQuery(helper, options, ctx, sql, params).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCQuery(helper, getOptions(), sql, params)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(helper, options, ctx, sql, null).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCUpdate(helper, getOptions(), sql, null)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    new JDBCUpdate(helper, options, ctx, sql, params).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCUpdate(helper, getOptions(), sql, params)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(helper, options, ctx, sql, null, null).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCCallable(helper, getOptions(), sql, null, null)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    new JDBCCallable(helper, options, ctx, sql, params, outputs).execute(conn, statementsQueue, resultHandler);
+    schedule(new JDBCCallable(helper, getOptions(), sql, params, outputs)).setHandler(resultHandler);
     return this;
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    new JDBCClose(options, ctx, metrics, metric).execute(conn, statementsQueue, handler);
+    schedule(new JDBCClose(getOptions(), metrics, metric)).setHandler(handler);
   }
 
   @Override
@@ -140,13 +140,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
-    new JDBCCommit(options, ctx).execute(conn, statementsQueue, handler);
+    schedule(new JDBCCommit(getOptions())).setHandler(handler);
     return this;
   }
 
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
-    new JDBCRollback(options, ctx).execute(conn, statementsQueue, handler);
+    schedule(new JDBCRollback(getOptions())).setHandler(handler);
     return this;
   }
 
@@ -164,26 +164,26 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, statementsQueue, handler);
+    }, handler);
 
     return this;
   }
 
   @Override
   public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(helper, options, ctx, sqlStatements).execute(conn, statementsQueue, handler);
+    schedule(new JDBCBatch(helper, getOptions(), sqlStatements)).setHandler(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(helper, options, ctx, statement, args).execute(conn, statementsQueue, handler);
+    schedule(new JDBCBatch(helper, getOptions(), statement, args)).setHandler(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
-    new JDBCBatch(helper, options, ctx, statement, inArgs, outArgs).execute(conn, statementsQueue, handler);
+    schedule(new JDBCBatch(helper, getOptions(), statement, inArgs, outArgs)).setHandler(handler);
     return this;
   }
 
@@ -196,7 +196,7 @@ class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, statementsQueue, handler);
+    }, handler);
 
     return this;
   }
@@ -205,5 +205,34 @@ class JDBCConnectionImpl implements SQLConnection {
   @SuppressWarnings("unchecked")
   public <C> C unwrap() {
     return (C) conn;
+  }
+
+  public <T> Future<T> schedule(AbstractJDBCAction<T> action) {
+    SQLOptions sqlOptions = getOptions();
+    return ctx.executeBlocking(promise -> {
+      try {
+        // apply connection options
+        applyConnectionOptions(conn, sqlOptions);
+        // execute
+        T result = action.execute(conn);
+        promise.complete(result);
+      } catch (SQLException e) {
+        promise.fail(e);
+      }
+    });
+  }
+
+  private static void applyConnectionOptions(Connection conn, SQLOptions sqlOptions) throws SQLException {
+    if (sqlOptions != null) {
+      if (sqlOptions.isReadOnly()) {
+        conn.setReadOnly(true);
+      }
+      if (sqlOptions.getCatalog() != null) {
+        conn.setCatalog(sqlOptions.getCatalog());
+      }
+      if (sqlOptions.getSchema() != null) {
+        conn.setSchema(sqlOptions.getSchema());
+      }
+    }
   }
 }

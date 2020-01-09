@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;
@@ -31,8 +30,8 @@ public class JDBCExecute extends AbstractJDBCAction<Void> {
 
   private final String sql;
 
-  public JDBCExecute(SQLOptions options, ContextInternal ctx, String sql) {
-    super(options, ctx);
+  public JDBCExecute(SQLOptions options, String sql) {
+    super(options);
     this.sql = sql;
   }
 

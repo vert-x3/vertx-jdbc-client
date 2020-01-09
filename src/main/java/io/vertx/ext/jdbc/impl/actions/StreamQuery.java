@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.sql.SQLRowStream;
@@ -34,15 +33,15 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
 
   private static final int DEFAULT_ROW_STREAM_FETCH_SIZE = 128;
 
+  private final ContextInternal ctx;
   private final String sql;
   private final JsonArray in;
-  private final TaskQueue statementsQueue;
 
-  public StreamQuery(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, TaskQueue statementsQueue, String sql, JsonArray in) {
-    super(helper, options, ctx);
+  public StreamQuery(JDBCStatementHelper helper, SQLOptions options, ContextInternal ctx, String sql, JsonArray in) {
+    super(helper, options);
+    this.ctx = ctx;
     this.sql = sql;
     this.in = in;
-    this.statementsQueue = statementsQueue;
   }
 
   @Override
@@ -68,7 +67,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
           fetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
         }
 
-        return new JDBCSQLRowStream(ctx, this.statementsQueue, st, rs, fetchSize);
+        return new JDBCSQLRowStream(ctx, st, rs, fetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();

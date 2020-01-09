@@ -20,10 +20,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.ext.sql.SQLRowStream;
@@ -45,7 +44,6 @@ class JDBCSQLRowStream implements SQLRowStream {
   private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
 
   private final ContextInternal ctx;
-  private final TaskQueue statementsQueue;
   private final Statement st;
   private final int fetchSize;
   private final InboundBuffer<JsonArray> pending;
@@ -63,12 +61,11 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(ContextInternal ctx, TaskQueue statementsQueue, Statement st, ResultSet rs, int fetchSize) throws SQLException {
+  JDBCSQLRowStream(ContextInternal ctx, Statement st, ResultSet rs, int fetchSize) throws SQLException {
     this.ctx = ctx;
     this.st = st;
     this.fetchSize = fetchSize;
     this.rs = rs;
-    this.statementsQueue = statementsQueue;
     this.pending = new InboundBuffer<JsonArray>(ctx, fetchSize)
       .drainHandler(v -> readBatch())
       .emptyHandler(v -> checkEndHandler());
@@ -173,7 +170,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         } catch (SQLException e) {
           fut.fail(e);
         }
-      }, statementsQueue, ar -> {
+      }, ar -> {
         if (ar.succeeded()) {
           List<JsonArray> rows = ar.result();
           if (rows.isEmpty()) {
@@ -261,7 +258,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       // pause streaming if rs is not complete
       pause();
 
-      ctx.executeBlocking(this::getNextResultSet, statementsQueue, res -> {
+      ctx.executeBlocking(this::getNextResultSet, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -315,7 +312,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         } catch (Exception e) {
           f.fail(e);
         }
-      }, statementsQueue, handler);
+      }, handler);
     } else {
       if (handler != null) {
         handler.handle(Future.succeededFuture());
