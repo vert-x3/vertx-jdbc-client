@@ -46,13 +46,21 @@ public interface JDBCClient extends SQLClient {
   String DEFAULT_DS_NAME = "DEFAULT_DS";
 
   /**
+   * @deprecated use {@link #create(Vertx, JsonObject)} instead
+   */
+  @Deprecated
+  static JDBCClient createNonShared(Vertx vertx, JsonObject config) {
+    return create(vertx, config);
+  }
+
+  /**
    * Create a JDBC client which maintains its own data source.
    *
    * @param vertx  the Vert.x instance
-   * @param config  the configuration
+   * @param config the configuration
    * @return the client
    */
-  static JDBCClient createNonShared(Vertx vertx, JsonObject config) {
+  static JDBCClient create(Vertx vertx, JsonObject config) {
     return new JDBCClientImpl(vertx, config, UUID.randomUUID().toString());
   }
 

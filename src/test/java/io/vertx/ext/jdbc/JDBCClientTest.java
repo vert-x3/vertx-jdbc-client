@@ -50,7 +50,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.createNonShared(vertx, config());
+    client = JDBCClient.create(vertx, config());
   }
 
   @After

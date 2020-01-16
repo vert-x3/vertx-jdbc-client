@@ -38,7 +38,7 @@ public class JDBCExamples {
 
   public void exampleCreateNonShared(Vertx vertx, JsonObject config) {
 
-    SQLClient client = JDBCClient.createNonShared(vertx, config);
+    SQLClient client = JDBCClient.create(vertx, config);
 
   }
 
