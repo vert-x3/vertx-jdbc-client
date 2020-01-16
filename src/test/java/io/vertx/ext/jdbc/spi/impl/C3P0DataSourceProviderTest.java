@@ -47,7 +47,7 @@ public class C3P0DataSourceProviderTest extends VertxTestBase {
 
   @Test
   public void continuingConnectionAttempts() {
-    client = JDBCClient.createNonShared(vertx, config());
+    client = JDBCClient.create(vertx, config());
     vertx.setTimer(2000, res -> {
       testComplete();
     });
@@ -62,7 +62,7 @@ public class C3P0DataSourceProviderTest extends VertxTestBase {
   @Test
   public void stopConnectionAttempts() {
     JsonObject config = config().put("acquire_retry_attempts", 1).put("break_after_acquire_failure", true);
-    client = JDBCClient.createNonShared(vertx, config);
+    client = JDBCClient.create(vertx, config);
     vertx.setTimer(2000, res -> {
       fail("Should not get invoked");
     });

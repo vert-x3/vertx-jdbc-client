@@ -24,11 +24,11 @@ public class RefCountTest extends VertxTestBase {
   @Test
   public void testNonShared() {
     JsonObject config = new JsonObject();
-    SQLClient client1 = JDBCClient.createNonShared(vertx, config);
+    SQLClient client1 = JDBCClient.create(vertx, config);
     assertEquals(1, map.size());
-    SQLClient client2 = JDBCClient.createNonShared(vertx, config);
+    SQLClient client2 = JDBCClient.create(vertx, config);
     assertEquals(2, map.size());
-    SQLClient client3 = JDBCClient.createNonShared(vertx, config);
+    SQLClient client3 = JDBCClient.create(vertx, config);
     assertEquals(3, map.size());
 
     close(client1, 2)

@@ -73,7 +73,7 @@ interacting with different databases.
 In most cases you will want to share a data source between different client instances.
 However, it's possible you want to create a client instance that doesn't share its data source with any other client.
 
-In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#createNonShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
+In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#create(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
 
 [source,java]
 ----

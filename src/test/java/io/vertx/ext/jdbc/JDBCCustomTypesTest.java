@@ -62,7 +62,7 @@ public class JDBCCustomTypesTest extends VertxTestBase {
       }
     }
     super.setUp();
-    client = JDBCClient.createNonShared(vertx, config);
+    client = JDBCClient.create(vertx, config);
   }
 
   @After
