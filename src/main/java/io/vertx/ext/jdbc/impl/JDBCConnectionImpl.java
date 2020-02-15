@@ -33,7 +33,7 @@ import java.util.List;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-class JDBCConnectionImpl implements SQLConnection {
+public class JDBCConnectionImpl implements SQLConnection {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCConnectionImpl.class);
 

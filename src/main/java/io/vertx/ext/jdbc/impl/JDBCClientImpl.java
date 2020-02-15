@@ -103,6 +103,10 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     }
   }
 
+  public JDBCStatementHelper getHelper() {
+    return helper;
+  }
+
   @Override
   public void close(Promise<Void> completion) {
     close((Handler<AsyncResult<Void>>) completion);
@@ -183,8 +187,11 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     }).onComplete(handler);
   }
 
-  private Future<SQLConnection> getConnection() {
-    ContextInternal ctx = vertx.getOrCreateContext();
+  public Future<SQLConnection> getConnection() {
+    return getConnection(vertx.getOrCreateContext());
+  }
+
+  public Future<SQLConnection> getConnection(ContextInternal ctx) {
     return getDataSourceHolder(ctx).flatMap(holder -> {
       Promise<SQLConnection> res = ctx.promise();
       boolean enabled = holder.metrics != null;
