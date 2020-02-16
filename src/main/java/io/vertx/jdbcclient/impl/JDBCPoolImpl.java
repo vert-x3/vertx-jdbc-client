@@ -1,7 +1,6 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
@@ -9,7 +8,6 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.impl.Connection;
 import io.vertx.sqlclient.impl.PoolBase;
 import io.vertx.sqlclient.impl.SqlConnectionImpl;
@@ -45,17 +43,8 @@ public class JDBCPoolImpl extends PoolBase<JDBCPoolImpl> implements JDBCPool {
   }
 
   @Override
-  public void begin(Handler<AsyncResult<Transaction>> handler) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Future<Transaction> begin() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void close() {
+  protected void doClose() {
     client.close();
+    super.doClose();
   }
 }
