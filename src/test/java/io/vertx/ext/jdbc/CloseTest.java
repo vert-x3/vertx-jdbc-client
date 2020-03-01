@@ -7,6 +7,7 @@ import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.sql.DataSource;
@@ -23,6 +24,11 @@ import static java.util.concurrent.TimeUnit.*;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class CloseTest extends JDBCClientTestBase {
+
+  @BeforeClass
+  public static void createDb() throws Exception {
+    createDb();
+  }
 
   private static final JsonObject theConfig = config();
 
