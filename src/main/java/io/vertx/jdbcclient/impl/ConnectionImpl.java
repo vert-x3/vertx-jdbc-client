@@ -5,6 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.jdbcclient.impl.actions.JDBCTxOp;
 import io.vertx.jdbcclient.impl.actions.JDBCPrepareStatementAction;
 import io.vertx.jdbcclient.impl.actions.JDBCPreparedQuery;
 import io.vertx.jdbcclient.impl.actions.JDBCPreparedStatement;
@@ -19,6 +20,7 @@ import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
 import io.vertx.sqlclient.impl.command.PrepareStatementCommand;
 import io.vertx.sqlclient.impl.command.SimpleQueryCommand;
+import io.vertx.sqlclient.impl.command.TxCommand;
 
 public class ConnectionImpl implements Connection {
 
@@ -66,6 +68,8 @@ public class ConnectionImpl implements Connection {
       handle((PrepareStatementCommand) commandBase, (Promise<PreparedStatement>) promise);
     } else if (commandBase instanceof ExtendedQueryCommand) {
       handle((ExtendedQueryCommand<?>) commandBase, (Promise<Boolean>) promise);
+    } else if (commandBase instanceof TxCommand) {
+      handle((TxCommand) commandBase, (Promise<Void>) promise);
     } else if (commandBase instanceof BiCommand<?, ?>) {
       handle((BiCommand) commandBase, promise);
     } else {
@@ -88,6 +92,12 @@ public class ConnectionImpl implements Connection {
   private <R> void handle(SimpleQueryCommand<R> command, Promise<Boolean> promise) {
     JDBCSimpleQueryAction<?, R> action = new JDBCSimpleQueryAction<>(helper, null, command.sql(), command.collector());
     handle(action, command.resultHandler(), promise);
+  }
+
+  private void handle(TxCommand command, Promise<Void> promise) {
+    JDBCTxOp action = new JDBCTxOp(helper, command, null);
+    Future<Void> fut = conn.schedule(action);
+    fut.setHandler(promise);
   }
 
   private <R> void handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler, Promise<Boolean> promise) {

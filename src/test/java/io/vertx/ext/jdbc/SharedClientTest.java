@@ -2,6 +2,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLClient;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -12,6 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class SharedClientTest extends JDBCClientTestBase {
+
+  @BeforeClass
+  public static void createDb() throws Exception {
+    createDb();
+  }
 
   @Test(timeout = 60000)
   public void testDeadlock() throws Exception {
