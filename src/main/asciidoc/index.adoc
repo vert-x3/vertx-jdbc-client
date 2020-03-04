@@ -207,6 +207,11 @@ a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled u
 When this config is present UUIDs will be handled as a native type.
 
 
+Storing data to a binary column encounters an issue because the internally stored Based64 encoding of the array
+isn't recognized as a byte array. Enable optimistic casting of a Base64-encoded string to a byte[] using:
+
+{ "castBase64": true }
+
 == Use as OSGi bundle
 
 Vert.x JDBC client can be used as an OSGi bundle. However notice that you would need to deploy all dependencies

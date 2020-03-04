@@ -42,6 +42,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
@@ -63,8 +64,10 @@ public final class JDBCStatementHelper {
   private static final Pattern DATE = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}$");
   private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
   private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
+  private static final Pattern BASE64 = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$");
 
   private final boolean castUUID;
+  private final boolean castBase64;
 
   public JDBCStatementHelper() {
     this(new JsonObject());
@@ -72,6 +75,7 @@ public final class JDBCStatementHelper {
 
   public JDBCStatementHelper(JsonObject config) {
     this.castUUID = config.getBoolean("castUUID", false);
+    this.castBase64 = config.getBoolean("castBase64", false);
   }
 
   public void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
@@ -300,6 +304,11 @@ public final class JDBCStatementHelper {
       // sql uuid
       if (castUUID && UUID.matcher(value).matches()) {
         return java.util.UUID.fromString(value);
+      }
+
+      // possible byte[]
+      if (castBase64 && BASE64.matcher(value).matches()) {
+        return Base64.getDecoder().decode(value);
       }
 
     } catch (RuntimeException e) {
