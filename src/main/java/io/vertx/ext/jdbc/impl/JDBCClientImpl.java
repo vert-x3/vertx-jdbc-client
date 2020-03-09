@@ -169,7 +169,7 @@ public class JDBCClientImpl implements JDBCClient {
     getConnection().flatMap(sqlConnection -> {
       JDBCConnectionImpl conn = (JDBCConnectionImpl) sqlConnection;
       return conn.schedule(action).onComplete(v -> conn.close());
-    }).setHandler(handler);
+    }).onComplete(handler);
   }
 
   private Future<SQLConnection> getConnection() {
@@ -261,7 +261,7 @@ public class JDBCClientImpl implements JDBCClient {
 
   @Override
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
-    getConnection().setHandler(handler);
+    getConnection().onComplete(handler);
     return this;
   }
 

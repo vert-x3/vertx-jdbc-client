@@ -66,67 +66,67 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler) {
-    schedule(new JDBCAutoCommit(getOptions(), autoCommit)).setHandler(resultHandler);
+    schedule(new JDBCAutoCommit(getOptions(), autoCommit)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler) {
-    schedule(new JDBCExecute(getOptions(), sql)).setHandler(resultHandler);
+    schedule(new JDBCExecute(getOptions(), sql)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    schedule(new JDBCQuery(helper, getOptions(), sql, null)).setHandler(resultHandler);
+    schedule(new JDBCQuery(helper, getOptions(), sql, null)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    schedule(new StreamQuery(helper, getOptions(), ctx, sql, null)).setHandler(handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, sql, null)).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    schedule(new StreamQuery(helper, getOptions(), ctx, sql, params)).setHandler(handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, sql, params)).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler) {
-    schedule(new JDBCQuery(helper, getOptions(), sql, params)).setHandler(resultHandler);
+    schedule(new JDBCQuery(helper, getOptions(), sql, params)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    schedule(new JDBCUpdate(helper, getOptions(), sql, null)).setHandler(resultHandler);
+    schedule(new JDBCUpdate(helper, getOptions(), sql, null)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler) {
-    schedule(new JDBCUpdate(helper, getOptions(), sql, params)).setHandler(resultHandler);
+    schedule(new JDBCUpdate(helper, getOptions(), sql, params)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler) {
-    schedule(new JDBCCallable(helper, getOptions(), sql, null, null)).setHandler(resultHandler);
+    schedule(new JDBCCallable(helper, getOptions(), sql, null, null)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler) {
-    schedule(new JDBCCallable(helper, getOptions(), sql, params, outputs)).setHandler(resultHandler);
+    schedule(new JDBCCallable(helper, getOptions(), sql, params, outputs)).onComplete(resultHandler);
     return this;
   }
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    schedule(new JDBCClose(getOptions(), metrics, metric)).setHandler(handler);
+    schedule(new JDBCClose(getOptions(), metrics, metric)).onComplete(handler);
   }
 
   @Override
@@ -140,13 +140,13 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection commit(Handler<AsyncResult<Void>> handler) {
-    schedule(new JDBCCommit(getOptions())).setHandler(handler);
+    schedule(new JDBCCommit(getOptions())).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection rollback(Handler<AsyncResult<Void>> handler) {
-    schedule(new JDBCRollback(getOptions())).setHandler(handler);
+    schedule(new JDBCRollback(getOptions())).onComplete(handler);
     return this;
   }
 
@@ -171,19 +171,19 @@ class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler) {
-    schedule(new JDBCBatch(helper, getOptions(), sqlStatements)).setHandler(handler);
+    schedule(new JDBCBatch(helper, getOptions(), sqlStatements)).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchWithParams(String statement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler) {
-    schedule(new JDBCBatch(helper, getOptions(), statement, args)).setHandler(handler);
+    schedule(new JDBCBatch(helper, getOptions(), statement, args)).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection batchCallableWithParams(String statement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler) {
-    schedule(new JDBCBatch(helper, getOptions(), statement, inArgs, outArgs)).setHandler(handler);
+    schedule(new JDBCBatch(helper, getOptions(), statement, inArgs, outArgs)).onComplete(handler);
     return this;
   }
 

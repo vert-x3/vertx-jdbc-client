@@ -34,7 +34,7 @@ public class RefCountTest extends VertxTestBase {
     close(client1, 2)
       .compose(v -> close(client2, 1))
       .compose(v -> close(client3, 0))
-      .setHandler(onSuccess(v -> testComplete()));
+      .onComplete(onSuccess(v -> testComplete()));
 
     await();
   }
@@ -52,7 +52,7 @@ public class RefCountTest extends VertxTestBase {
     close(client1, 1)
       .compose(v -> close(client2, 1))
       .compose(v -> close(client3, 0))
-      .setHandler(onSuccess(v -> testComplete()));
+      .onComplete(onSuccess(v -> testComplete()));
 
     await();
   }
@@ -80,7 +80,7 @@ public class RefCountTest extends VertxTestBase {
       .compose(v -> close(client4, 1))
       .compose(v -> close(client5, 1))
       .compose(v -> close(client6, 0))
-      .setHandler(onSuccess(v -> testComplete()));
+      .onComplete(onSuccess(v -> testComplete()));
 
     await();
   }
