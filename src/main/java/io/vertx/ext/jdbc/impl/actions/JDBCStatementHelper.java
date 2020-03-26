@@ -65,6 +65,9 @@ public final class JDBCStatementHelper {
   private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
 
   private final boolean castUUID;
+  private final boolean castDate;
+  private final boolean castTime;
+  private final boolean castDateTime;
 
   public JDBCStatementHelper() {
     this(new JsonObject());
@@ -72,6 +75,9 @@ public final class JDBCStatementHelper {
 
   public JDBCStatementHelper(JsonObject config) {
     this.castUUID = config.getBoolean("castUUID", false);
+    this.castDate = config.getBoolean("castDate", true);
+    this.castTime = config.getBoolean("castTime", true);
+    this.castDateTime = config.getBoolean("castDateTime", true);
   }
 
   public void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
@@ -272,7 +278,7 @@ public final class JDBCStatementHelper {
 
     try {
       // sql time
-      if (TIME.matcher(value).matches()) {
+      if (castTime && TIME.matcher(value).matches()) {
         // convert from local time to instant
         Instant instant = LocalTime.parse(value).atDate(LocalDate.of(1970, 1, 1)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -282,7 +288,7 @@ public final class JDBCStatementHelper {
       }
 
       // sql date
-      if (DATE.matcher(value).matches()) {
+      if (castDate && DATE.matcher(value).matches()) {
         // convert from local date to instant
         Instant instant = LocalDate.parse(value).atTime(LocalTime.of(0, 0, 0, 0)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -292,7 +298,7 @@ public final class JDBCStatementHelper {
       }
 
       // sql timestamp
-      if (DATETIME.matcher(value).matches()) {
+      if (castDateTime && DATETIME.matcher(value).matches()) {
         Instant instant = Instant.from(ISO_INSTANT.parse(value));
         return Timestamp.from(instant);
       }
