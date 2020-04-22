@@ -27,7 +27,7 @@ public class CloseTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    createDb();
+    resetDb();
   }
 
   private static final JsonObject theConfig = config();

@@ -51,7 +51,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    createDb();
+    resetDb();
   }
 
   @Before
