@@ -80,7 +80,7 @@ public class ConnectionImpl implements Connection {
   private void handle(PrepareStatementCommand command, Promise<PreparedStatement> promise) {
     JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, null, command.sql());
     Future<PreparedStatement> fut = conn.schedule(action);
-    fut.setHandler(promise);
+    fut.onComplete(promise);
   }
 
   private <R> void handle(ExtendedQueryCommand<R> command, Promise<Boolean> promise) {
@@ -94,15 +94,15 @@ public class ConnectionImpl implements Connection {
     handle(action, command.resultHandler(), promise);
   }
 
-  private void handle(TxCommand command, Promise<Void> promise) {
-    JDBCTxOp action = new JDBCTxOp(helper, command, null);
-    Future<Void> fut = conn.schedule(action);
-    fut.setHandler(promise);
+  private <R> void handle(TxCommand<R> command, Promise<R> promise) {
+    JDBCTxOp<R> action = new JDBCTxOp<>(helper, command, null);
+    Future<R> fut = conn.schedule(action);
+    fut.onComplete(promise);
   }
 
   private <R> void handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler, Promise<Boolean> promise) {
     Future<JDBCSimpleQueryAction.Response<R>> fut = conn.schedule(action);
-    fut.setHandler(ar -> {
+    fut.onComplete(ar -> {
       if (ar.succeeded()) {
         JDBCSimpleQueryAction.Response<R> resp = ar.result();
         handler.handleResult(0, resp.size, resp.rowDesc, resp.result, null);
@@ -116,7 +116,7 @@ public class ConnectionImpl implements Connection {
 
   private <T, R> void handle(BiCommand<T, R> command, Promise<R> promise) {
     Promise<T> p = Promise.promise();
-    p.future().setHandler(ar -> {
+    p.future().onComplete(ar -> {
       if (ar.succeeded()) {
         AsyncResult<CommandBase<R>> b = command.then.apply(ar.result());
         if (b.succeeded()) {

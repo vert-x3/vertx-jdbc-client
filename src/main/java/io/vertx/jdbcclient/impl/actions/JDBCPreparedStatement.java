@@ -42,6 +42,11 @@ public class JDBCPreparedStatement implements PreparedStatement {
   }
 
   @Override
+  public boolean cacheable() {
+    return false;
+  }
+
+  @Override
   public ParamDesc paramDesc() {
     return paramDesc;
   }

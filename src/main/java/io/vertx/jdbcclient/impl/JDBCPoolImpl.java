@@ -34,7 +34,7 @@ public class JDBCPoolImpl extends PoolBase<JDBCPoolImpl> implements JDBCPool {
     client
       .getConnection(ctx)
       .map(c -> (Connection)new ConnectionImpl(client.getHelper(), ctx, (io.vertx.ext.jdbc.impl.JDBCConnectionImpl) c))
-      .setHandler(completionHandler);
+      .onComplete(completionHandler);
   }
 
   @Override
