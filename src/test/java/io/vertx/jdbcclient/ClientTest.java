@@ -6,7 +6,6 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowIterator;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.Transaction;
 import io.vertx.sqlclient.Tuple;
 import org.junit.After;
 import org.junit.Before;
@@ -66,7 +65,9 @@ public class ClientTest extends JDBCClientTestBase {
 
   private void testSelect(SqlClient client) {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
-    client.query(sql, onSuccess(resultSet -> {
+    client
+      .query(sql)
+      .execute(onSuccess(resultSet -> {
       assertEquals(2, resultSet.size());
       assertEquals("ID", resultSet.columnsNames().get(0));
       assertEquals("FNAME", resultSet.columnsNames().get(1));
@@ -92,9 +93,9 @@ public class ClientTest extends JDBCClientTestBase {
     SqlClient conn = connection();
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     LocalDate expected = LocalDate.of(2002, 2, 2);
-    conn.preparedQuery(sql, Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
+    conn.preparedQuery(sql).execute(Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
       // assertUpdate(result, 1);
-      conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?", Tuple.of(0), onSuccess(rs -> {
+      conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?").execute(Tuple.of(0), onSuccess(rs -> {
         assertEquals(1, rs.size());
         assertEquals(expected, rs.iterator().next().getLocalDate(0));
         testComplete();
@@ -117,26 +118,31 @@ public class ClientTest extends JDBCClientTestBase {
     Context ctx = vertx.getOrCreateContext();
     SqlConnection conn = connection(ctx);
     ctx.runOnContext(v -> {
-      Transaction tx = conn.begin();
-      String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
-      LocalDate expected = LocalDate.of(2002, 2, 2);
-      conn.preparedQuery(sql, Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
-        if (commit) {
-          tx.commit(onSuccess(v2 -> {
-            conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?", Tuple.of(0), onSuccess(rs -> {
-              assertEquals(1, rs.size());
-              assertEquals(expected, rs.iterator().next().getLocalDate(0));
-              testComplete();
-            }));
+      conn.begin(onSuccess(tx -> {
+        String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
+        LocalDate expected = LocalDate.of(2002, 2, 2);
+        conn
+          .preparedQuery(sql)
+          .execute(Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
+            if (commit) {
+              tx.commit(onSuccess(v2 -> {
+                conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                  .execute(Tuple.of(0), onSuccess(rs -> {
+                    assertEquals(1, rs.size());
+                    assertEquals(expected, rs.iterator().next().getLocalDate(0));
+                    testComplete();
+                  }));
+              }));
+            } else {
+              tx.rollback(onSuccess(v2 -> {
+                conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                  .execute(Tuple.of(0), onSuccess(rs -> {
+                    assertEquals(0, rs.size());
+                    testComplete();
+                  }));
+              }));
+            }
           }));
-        } else {
-          tx.rollback(onSuccess(v2 -> {
-            conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?", Tuple.of(0), onSuccess(rs -> {
-              assertEquals(0, rs.size());
-              testComplete();
-            }));
-          }));
-        }
       }));
     });
     await();

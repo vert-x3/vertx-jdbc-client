@@ -121,7 +121,7 @@ public class JDBCRow extends ArrayTuple implements Row {
     } else if (type == OffsetDateTime.class) {
       return (T[]) getOffsetDateTimeArray(pos);
     } else if (type == Object.class) {
-      return (T[]) getJsonArray(pos);
+      return (T[]) getJsonArray_(pos);
     }
     throw new UnsupportedOperationException("Unsupported type " + type.getName());
   }
@@ -131,9 +131,9 @@ public class JDBCRow extends ArrayTuple implements Row {
     return pos == -1 ? null : getNumeric(pos);
   }
 
-  public Object[] getJsonArray(String name) {
+  public Object[] getJsonArray_(String name) {
     int pos = desc.columnIndex(name);
-    return pos == -1 ? null : getJsonArray(pos);
+    return pos == -1 ? null : getJsonArray_(pos);
   }
 
   public Numeric[] getNumericArray(String name) {
@@ -191,7 +191,7 @@ public class JDBCRow extends ArrayTuple implements Row {
   /**
    * Get a {@code Json} array value, the {@code Json} value may be a string, number, JSON object, array, boolean or null.
    */
-  public Object[] getJsonArray(int pos) {
+  public Object[] getJsonArray_(int pos) {
     Object val = getValue(pos);
     if (val instanceof Object[]) {
       return (Object[]) val;

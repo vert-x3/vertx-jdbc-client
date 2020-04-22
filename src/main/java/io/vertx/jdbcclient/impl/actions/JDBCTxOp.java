@@ -27,22 +27,22 @@ import java.sql.SQLException;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class JDBCTxOp extends AbstractJDBCAction<Void> {
+public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
 
-  private final TxCommand op;
+  private final TxCommand<R> op;
 
-  public JDBCTxOp(JDBCStatementHelper helper, TxCommand op, SQLOptions options) {
+  public JDBCTxOp(JDBCStatementHelper helper, TxCommand<R> op, SQLOptions options) {
     super(helper, options);
     this.op = op;
   }
 
   @Override
-  public Void execute(Connection conn) throws SQLException {
-    if (op == TxCommand.BEGIN) {
+  public R execute(Connection conn) throws SQLException {
+    if (op.kind == TxCommand.Kind.BEGIN) {
       conn.setAutoCommit(false);
     } else {
       try {
-        if (op == TxCommand.COMMIT) {
+        if (op.kind == TxCommand.Kind.COMMIT) {
           conn.commit();
         } else {
           conn.rollback();
@@ -51,6 +51,6 @@ public class JDBCTxOp extends AbstractJDBCAction<Void> {
         conn.setAutoCommit(false);
       }
     }
-    return null;
+    return op.result;
   }
 }
