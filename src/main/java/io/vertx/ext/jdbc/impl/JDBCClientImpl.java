@@ -97,8 +97,8 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   private void setupCloseHook() {
-    Context ctx = Vertx.currentContext();
-    if (ctx != null && ctx.owner() == vertx) {
+    ContextInternal ctx = vertx.getContext();
+    if (ctx != null) {
       ctx.addCloseHook(this::close);
     }
   }
