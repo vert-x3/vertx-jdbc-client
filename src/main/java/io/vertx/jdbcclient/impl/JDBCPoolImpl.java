@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
+import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlClient;
@@ -39,10 +40,13 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   @Override
   public Future<SqlConnection> getConnection() {
     ContextInternal ctx = vertx.getOrCreateContext();
+    return getConnectionInternal(ctx);
+  }
+
+  private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .<SqlConnection>getConnection(ctx)
-      .map(c -> (Connection)new ConnectionImpl(client.getHelper(), ctx, (io.vertx.ext.jdbc.impl.JDBCConnectionImpl) c))
-      .map(c -> (SqlConnection)new SqlConnectionImpl<>(ctx, c, null));
+      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, (JDBCConnectionImpl) c), null));
   }
 
   @Override
@@ -62,38 +66,17 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
 
   @Override
   public Future<Void> close() {
+    client.close(); // SHOULD BE A FUTURE
     return Future.succeededFuture();
   }
 
   @Override
   public <R> void schedule(CommandBase<R> commandBase, Promise<R> promise) {
-
-  }
-
-  /*
-  @Override
-  public void connect(Handler<AsyncResult<Connection>> completionHandler) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void acquire(Handler<AsyncResult<Connection>> completionHandler) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    client
-      .getConnection(ctx)
-      .map(c -> (Connection)new ConnectionImpl(client.getHelper(), ctx, (io.vertx.ext.jdbc.impl.JDBCConnectionImpl) c))
-      .onComplete(completionHandler);
+    getConnectionInternal(ctx).flatMap(conn -> {
+      Promise<R> p = ctx.promise();
+      ((SqlConnectionImpl)conn).schedule(commandBase, p);
+      return p.future().flatMap(r -> conn.close().map(r));
+    }).onComplete(promise);
   }
-
-  @Override
-  protected SqlConnectionImpl<SqlConnection> wrap(ContextInternal context, Connection conn) {
-    return new SqlConnectionImpl<>(context, conn);
-  }
-
-  @Override
-  protected void doClose() {
-    client.close();
-    super.doClose();
-  }
-*/
 }

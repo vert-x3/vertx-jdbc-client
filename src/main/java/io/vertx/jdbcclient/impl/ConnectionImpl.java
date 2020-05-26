@@ -47,7 +47,13 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public void close(Holder holder, Promise<Void> promise) {
-    // TODO ?????
+    conn.close(ar -> {
+      if (ar.succeeded()) {
+        promise.complete();
+      } else {
+        promise.fail(ar.cause());
+      }
+    });
   }
 
   @Override
