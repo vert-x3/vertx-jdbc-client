@@ -88,7 +88,6 @@ public class JDBCRow extends ArrayTuple implements Row {
     throw new UnsupportedOperationException("Unsupported type " + type.getName());
   }
 
-  @Override
   public <T> T[] getValues(Class<T> type, int pos) {
     if (type == Boolean.class) {
       return (T[]) getBooleanArray(pos);
