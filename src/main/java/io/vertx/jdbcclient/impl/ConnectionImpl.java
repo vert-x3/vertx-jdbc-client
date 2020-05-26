@@ -46,8 +46,8 @@ public class ConnectionImpl implements Connection {
   }
 
   @Override
-  public void close(Holder holder) {
-
+  public void close(Holder holder, Promise<Void> promise) {
+    // TODO ?????
   }
 
   @Override
