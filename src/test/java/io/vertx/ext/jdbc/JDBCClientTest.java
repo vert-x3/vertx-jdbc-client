@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
@@ -693,32 +694,31 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
-  public void testWorkerPerConnection() {
-    int numConns = 4;
-    ArrayList<SQLConnection> conns = new ArrayList<>();
-    for (int i = 0; i < numConns; i++) {
-      conns.add(connection());
-    }
+  public void testWorkerPerContext() {
+    int numContexts = 4;
     AtomicInteger count = new AtomicInteger();
-    Context context = vertx.getOrCreateContext();
-    context.runOnContext(v -> {
-      for (SQLConnection conn : conns) {
-        conn.setAutoCommit(false, onSuccess(ar1 -> {
-          conn.execute("LOCK TABLE insert_table WRITE", onSuccess(ar2 -> {
-            String sql = "INSERT INTO insert_table VALUES (null, 'doe', 'john', '2001-01-01');";
-            conn.update(sql, onSuccess(res3 -> {
-              conn.commit(onSuccess(committed -> {
-                conn.close(onSuccess(closed -> {
-                  if (count.incrementAndGet() == numConns) {
-                    testComplete();
-                  }
+    ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
+    for (int i = 0;i < numContexts;i++) {
+      ContextInternal ctx = context.duplicate();
+      ctx.runOnContext(v -> {
+        client.getConnection(onSuccess(conn -> {
+          conn.setAutoCommit(false, onSuccess(ar1 -> {
+            conn.execute("LOCK TABLE insert_table WRITE", onSuccess(ar2 -> {
+              String sql = "INSERT INTO insert_table VALUES (null, 'doe', 'john', '2001-01-01');";
+              conn.update(sql, onSuccess(res3 -> {
+                conn.commit(onSuccess(committed -> {
+                  conn.close(onSuccess(closed -> {
+                    if (count.incrementAndGet() == numContexts) {
+                      testComplete();
+                    }
+                  }));
                 }));
               }));
             }));
           }));
         }));
-      }
-    });
+      });
+    }
     await();
   }
 

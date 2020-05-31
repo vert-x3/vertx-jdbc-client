@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class JDBCClientImpl implements JDBCClient {
+public class JDBCClientImpl implements JDBCClient, Closeable {
 
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
@@ -99,8 +99,13 @@ public class JDBCClientImpl implements JDBCClient {
   private void setupCloseHook() {
     ContextInternal ctx = vertx.getContext();
     if (ctx != null) {
-      ctx.addCloseHook(this::close);
+      ctx.addCloseHook(this);
     }
+  }
+
+  @Override
+  public void close(Promise<Void> completion) {
+    close((Handler<AsyncResult<Void>>) completion);
   }
 
   @Override
@@ -145,6 +150,12 @@ public class JDBCClientImpl implements JDBCClient {
   public JDBCClient update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler) {
     executeDirect(new JDBCUpdate(helper, null, sql, null), resultHandler);
     return this;
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    close();
+    super.finalize();
   }
 
   @Override
