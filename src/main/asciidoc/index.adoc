@@ -205,10 +205,3 @@ a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled u
 ----
 
 When this config is present UUIDs will be handled as a native type.
-
-
-== Use as OSGi bundle
-
-Vert.x JDBC client can be used as an OSGi bundle. However notice that you would need to deploy all dependencies
-first. Some connection pool requires the JDBC driver to be loaded from the classpath, and so cannot be packaged /
-deployed as bundle.
