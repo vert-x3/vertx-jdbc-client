@@ -33,7 +33,7 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-sql-common</artifactId>
+      <artifactId>vertx-core</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
