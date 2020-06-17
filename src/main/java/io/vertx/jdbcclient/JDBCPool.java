@@ -25,7 +25,11 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool create(Vertx vertx, JsonObject config) {
-    return new JDBCPoolImpl(vertx, new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()));
+    return new JDBCPoolImpl(
+      vertx,
+      new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()),
+      // TODO: tracer?
+      null);
   }
 
   @Override

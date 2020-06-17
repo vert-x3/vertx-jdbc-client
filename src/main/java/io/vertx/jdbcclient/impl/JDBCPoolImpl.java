@@ -18,16 +18,17 @@ import io.vertx.sqlclient.impl.PoolBase;
 import io.vertx.sqlclient.impl.SqlClientBase;
 import io.vertx.sqlclient.impl.SqlConnectionImpl;
 import io.vertx.sqlclient.impl.command.CommandBase;
+import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import java.util.function.Function;
 
 public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPool {
 
-  private VertxInternal vertx;
-  private JDBCClientImpl client;
+  private final VertxInternal vertx;
+  private final JDBCClientImpl client;
 
-  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client) {
-    super(null);
+  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, QueryTracer tracer) {
+    super(tracer);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
   }
@@ -46,7 +47,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .<SqlConnection>getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, (JDBCConnectionImpl) c), null));
+      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, (JDBCConnectionImpl) c), tracer));
   }
 
   @Override
@@ -61,13 +62,15 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-
+    client.close(handler);
   }
 
   @Override
   public Future<Void> close() {
-    client.close(); // SHOULD BE A FUTURE
-    return Future.succeededFuture();
+    final Promise<Void> promise = vertx.promise();
+    client.close(promise);
+
+    return promise.future();
   }
 
   @Override
@@ -75,7 +78,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
     ContextInternal ctx = vertx.getOrCreateContext();
     getConnectionInternal(ctx).flatMap(conn -> {
       Promise<R> p = ctx.promise();
-      ((SqlConnectionImpl)conn).schedule(commandBase, p);
+      ((SqlConnectionImpl<?>) conn).schedule(commandBase, p);
       return p.future().flatMap(r -> conn.close().map(r));
     }).onComplete(promise);
   }

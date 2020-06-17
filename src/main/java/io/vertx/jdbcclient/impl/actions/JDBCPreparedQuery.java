@@ -33,13 +33,11 @@ import java.util.stream.Collector;
  */
 public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
 
-  private final String sql;
   private final PreparedStatement statement;
   private final Tuple params;
 
   public JDBCPreparedQuery(JDBCStatementHelper helper, SQLOptions options, PreparedStatement statement, String sql, Collector<Row, C, R> collector, Tuple params) {
     super(helper, options, collector);
-    this.sql = sql;
     this.statement = statement;
     this.params = params;
   }

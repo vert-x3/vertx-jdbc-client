@@ -21,6 +21,7 @@ import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
 import io.vertx.sqlclient.impl.command.PrepareStatementCommand;
 import io.vertx.sqlclient.impl.command.SimpleQueryCommand;
 import io.vertx.sqlclient.impl.command.TxCommand;
+import io.vertx.sqlclient.spi.DatabaseMetadata;
 
 public class ConnectionImpl implements Connection {
 
@@ -38,6 +39,11 @@ public class ConnectionImpl implements Connection {
   @Override
   public boolean isSsl() {
     return false;
+  }
+
+  @Override
+  public DatabaseMetadata getDatabaseMetaData() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -75,9 +81,9 @@ public class ConnectionImpl implements Connection {
     } else if (commandBase instanceof ExtendedQueryCommand) {
       handle((ExtendedQueryCommand<?>) commandBase, (Promise<Boolean>) promise);
     } else if (commandBase instanceof TxCommand) {
-      handle((TxCommand) commandBase, (Promise<Void>) promise);
+      handle((TxCommand<R>) commandBase, promise);
     } else if (commandBase instanceof BiCommand<?, ?>) {
-      handle((BiCommand) commandBase, promise);
+      handle((BiCommand<?, R>) commandBase, promise);
     } else {
       promise.fail("Not yet implemented " + commandBase);
     }
