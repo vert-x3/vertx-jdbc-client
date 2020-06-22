@@ -2,11 +2,7 @@ package io.vertx.jdbcclient;
 
 import io.vertx.core.Context;
 import io.vertx.ext.jdbc.JDBCClientTestBase;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowIterator;
-import io.vertx.sqlclient.SqlClient;
-import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +19,10 @@ public class ClientTest extends JDBCClientTestBase {
   public void setUp() throws Exception {
     resetDb();
     super.setUp();
-    client = JDBCPool.create(vertx, config());
+    client = JDBCPool.pool(vertx,
+      new JDBCConnectOptions()
+        .setJdbcUrl(config().getString("url")),
+      new PoolOptions().setMaxSize(1));
   }
 
   @After
@@ -68,21 +67,21 @@ public class ClientTest extends JDBCClientTestBase {
     client
       .query(sql)
       .execute(onSuccess(resultSet -> {
-      assertEquals(2, resultSet.size());
-      assertEquals("ID", resultSet.columnsNames().get(0));
-      assertEquals("FNAME", resultSet.columnsNames().get(1));
-      assertEquals("LNAME", resultSet.columnsNames().get(2));
-      RowIterator<Row> it = resultSet.iterator();
-      Row result0 = it.next();
-      assertEquals(1, (int) result0.getInteger(0));
-      assertEquals("john", result0.getString(1));
-      assertEquals("doe", result0.getString(2));
-      Row result1 = it.next();
-      assertEquals(2, (int) result1.getInteger(0));
-      assertEquals("jane", result1.getString(1));
-      assertEquals("doe", result1.getString(2));
-      testComplete();
-    }));
+        assertEquals(2, resultSet.size());
+        assertEquals("ID", resultSet.columnsNames().get(0));
+        assertEquals("FNAME", resultSet.columnsNames().get(1));
+        assertEquals("LNAME", resultSet.columnsNames().get(2));
+        RowIterator<Row> it = resultSet.iterator();
+        Row result0 = it.next();
+        assertEquals(1, (int) result0.getInteger(0));
+        assertEquals("john", result0.getString(1));
+        assertEquals("doe", result0.getString(2));
+        Row result1 = it.next();
+        assertEquals(2, (int) result1.getInteger(0));
+        assertEquals("jane", result1.getString(1));
+        assertEquals("doe", result1.getString(2));
+        testComplete();
+      }));
     await();
   }
 

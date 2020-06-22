@@ -9,6 +9,7 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
+import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlClient;
@@ -26,11 +27,14 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
 
   private final VertxInternal vertx;
   private final JDBCClientImpl client;
+  private final SQLOptions queryOptions;
 
   public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, QueryTracer tracer) {
     super(tracer);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
+    // need to get access to the options to create a SQLOptions
+    queryOptions = new SQLOptions();
   }
 
   @Override
@@ -47,7 +51,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .<SqlConnection>getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, (JDBCConnectionImpl) c), tracer));
+      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, queryOptions, (JDBCConnectionImpl) c), tracer));
   }
 
   @Override

@@ -23,6 +23,7 @@ import io.vertx.sqlclient.Row;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.stream.Collector;
 
 /**
@@ -43,7 +44,7 @@ public class JDBCSimpleQueryAction<C, R> extends JDBCQueryAction<C, R> {
       // apply statement options
       applyStatementOptions(statement);
       statement.execute(sql);
-      return decode(statement);
+      return decode(statement, false, Collections.emptyList());
     }
   }
 }
