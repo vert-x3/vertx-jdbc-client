@@ -147,7 +147,7 @@ public class JDBCPoolTest {
       .execute(Tuple.of("Paulo", "Lopes"))
       .onFailure(should::fail)
       .onSuccess(rows -> {
-        should.assertEquals(0, rows.size());
+        should.assertEquals(-1, rows.size());
         // updated rows
         should.assertEquals(1, rows.rowCount());
 
@@ -232,7 +232,7 @@ public class JDBCPoolTest {
               .onFailure(should::fail)
               .onSuccess(rows -> {
                 should.assertNotNull(rows);
-                should.assertEquals(0, rows.size());
+                should.assertEquals(-1, rows.size());
                 // updated rows
                 should.assertEquals(1, rows.rowCount());
                 // extract the last inserted id

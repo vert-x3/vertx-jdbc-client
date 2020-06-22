@@ -63,11 +63,10 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
   }
 
   @Override
-  public Response<R> execute(Connection conn) throws SQLException {
+  public JDBCResponse<R> execute(Connection conn) throws SQLException {
     try (PreparedStatement ps = prepare(conn)) {
       fillStatement(ps, conn);
-      ps.execute();
-      return decode(ps, true, outParams);
+      return decode(ps, ps.execute(), true, outParams);
     }
   }
 

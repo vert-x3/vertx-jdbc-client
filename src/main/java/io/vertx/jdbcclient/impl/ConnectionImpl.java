@@ -5,13 +5,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
-import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.jdbcclient.impl.actions.JDBCTxOp;
-import io.vertx.jdbcclient.impl.actions.JDBCPrepareStatementAction;
-import io.vertx.jdbcclient.impl.actions.JDBCPreparedQuery;
-import io.vertx.jdbcclient.impl.actions.JDBCPreparedStatement;
-import io.vertx.jdbcclient.impl.actions.JDBCQueryAction;
-import io.vertx.jdbcclient.impl.actions.JDBCSimpleQueryAction;
+import io.vertx.jdbcclient.impl.actions.*;
 import io.vertx.sqlclient.impl.Connection;
 import io.vertx.sqlclient.impl.PreparedStatement;
 import io.vertx.sqlclient.impl.QueryResultHandler;
@@ -110,14 +104,12 @@ public class ConnectionImpl implements Connection {
   }
 
   private <R> void handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler, Promise<Boolean> promise) {
-    Future<JDBCSimpleQueryAction.Response<R>> fut = conn.schedule(action);
+    Future<JDBCResponse<R>> fut = conn.schedule(action);
     fut.onComplete(ar -> {
       if (ar.succeeded()) {
-        JDBCSimpleQueryAction.Response<R> resp = ar.result();
-        handler.handleResult(resp.updatedRows, resp.size, resp.rowDesc, resp.result, null);
-        if (resp.generatedIds != null) {
-          handler.addProperty(JDBCPool.GENERATED_KEYS, resp.generatedIds);
-        }
+        ar.result()
+          .handle(handler);
+
         promise.complete(true);
       } else {
         promise.fail(ar.cause());

@@ -17,6 +17,7 @@ import java.util.UUID;
 public interface JDBCPool extends Pool {
 
   PropertyKind<Row> GENERATED_KEYS = () -> Row.class;
+  PropertyKind<Boolean> OUTPUT = () -> Boolean.class;
 
   /**
    * Create a JDBC pool which maintains its own data source.

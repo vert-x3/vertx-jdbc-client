@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
+@Ignore
 @RunWith(VertxUnitRunner.class)
 public class JDBCConnectionTest extends ConnectionTestBase {
 

@@ -39,12 +39,11 @@ public class JDBCSimpleQueryAction<C, R> extends JDBCQueryAction<C, R> {
   }
 
   @Override
-  public Response<R> execute(Connection conn) throws SQLException {
+  public JDBCResponse<R> execute(Connection conn) throws SQLException {
     try (Statement statement = conn.createStatement()) {
       // apply statement options
       applyStatementOptions(statement);
-      statement.execute(sql);
-      return decode(statement, false, Collections.emptyList());
+      return decode(statement, statement.execute(sql), false, Collections.emptyList());
     }
   }
 }

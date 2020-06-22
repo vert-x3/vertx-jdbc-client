@@ -21,7 +21,6 @@ import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.impl.RowDesc;
 
@@ -29,6 +28,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
@@ -36,7 +36,7 @@ import java.util.stream.Collector;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCQueryAction.Response<R>> {
+public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCResponse<R>> {
 
   private final Collector<Row, C, R> collector;
 
@@ -45,104 +45,137 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCQuery
     this.collector = collector;
   }
 
-  public static class Response<R> {
-    public final R result;
-    public final RowDesc rowDesc;
-    public final int size;
-    // extras
-    public final int updatedRows;
-    public final Row generatedIds;
+  protected JDBCResponse<R> decode(Statement statement, boolean returnedResultSet, boolean returnedKeys, List<Integer> out) throws SQLException {
 
-    public Response(R result, RowDesc rowDesc, int size, int updatedRows, Row generatedIds) {
-      this.result = result;
-      this.rowDesc = rowDesc;
-      this.size = size;
-      this.updatedRows = updatedRows;
-      this.generatedIds = generatedIds;
+    final JDBCResponse<R> response = new JDBCResponse<>(statement.getUpdateCount());
+
+    if (returnedResultSet) {
+      // normal return only
+      while (returnedResultSet) {
+        try (ResultSet rs = statement.getResultSet()) {
+          decodeResultSet(rs, response);
+        }
+        returnedResultSet = statement.getMoreResults();
+      }
+    } else {
+      BiConsumer<C, Row> accumulator = collector.accumulator();
+
+      // first rowset includes the output results
+      C container = collector.supplier().get();
+
+      response.empty(collector.finisher().apply(container));
     }
+
+    if (returnedKeys) {
+      decodeReturnedKeys(statement, response);
+    }
+
+    if (out.size() > 0) {
+      decodeOutput((CallableStatement) statement, out, response);
+    }
+
+    return response;
   }
 
-  protected Response<R> decode(Statement statement, boolean returnedKeys, List<Integer> out) throws SQLException {
+  private void decodeResultSet(ResultSet rs, JDBCResponse<R> response) throws SQLException {
     BiConsumer<C, Row> accumulator = collector.accumulator();
 
     List<String> columnNames = new ArrayList<>();
-    ResultSet rs = statement.getResultSet();
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
     int size = 0;
-    if (rs != null) {
-      ResultSetMetaData metaData = rs.getMetaData();
-      int cols = metaData.getColumnCount();
+    ResultSetMetaData metaData = rs.getMetaData();
+    int cols = metaData.getColumnCount();
+    for (int i = 1; i <= cols; i++) {
+      columnNames.add(metaData.getColumnLabel(i));
+    }
+    while (rs.next()) {
+      size++;
+      Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        columnNames.add(metaData.getColumnLabel(i));
+        Object res = convertSqlValue(rs.getObject(i));
+        row.addValue(res);
       }
-      while (rs.next()) {
-        size++;
-        Row row = new JDBCRow(desc);
-        for (int i = 1; i <= cols; i++) {
-          Object res = convertSqlValue(rs.getObject(i));
-          row.addValue(res);
-        }
-        accumulator.accept(container, row);
+      accumulator.accept(container, row);
+    }
+
+    response
+      .push(collector.finisher().apply(container), desc, size);
+  }
+
+  private R decodeRawResultSet(ResultSet rs) throws SQLException {
+    BiConsumer<C, Row> accumulator = collector.accumulator();
+
+    List<String> columnNames = new ArrayList<>();
+    RowDesc desc = new RowDesc(columnNames);
+    C container = collector.supplier().get();
+
+    ResultSetMetaData metaData = rs.getMetaData();
+    int cols = metaData.getColumnCount();
+    for (int i = 1; i <= cols; i++) {
+      columnNames.add(metaData.getColumnLabel(i));
+    }
+    while (rs.next()) {
+      Row row = new JDBCRow(desc);
+      for (int i = 1; i <= cols; i++) {
+        Object res = convertSqlValue(rs.getObject(i));
+        row.addValue(res);
+      }
+      accumulator.accept(container, row);
+    }
+
+    return collector.finisher().apply(container);
+  }
+
+  private void decodeOutput(CallableStatement cs, List<Integer> out, JDBCResponse<R> output) throws SQLException {
+    BiConsumer<C, Row> accumulator = collector.accumulator();
+
+    // first rowset includes the output results
+    C container = collector.supplier().get();
+
+    // the result is unlabeled
+    Row row = new JDBCRow(new RowDesc(new ArrayList<>()));
+    for (Integer idx : out) {
+      if (cs.getObject(idx) instanceof ResultSet) {
+        row.addValue(decodeRawResultSet((ResultSet) cs.getObject(idx)));
+      } else {
+        Object res = convertSqlValue(cs.getObject(idx));
+        row.addValue(res);
       }
     }
 
-//    if (out.size() > 0) {
-//      accumulator = collector.accumulator();
-//      // first rowset includes the output results
-//      container = collector.supplier().get();
-//
-//      CallableStatement cs = (CallableStatement) statement;
-//
-//      // the result is unlabeled
-//      Row row = new JDBCRow(new RowDesc(new ArrayList<>()));
-//      size++;
-//      for (Integer idx : out) {
-//        if (cs.getObject(idx) instanceof ResultSet) {
-//          row.addValue(null);
-//        } else {
-//          Object res = convertSqlValue(cs.getObject(idx));
-//          row.addValue(res);
-//        }
-//      }
-//
-//      accumulator.accept(container, row);
-//    }
+    accumulator.accept(container, row);
 
     R result = collector.finisher().apply(container);
 
-    return new Response<>(result, desc, size, statement.getUpdateCount(), processGeneratedIds(returnedKeys, statement));
+    output.outputs(result, null, 1);
   }
 
-  private Row processGeneratedIds(boolean returnedKeys, Statement statement) throws SQLException {
-    if (returnedKeys) {
-      Row keys = null;
+  private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {
+    Row keys = null;
 
-      ResultSet keysRS = statement.getGeneratedKeys();
+    ResultSet keysRS = statement.getGeneratedKeys();
 
-      if (keysRS != null) {
-        List<String> keysColumnNames = new ArrayList<>();
-        RowDesc keysDesc = new RowDesc(keysColumnNames);
+    if (keysRS != null) {
+      List<String> keysColumnNames = new ArrayList<>();
+      RowDesc keysDesc = new RowDesc(keysColumnNames);
 
-        ResultSetMetaData metaData = keysRS.getMetaData();
-        int cols = metaData.getColumnCount();
-        for (int i = 1; i <= cols; i++) {
-          keysColumnNames.add(metaData.getColumnLabel(i));
-        }
-
-        if (keysRS.next()) {
-          keys = new JDBCRow(keysDesc);
-          for (int i = 1; i <= cols; i++) {
-            Object res = convertSqlValue(keysRS.getObject(i));
-            keys.addValue(res);
-          }
-        }
+      ResultSetMetaData metaData = keysRS.getMetaData();
+      int cols = metaData.getColumnCount();
+      for (int i = 1; i <= cols; i++) {
+        keysColumnNames.add(metaData.getColumnLabel(i));
       }
 
-      return keys;
-    } else {
-      return null;
+      if (keysRS.next()) {
+        keys = new JDBCRow(keysDesc);
+        for (int i = 1; i <= cols; i++) {
+          Object res = convertSqlValue(keysRS.getObject(i));
+          keys.addValue(res);
+        }
+      }
     }
+
+    response.returnedKeys(keys);
   }
 
   public static Object convertSqlValue(Object value) throws SQLException {
