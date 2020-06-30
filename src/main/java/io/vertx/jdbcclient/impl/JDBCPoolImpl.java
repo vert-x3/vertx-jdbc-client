@@ -11,17 +11,11 @@ import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.sqlclient.Pool;
-import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.impl.Connection;
-import io.vertx.sqlclient.impl.PoolBase;
 import io.vertx.sqlclient.impl.SqlClientBase;
 import io.vertx.sqlclient.impl.SqlConnectionImpl;
 import io.vertx.sqlclient.impl.command.CommandBase;
 import io.vertx.sqlclient.impl.tracing.QueryTracer;
-
-import java.util.function.Function;
 
 public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPool {
 
@@ -30,7 +24,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private final SQLOptions queryOptions;
 
   public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, QueryTracer tracer) {
-    super(tracer);
+    super(tracer, null);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
     // need to get access to the options to create a SQLOptions
@@ -51,7 +45,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .<SqlConnection>getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, queryOptions, (JDBCConnectionImpl) c), tracer));
+      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, queryOptions, (JDBCConnectionImpl) c), tracer, null));
   }
 
   @Override

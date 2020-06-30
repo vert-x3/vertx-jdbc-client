@@ -104,6 +104,75 @@ the same data source is closed, the data source will be closed.
 
 If you're creating clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
 
+
+== Using the Sql Client API
+
+Sql Client is the vert.x reactive API to communicate with SQL databases. There are already several implementations of the
+API for popular engines such as `MySQL`, `PostgreSQL`, `MSSQL` and `IBM DB2`. However as there are still many other
+engines that have no asynchronous drivers, the JDBC Client also implements the same API to allow the usage of JDBC
+drivers until such asynchronous support is implemented (eventually).
+
+=== Creating a DB Pool
+
+It all starts with a pool. Creating a pool is simple. The shortest example would be:
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#exampleCreateDefault}
+----
+
+In this case we are reusing the JDBC client API to create the pool. The configuration is free form and users need to
+look up the properties required for the underlying connection pool of choice.
+
+For a type safe alternative, a second factory method is present. This second factory method ensures that the config is
+correct (as it's properties and type is validated by the compiler) but currently only works with the `Agroal` connection
+pool.
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#exampleCreateTypeSafe}
+----
+
+==== Using the Pool
+
+Once you have a pool, you can start using your database, the pool operates in 2 modes:
+
+1. Managed connection mode
+2. Manual connection mode
+
+When working in managed connection mode, as a user, you don't need to worry to fetch and return connections to the pool.
+Queries can be run directly against the pool and the pool ensures that a connection is acquired and returned after the
+query is terminated.
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#exampleQueryManaged}
+----
+
+This is also applicable for prepared statements:
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#examplePreparedQueryManaged}
+----
+
+Using this mode is quite convenient as it allows you to focus on the business logic, not on the connection management.
+There are times when order and causality may need to be preserved. In this case we need to execute queries on a manual
+connection mode:
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#exampleQueryManual}
+----
+
+Of course same is to say that prepared statements are also applicable to this mode:
+
+[source,$lang]
+----
+{@link examples.SqlClientExamples#examplePreparedQueryManual}
+----
+
+
 == Getting a connection
 
 Once you've created a client you use {@link io.vertx.ext.jdbc.JDBCClient#getConnection(io.vertx.core.Handler)} to get
@@ -111,7 +180,7 @@ a connection.
 
 This will return the connection in the handler when one is ready from the pool.
 
-[source,java]
+[source,$lang]
 ----
 {@link examples.JDBCExamples#example4}
 ----
