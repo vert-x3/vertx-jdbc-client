@@ -18,10 +18,7 @@ package io.vertx.jdbcclient;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.spi.metrics.PoolMetrics;
-import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
@@ -55,13 +52,15 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, SqlConnectOptions connectOptions, PoolOptions poolOptions) {
-    ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
-    QueryTracer tracer = context.tracer() == null ? null : new QueryTracer(context.tracer(), connectOptions);
+    final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
+    final JDBCConnectOptions jdbcOptions = (JDBCConnectOptions) connectOptions;
 
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider((JDBCConnectOptions) connectOptions, poolOptions)),
-      tracer);
+      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(jdbcOptions, poolOptions)),
+      context.tracer() == null ?
+        null :
+        new QueryTracer(context.tracer(), jdbcOptions.getJdbcUrl(), jdbcOptions.getUser(), jdbcOptions.getDatabase()));
   }
 
   /**
@@ -72,11 +71,13 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, JsonObject config) {
+    final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
 
     return new JDBCPoolImpl(
       vertx,
       new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()),
-      // TODO: tracer?
-      null);
+      context.tracer() == null ?
+        null :
+        new QueryTracer(context.tracer(), config.getString("jdbcUrl"), config.getString("user"), config.getString("database")));
   }
 }
