@@ -30,16 +30,28 @@ import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import java.util.UUID;
 
+/**
+ * JDBCPool is the interface that allows using the Sql Client API with plain JDBC.
+ */
 @VertxGen
 public interface JDBCPool extends Pool {
 
+  /**
+   * The property to be used to retrieve the generated keys
+   */
   PropertyKind<Row> GENERATED_KEYS = () -> Row.class;
+
+  /**
+   * The property to be used to retreive the output of the callable statement
+   */
   PropertyKind<Boolean> OUTPUT = () -> Boolean.class;
 
   /**
    * Create a JDBC pool which maintains its own data source.
    *
    * @param vertx  the Vert.x instance
+   * @param connectOptions the options to configure the connection
+   * @param poolOptions the connection pool options
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, SqlConnectOptions connectOptions, PoolOptions poolOptions) {
@@ -52,6 +64,13 @@ public interface JDBCPool extends Pool {
       tracer);
   }
 
+  /**
+   * Create a JDBC pool which maintains its own data source.
+   *
+   * @param vertx  the Vert.x instance
+   * @param config the options to configure the client using the same format as {@link io.vertx.ext.jdbc.JDBCClient}
+   * @return the client
+   */
   static JDBCPool pool(Vertx vertx, JsonObject config) {
 
     return new JDBCPoolImpl(
