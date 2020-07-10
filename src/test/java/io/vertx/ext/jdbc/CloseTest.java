@@ -148,7 +148,7 @@ public class CloseTest extends JDBCClientTestBase {
     }));
     awaitLatch(closeLatch);
     long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < 5000) {
+    while (System.currentTimeMillis() - start < 10000) {
       if (!getConnThread.get(0).isAlive() && poolThreads.stream().allMatch(t -> t.isAlive() == expectedDsThreadStatus)) {
         return;
       }
