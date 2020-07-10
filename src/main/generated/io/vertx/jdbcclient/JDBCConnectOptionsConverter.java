@@ -15,9 +15,24 @@ public class JDBCConnectOptionsConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, JDBCConnectOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "connectTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setConnectTimeout(((Number)member.getValue()).intValue());
+          }
+          break;
         case "dataSourceImplementation":
           if (member.getValue() instanceof String) {
             obj.setDataSourceImplementation((String)member.getValue());
+          }
+          break;
+        case "database":
+          if (member.getValue() instanceof String) {
+            obj.setDatabase((String)member.getValue());
+          }
+          break;
+        case "idleTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setIdleTimeout(((Number)member.getValue()).intValue());
           }
           break;
         case "jdbcUrl":
@@ -30,6 +45,16 @@ public class JDBCConnectOptionsConverter {
             obj.setMetricsEnabled((Boolean)member.getValue());
           }
           break;
+        case "password":
+          if (member.getValue() instanceof String) {
+            obj.setPassword((String)member.getValue());
+          }
+          break;
+        case "user":
+          if (member.getValue() instanceof String) {
+            obj.setUser((String)member.getValue());
+          }
+          break;
       }
     }
   }
@@ -39,12 +64,23 @@ public class JDBCConnectOptionsConverter {
   }
 
   public static void toJson(JDBCConnectOptions obj, java.util.Map<String, Object> json) {
+    json.put("connectTimeout", obj.getConnectTimeout());
     if (obj.getDataSourceImplementation() != null) {
       json.put("dataSourceImplementation", obj.getDataSourceImplementation());
     }
+    if (obj.getDatabase() != null) {
+      json.put("database", obj.getDatabase());
+    }
+    json.put("idleTimeout", obj.getIdleTimeout());
     if (obj.getJdbcUrl() != null) {
       json.put("jdbcUrl", obj.getJdbcUrl());
     }
     json.put("metricsEnabled", obj.isMetricsEnabled());
+    if (obj.getPassword() != null) {
+      json.put("password", obj.getPassword());
+    }
+    if (obj.getUser() != null) {
+      json.put("user", obj.getUser());
+    }
   }
 }

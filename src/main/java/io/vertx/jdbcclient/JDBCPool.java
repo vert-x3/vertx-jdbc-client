@@ -51,16 +51,15 @@ public interface JDBCPool extends Pool {
    * @param poolOptions the connection pool options
    * @return the client
    */
-  static JDBCPool pool(Vertx vertx, SqlConnectOptions connectOptions, PoolOptions poolOptions) {
+  static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
     final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
-    final JDBCConnectOptions jdbcOptions = (JDBCConnectOptions) connectOptions;
 
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(jdbcOptions, poolOptions)),
+      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions)),
       context.tracer() == null ?
         null :
-        new QueryTracer(context.tracer(), jdbcOptions.getJdbcUrl(), jdbcOptions.getUser(), jdbcOptions.getDatabase()));
+        new QueryTracer(context.tracer(), connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getDatabase()));
   }
 
   /**

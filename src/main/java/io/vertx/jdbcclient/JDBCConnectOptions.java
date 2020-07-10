@@ -17,14 +17,18 @@ package io.vertx.jdbcclient;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
-import io.vertx.sqlclient.SqlConnectOptions;
 
 @DataObject(generateConverter = true)
-public class JDBCConnectOptions extends SqlConnectOptions {
+public class JDBCConnectOptions {
 
   private String dataSourceImplementation = "AGROAL";
   private boolean metricsEnabled;
   private String jdbcUrl;
+  private String user;
+  private String password;
+  private String database;
+  private int connectTimeout = 60000;
+  private int idleTimeout;
 
   public JDBCConnectOptions() {}
 
@@ -56,6 +60,51 @@ public class JDBCConnectOptions extends SqlConnectOptions {
 
   public JDBCConnectOptions setJdbcUrl(String jdbcUrl) {
     this.jdbcUrl = jdbcUrl;
+    return this;
+  }
+
+  public String getUser() {
+    return user;
+  }
+
+  public JDBCConnectOptions setUser(String user) {
+    this.user = user;
+    return this;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public JDBCConnectOptions setPassword(String password) {
+    this.password = password;
+    return this;
+  }
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public JDBCConnectOptions setDatabase(String database) {
+    this.database = database;
+    return this;
+  }
+
+  public int getConnectTimeout() {
+    return connectTimeout;
+  }
+
+  public JDBCConnectOptions setConnectTimeout(int connectTimeout) {
+    this.connectTimeout = connectTimeout;
+    return this;
+  }
+
+  public int getIdleTimeout() {
+    return idleTimeout;
+  }
+
+  public JDBCConnectOptions setIdleTimeout(int idleTimeout) {
+    this.idleTimeout = idleTimeout;
     return this;
   }
 
