@@ -1,5 +1,23 @@
 = Cheatsheets
 
+[[JDBCConnectOptions]]
+== JDBCConnectOptions
+
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[connectTimeout]]`@connectTimeout`|`Number (int)`|-
+|[[dataSourceImplementation]]`@dataSourceImplementation`|`String`|-
+|[[database]]`@database`|`String`|-
+|[[idleTimeout]]`@idleTimeout`|`Number (int)`|-
+|[[jdbcUrl]]`@jdbcUrl`|`String`|-
+|[[metricsEnabled]]`@metricsEnabled`|`Boolean`|-
+|[[password]]`@password`|`String`|-
+|[[user]]`@user`|`String`|-
+|===
+
 [[ResultSet]]
 == ResultSet
 

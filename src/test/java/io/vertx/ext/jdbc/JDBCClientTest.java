@@ -26,6 +26,7 @@ import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.*;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,6 +48,11 @@ import java.util.logging.Level;
 public class JDBCClientTest extends JDBCClientTestBase {
 
   protected SQLClient client;
+
+  @BeforeClass
+  public static void createDb() throws Exception {
+    resetDb();
+  }
 
   @Before
   public void setUp() throws Exception {

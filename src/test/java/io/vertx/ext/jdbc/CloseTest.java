@@ -7,6 +7,7 @@ import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.sql.DataSource;
@@ -23,6 +24,11 @@ import static java.util.concurrent.TimeUnit.*;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 public class CloseTest extends JDBCClientTestBase {
+
+  @BeforeClass
+  public static void createDb() throws Exception {
+    resetDb();
+  }
 
   private static final JsonObject theConfig = config();
 
@@ -142,13 +148,17 @@ public class CloseTest extends JDBCClientTestBase {
     }));
     awaitLatch(closeLatch);
     long start = System.currentTimeMillis();
-    while (System.currentTimeMillis() - start < 5000) {
+    while (System.currentTimeMillis() - start < 10000) {
       if (!getConnThread.get(0).isAlive() && poolThreads.stream().allMatch(t -> t.isAlive() == expectedDsThreadStatus)) {
         return;
       }
       MILLISECONDS.sleep(10);
     }
-    fail("Timeout waiting for connection threads to be dead");
+    String msg = poolThreads
+      .stream()
+      .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
+      .collect(Collectors.joining(", ", "Timeout waiting for connection threads to be dead:", "."));
+    fail(msg);
   }
 
   private List<Thread> findThreads(Predicate<Thread> predicate) {

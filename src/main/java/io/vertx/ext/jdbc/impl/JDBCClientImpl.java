@@ -96,11 +96,31 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     setupCloseHook();
   }
 
+  /**
+   * Create client with shared datasource.
+   */
+  public JDBCClientImpl(Vertx vertx, DataSourceProvider dataSourceProvider) {
+    Objects.requireNonNull(vertx);
+    Objects.requireNonNull(dataSourceProvider);
+
+    this.vertx = (VertxInternal) vertx;
+    this.datasourceName = UUID.randomUUID().toString();
+    this.config = new JsonObject();
+    holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
+    holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(dataSourceProvider) : h.increment());
+    this.helper = new JDBCStatementHelper(config);
+    setupCloseHook();
+  }
+
   private void setupCloseHook() {
     ContextInternal ctx = vertx.getContext();
     if (ctx != null) {
       ctx.addCloseHook(this);
     }
+  }
+
+  public JDBCStatementHelper getHelper() {
+    return helper;
   }
 
   @Override
@@ -183,8 +203,11 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     }).onComplete(handler);
   }
 
-  private Future<SQLConnection> getConnection() {
-    ContextInternal ctx = vertx.getOrCreateContext();
+  public Future<SQLConnection> getConnection() {
+    return getConnection(vertx.getOrCreateContext());
+  }
+
+  public Future<SQLConnection> getConnection(ContextInternal ctx) {
     return getDataSourceHolder(ctx).flatMap(holder -> {
       Promise<SQLConnection> res = ctx.promise();
       boolean enabled = holder.metrics != null;
