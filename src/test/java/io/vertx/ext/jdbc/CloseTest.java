@@ -154,7 +154,11 @@ public class CloseTest extends JDBCClientTestBase {
       }
       MILLISECONDS.sleep(10);
     }
-    fail("Timeout waiting for connection threads to be dead");
+    String msg = poolThreads
+      .stream()
+      .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
+      .collect(Collectors.joining(", ", "Timeout waiting for connection threads to be dead:", "."));
+    fail(msg);
   }
 
   private List<Thread> findThreads(Predicate<Thread> predicate) {
