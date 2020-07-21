@@ -25,86 +25,6 @@ To use this project, add the following dependency to the _dependencies_ section 
 compile 'io.vertx:vertx-jdbc-client:${maven.version}'
 ----
 
-== Creating a the client
-
-There are several ways to create a client. Let's go through them all.
-
-=== Using default shared data source
-
-In most cases you will want to share a data source between different client instances.
-
-E.g. you scale your application by deploying multiple instances of your verticle and you want each verticle instance
-to share the same datasource so you don't end up with multiple pools
-
-You do this as follows:
-
-[source,java]
-----
-{@link examples.JDBCExamples#exampleCreateDefault}
-----
-
-The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
-will actually create the data source, and the specified config will be used.
-
-Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
-
-=== Specifying a data source name
-
-You can create a client specifying a data source name as follows
-
-[source,java]
-----
-{@link examples.JDBCExamples#exampleCreateDataSourceName}
-----
-
-If different clients are created using the same Vert.x instance and specifying the same data source name, they will
-share the same data source.
-
-The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
-will actually create the data source, and the specified config will be used.
-
-Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
-
-Use this way of creating if you wish different groups of clients to have different data sources, e.g. they're
-interacting with different databases.
-
-=== Creating a client with a non shared data source
-
-In most cases you will want to share a data source between different client instances.
-However, it's possible you want to create a client instance that doesn't share its data source with any other client.
-
-In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#create(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
-
-[source,java]
-----
-{@link examples.JDBCExamples#exampleCreateNonShared}
-----
-
-This is equivalent to calling {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject, java.lang.String)}
-with a unique data source name each time.
-
-=== Specifying a data source
-
-If you already have a pre-existing data source, you can also create the client directly specifying that:
-
-[source,java]
-----
-{@link examples.JDBCExamples#exampleCreateWithDataSource}
-----
-
-== Closing the client
-
-It's fine to keep hold of the client for a long time (e.g. the lifetime of your verticle), but once you're
-done with it you should close it.
-
-Clients that share a data source with other client instances are reference counted. Once the last one that references
-the same data source is closed, the data source will be closed.
-
-=== Automatic clean-up in verticles
-
-If you're creating clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
-
-
 == Using the Sql Client API
 
 Sql Client is the vert.x reactive API to communicate with SQL databases. There are already several implementations of the
@@ -172,8 +92,14 @@ Of course same is to say that prepared statements are also applicable to this mo
 {@link examples.SqlClientExamples#examplePreparedQueryManual}
 ----
 
+== Legacy JDBC Client API
 
-== Getting a connection
+The JDBC Client API created in Vert.x 3 is now deprecated and instead the new SQL Client API should be used.
+
+It will remain supported for the life time of Vert.x 4 to allow applications to be migrated to the new SQL
+Client API.
+
+=== Getting a connection
 
 Once you've created a client you use {@link io.vertx.ext.jdbc.JDBCClient#getConnection(io.vertx.core.Handler)} to get
 a connection.
@@ -190,7 +116,7 @@ the Vert.x JDBC Client.
 
 You can learn how to use it in the http://vertx.io/docs/vertx-sql-common/$lang/[common sql interface] documentation.
 
-== Simple SQL Operations
+=== Simple SQL Operations
 
 There are times when you will want to run a single SQL operation, e.g.: a single select of a row, or a update to a
 set of rows which do not require to be part of a transaction or have dependencies on the previous or next operation.
@@ -222,12 +148,90 @@ You can perform the following operations as a simple one "shot" method call:
 
 For further details on these API please refer to the {@link io.vertx.ext.sql.SQLOperations} interface.
 
+=== Creating a the client
 
-== The SQL Connection
+There are several ways to create a client. Let's go through them all.
+
+==== Using default shared data source
+
+In most cases you will want to share a data source between different client instances.
+
+E.g. you scale your application by deploying multiple instances of your verticle and you want each verticle instance
+to share the same datasource so you don't end up with multiple pools
+
+You do this as follows:
+
+[source,java]
+----
+{@link examples.JDBCExamples#exampleCreateDefault}
+----
+
+The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
+will actually create the data source, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+
+==== Specifying a data source name
+
+You can create a client specifying a data source name as follows
+
+[source,java]
+----
+{@link examples.JDBCExamples#exampleCreateDataSourceName}
+----
+
+If different clients are created using the same Vert.x instance and specifying the same data source name, they will
+share the same data source.
+
+The first call to {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}
+will actually create the data source, and the specified config will be used.
+
+Subsequent calls will return a new client instance that uses the same data source, so the configuration won't be used.
+
+Use this way of creating if you wish different groups of clients to have different data sources, e.g. they're
+interacting with different databases.
+
+==== Creating a client with a non shared data source
+
+In most cases you will want to share a data source between different client instances.
+However, it's possible you want to create a client instance that doesn't share its data source with any other client.
+
+In that case you can use {@link io.vertx.ext.jdbc.JDBCClient#create(io.vertx.core.Vertx, io.vertx.core.json.JsonObject)}.
+
+[source,java]
+----
+{@link examples.JDBCExamples#exampleCreateNonShared}
+----
+
+This is equivalent to calling {@link io.vertx.ext.jdbc.JDBCClient#createShared(io.vertx.core.Vertx, io.vertx.core.json.JsonObject, java.lang.String)}
+with a unique data source name each time.
+
+==== Specifying a data source
+
+If you already have a pre-existing data source, you can also create the client directly specifying that:
+
+[source,java]
+----
+{@link examples.JDBCExamples#exampleCreateWithDataSource}
+----
+
+=== Closing the client
+
+It's fine to keep hold of the client for a long time (e.g. the lifetime of your verticle), but once you're
+done with it you should close it.
+
+Clients that share a data source with other client instances are reference counted. Once the last one that references
+the same data source is closed, the data source will be closed.
+
+==== Automatic clean-up in verticles
+
+If you're creating clients from inside verticles, the clients will be automatically closed when the verticle is undeployed.
+
+=== The SQL Connection
 
 A connection to the database is represented by {@link io.vertx.ext.sql.SQLConnection}.
 
-=== Auto-commit
+==== Auto-commit
 
 When you obtain a connection auto commit is set to `true`. This means that each operation you perform will effectively
 execute in its own transaction.
@@ -242,7 +246,7 @@ When the operation is complete, the handler will be called:
 {@link examples.SQLExamples#example1}
 ----
 
-=== Executing queries
+==== Executing queries
 
 To execute a query use {@link io.vertx.ext.sql.SQLConnection#query(java.lang.String, io.vertx.core.Handler)}
 
@@ -279,7 +283,7 @@ Here's an example of iterating through the results as Json object instances:
 {@link examples.SQLExamples#example3__1}
 ----
 
-=== Prepared statement queries
+==== Prepared statement queries
 
 To execute a prepared statement query you can use
 {@link io.vertx.ext.sql.SQLConnection#queryWithParams(java.lang.String, io.vertx.core.json.JsonArray, io.vertx.core.Handler)}.
@@ -292,7 +296,7 @@ values.
 {@link examples.SQLExamples#example3_1}
 ----
 
-=== Executing INSERT, UPDATE or DELETE
+==== Executing INSERT, UPDATE or DELETE
 
 To execute an operation which updates the database use {@link io.vertx.ext.sql.SQLConnection#update(java.lang.String, io.vertx.core.Handler)}.
 
@@ -309,7 +313,7 @@ if the update generated keys, they are available with {@link io.vertx.ext.sql.Up
 {@link examples.SQLExamples#example4}
 ----
 
-=== Prepared statement updates
+==== Prepared statement updates
 
 To execute a prepared statement update you can use
 {@link io.vertx.ext.sql.SQLConnection#updateWithParams(java.lang.String, io.vertx.core.json.JsonArray, io.vertx.core.Handler)}.
@@ -322,7 +326,7 @@ values.
 {@link examples.SQLExamples#example5}
 ----
 
-=== Callable statements
+==== Callable statements
 
 To execute a callable statement (either SQL functions or SQL procedures) you can use
 {@link io.vertx.ext.sql.SQLConnection#callWithParams(java.lang.String, io.vertx.core.json.JsonArray, io.vertx.core.json.JsonArray, io.vertx.core.Handler)}.
@@ -369,7 +373,7 @@ When the `OUT` is also null it is expected that the IN value is the `NULL` value
 
 The registered `OUT` parameters will be available as an array in the result set under the output property.
 
-=== Batch operations
+==== Batch operations
 
 The SQL common interface also defines how to execute batch operations. There are 3 types of batch operations:
 
@@ -391,7 +395,7 @@ While a prepared or callable statement batch will reuse the sql statement and ta
 {@link examples.SQLExamples#example11}
 ----
 
-=== Executing other operations
+==== Executing other operations
 
 To execute any other database operation, e.g. a `CREATE TABLE` you can use
 {@link io.vertx.ext.sql.SQLConnection#execute(java.lang.String, io.vertx.core.Handler)}.
@@ -404,7 +408,7 @@ is complete
 {@link examples.SQLExamples#example6}
 ----
 
-=== Multiple ResultSet responses
+==== Multiple ResultSet responses
 
 In some cases your query might return more than one result set, in this case and to preserve the compatibility when
 the returned result set object is converted to pure json, the next result sets are chained to the current result set
@@ -415,7 +419,7 @@ under the property `next`. A simple walk of all result sets can be achieved like
 {@link examples.SQLExamples#example13}
 ----
 
-=== Streaming
+==== Streaming
 
 When dealing with large data sets, it is not advised to use API just described but to stream data since it avoids
 inflating the whole response into memory and JSON and data is just processed on a row by row basis, for example:
@@ -434,7 +438,7 @@ data the stream handler will receive the new data, otherwise the end handler is 
 {@link examples.SQLExamples#example15}
 ----
 
-=== Using transactions
+==== Using transactions
 
 To use transactions first set auto-commit to false with {@link io.vertx.ext.sql.SQLConnection#setAutoCommit(boolean, io.vertx.core.Handler)}.
 
@@ -449,7 +453,7 @@ Once the commit/rollback is complete the handler will be called and the next tra
 {@link examples.SQLExamples#example7}
 ----
 
-=== Closing connections
+==== Closing connections
 
 When you've done with the connection you should return it to the pool with {@link io.vertx.ext.sql.SQLConnection#close(io.vertx.core.Handler)}.
 
@@ -457,7 +461,7 @@ ifeval::["$lang" == "java"]
 include::override/rxjava2.adoc[]
 endif::[]
 
-== Configuration
+=== Configuration
 
 Configuration is passed to the client when creating or deploying it.
 
@@ -512,7 +516,7 @@ Refer to the https://github.com/brettwooldridge/HikariCP#configuration-knobs-bab
 for further details. Also refer to the https://agroal.github.io/[Agroal documentation]
 to configure Agroal.
 
-== JDBC Drivers
+=== JDBC Drivers
 
 If you are using the default `DataSourceProvider` (relying on c3p0), you would need to copy the JDBC driver class
 in your _classpath_.
@@ -522,7 +526,7 @@ with the `vertx` command line, copy the JDBC driver to `${VERTX_HOME}/lib`.
 
 The behavior may be different when using a different connection pool.
 
-== Data types
+=== Data types
 
 Due to the fact that Vert.x uses JSON as its standard message format there will be many limitations to the data types
 accepted by the client. You will get out of the box the standard:
