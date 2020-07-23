@@ -38,7 +38,7 @@ It all starts with a pool. Creating a pool is simple. The shortest example would
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#exampleCreateDefault}
+{@link examples.JDBCSqlClientExamples#exampleCreateDefault}
 ----
 
 In this case we are reusing the JDBC client API to create the pool. The configuration is free form and users need to
@@ -50,7 +50,7 @@ pool.
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#exampleCreateTypeSafe}
+{@link examples.JDBCSqlClientExamples#exampleCreateTypeSafe}
 ----
 
 ==== Using the Pool
@@ -66,14 +66,14 @@ query is terminated.
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#exampleQueryManaged}
+{@link examples.JDBCSqlClientExamples#exampleQueryManaged}
 ----
 
 This is also applicable for prepared statements:
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#examplePreparedQueryManaged}
+{@link examples.JDBCSqlClientExamples#examplePreparedQueryManaged}
 ----
 
 Using this mode is quite convenient as it allows you to focus on the business logic, not on the connection management.
@@ -82,14 +82,14 @@ connection mode:
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#exampleQueryManual}
+{@link examples.JDBCSqlClientExamples#exampleQueryManual}
 ----
 
 Of course same is to say that prepared statements are also applicable to this mode:
 
 [source,$lang]
 ----
-{@link examples.SqlClientExamples#examplePreparedQueryManual}
+{@link examples.JDBCSqlClientExamples#examplePreparedQueryManual}
 ----
 
 == Legacy JDBC Client API

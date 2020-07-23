@@ -20,7 +20,7 @@ import java.time.Instant;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 @Source
-public class SqlClientExamples {
+public class JDBCSqlClientExamples {
 
   public void exampleCreateDefault(Vertx vertx, JsonObject config) {
     JDBCPool pool = JDBCPool.pool(vertx, config);
