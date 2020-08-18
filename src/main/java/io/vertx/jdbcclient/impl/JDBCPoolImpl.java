@@ -22,6 +22,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.ext.sql.SQLOptions;
@@ -64,12 +65,12 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   }
 
   @Override
-  protected <T> Promise<T> promise() {
+  protected <T> PromiseInternal<T> promise() {
     return vertx.promise();
   }
 
   @Override
-  protected <T> Promise<T> promise(Handler<AsyncResult<T>> handler) {
+  protected <T> PromiseInternal<T> promise(Handler<AsyncResult<T>> handler) {
     return vertx.promise(handler);
   }
 
