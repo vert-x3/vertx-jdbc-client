@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.*;
 
@@ -137,7 +138,7 @@ public class CloseTest extends JDBCClientTestBase {
     close(id.get(10, TimeUnit.SECONDS), true);
   }
 
-  private void close(String deploymentId, boolean expectedDsThreadStatus) throws Exception {
+  private void close(String deploymentId, boolean expecteedDsThreadStatus) throws Exception {
     List<Thread> getConnThread = findThreads(t -> t.getName().equals("vertx-jdbc-service-get-connection-thread"));
     assertTrue(getConnThread.size() > 0);
     List<Thread> poolThreads = findThreads(t -> t.getName().startsWith("C3P0PooledConnectionPoolManager"));
@@ -154,10 +155,11 @@ public class CloseTest extends JDBCClientTestBase {
       }
       MILLISECONDS.sleep(10);
     }
-    String msg = poolThreads
-      .stream()
+    String msg = Stream
+      .concat(Stream.of(getConnThread.get(0)), poolThreads.stream())
       .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
-      .collect(Collectors.joining(", ", "Timeout waiting for connection threads to be dead:", "."));
+      .collect(Collectors.joining(", ",
+        "Timeout waiting for end condition:", "."));
     fail(msg);
   }
 
