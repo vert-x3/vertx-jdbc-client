@@ -58,14 +58,14 @@ public class CloseTest extends JDBCClientTestBase {
   public void testUsingNonSharedInVerticle() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(NonSharedClientVerticle.class.getName(), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), false);
+    close(id.get(30, TimeUnit.SECONDS), false);
   }
 
   @Test
   public void testUsingNonSharedInVerticle2() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(NonSharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), false);
+    close(id.get(30, TimeUnit.SECONDS), false);
   }
 
   public static class SharedClientVerticle extends AbstractVerticle {
@@ -94,14 +94,14 @@ public class CloseTest extends JDBCClientTestBase {
   public void testUsingSharedInVerticle() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(1), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), false);
+    close(id.get(30, TimeUnit.SECONDS), false);
   }
 
   @Test
   public void testUsingSharedInVerticle2() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), false);
+    close(id.get(30, TimeUnit.SECONDS), false);
   }
 
   private static DataSource ds;
@@ -134,7 +134,7 @@ public class CloseTest extends JDBCClientTestBase {
     ds = provider.getDataSource(theConfig);
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(ProvidedDataSourceVerticle.class.getName(), new DeploymentOptions().setInstances(1), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), true);
+    close(id.get(30, TimeUnit.SECONDS), true);
   }
 
   private void close(String deploymentId, boolean expectedDsThreadStatus) throws Exception {
