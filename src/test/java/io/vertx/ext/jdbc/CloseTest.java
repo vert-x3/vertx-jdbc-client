@@ -138,7 +138,7 @@ public class CloseTest extends JDBCClientTestBase {
     close(id.get(10, TimeUnit.SECONDS), true);
   }
 
-  private void close(String deploymentId, boolean expecteedDsThreadStatus) throws Exception {
+  private void close(String deploymentId, boolean expectedDsThreadStatus) throws Exception {
     List<Thread> getConnThread = findThreads(t -> t.getName().equals("vertx-jdbc-service-get-connection-thread"));
     assertTrue(getConnThread.size() > 0);
     List<Thread> poolThreads = findThreads(t -> t.getName().startsWith("C3P0PooledConnectionPoolManager"));
