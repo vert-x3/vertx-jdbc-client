@@ -31,7 +31,7 @@ public class CloseTest extends JDBCClientTestBase {
     resetDb();
   }
 
-  private static final JsonObject theConfig = config();
+  private static final JsonObject theConfig = DBConfigs.hsqldb();
 
   public static class NonSharedClientVerticle extends AbstractVerticle {
     @Override
@@ -135,7 +135,11 @@ public class CloseTest extends JDBCClientTestBase {
     ds = provider.getDataSource(theConfig);
     CompletableFuture<String> id = new CompletableFuture<>();
     vertx.deployVerticle(ProvidedDataSourceVerticle.class.getName(), new DeploymentOptions().setInstances(1), onSuccess(id::complete));
-    close(id.get(10, TimeUnit.SECONDS), true);
+    try {
+      close(id.get(10, TimeUnit.SECONDS), true);
+    } finally {
+      provider.close(ds);
+    }
   }
 
   private void close(String deploymentId, boolean expectedDsThreadStatus) throws Exception {

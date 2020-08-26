@@ -18,13 +18,9 @@ package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
-import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -33,8 +29,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-@RunWith(VertxUnitRunner.class)
-public class JDBCPoolStoredProceduresTest {
+public class JDBCPoolStoredProceduresTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()
     .setJdbcUrl("jdbc:hsqldb:mem:" + JDBCPoolStoredProceduresTest.class.getSimpleName() + "?shutdown=true");
@@ -73,20 +68,15 @@ public class JDBCPoolStoredProceduresTest {
     }
   }
 
-  @Rule
-  public RunTestOnContext rule = new RunTestOnContext();
-
-  private JDBCPool pool;
-
-  @Before
-  public void before() throws SQLException {
+  @Override
+  public void setUp() throws Exception {
     resetDb();
-    pool = JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
+    super.setUp();
   }
 
-  @After
-  public void after(TestContext should) {
-    pool.close(should.asyncAssertSuccess());
+  @Override
+  protected JDBCConnectOptions connectOptions() {
+    return options;
   }
 
   @Test
@@ -95,7 +85,7 @@ public class JDBCPoolStoredProceduresTest {
 
     String sql = "{call new_customer(?, ?)}";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of("Paulo", "Lopes"))
       .onFailure(should::fail)
@@ -103,7 +93,7 @@ public class JDBCPoolStoredProceduresTest {
         should.assertNotNull(rows);
 
         // verify that data was saved
-        pool
+        client
           .query("SELECT * from customers where firstname = 'Paulo'")
           .execute()
           .onFailure(should::fail)
@@ -128,7 +118,7 @@ public class JDBCPoolStoredProceduresTest {
 
     String sql = "{call customer_lastname(?, ?)}";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of("John", SqlOutParam.OUT(JDBCType.VARCHAR)))
       .onFailure(should::fail)

@@ -17,13 +17,8 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLOptions;
-import io.vertx.ext.sql.UpdateResult;
-import io.vertx.test.core.VertxTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,18 +26,14 @@ import org.junit.Test;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
-public class JDBCTypesTestBase extends VertxTestBase {
-
-  protected SQLClient client;
+public class JDBCTypesTestBase extends JDBCClientTestBase {
 
   private static final List<String> SQL = new ArrayList<>();
 
@@ -55,27 +46,15 @@ public class JDBCTypesTestBase extends VertxTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, config());
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
+    client = JDBCClient.create(vertx, DBConfigs.derby());
   }
 
   @BeforeClass
   public static void createDb() throws Exception {
-    Connection conn = DriverManager.getConnection(config().getString("url"));
+    Connection conn = DriverManager.getConnection(DBConfigs.derby().getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }
-  }
-
-  protected static JsonObject config() {
-    return new JsonObject()
-      .put("url", "jdbc:derby:memory:myDB2;create=true")
-      .put("driver_class", "org.apache.derby.jdbc.EmbeddedDriver");
   }
 
   @Test
@@ -134,25 +113,6 @@ public class JDBCTypesTestBase extends VertxTestBase {
     }));
 
     await();
-  }
-
-  private void assertUpdate(UpdateResult result, int updated) {
-    assertUpdate(result, updated, false);
-  }
-
-  private void assertUpdate(UpdateResult result, int updated, boolean generatedKeys) {
-    assertNotNull(result);
-    assertEquals(updated, result.getUpdated());
-    if (generatedKeys) {
-      JsonArray keys = result.getKeys();
-      assertNotNull(keys);
-      assertEquals(updated, keys.size());
-      Set<Integer> numbers = new HashSet<>();
-      for (int i = 0; i < updated; i++) {
-        assertTrue(keys.getValue(i) instanceof Integer);
-        assertTrue(numbers.add(i));
-      }
-    }
   }
 
   private SQLConnection connection() {

@@ -1,149 +1,100 @@
 package io.vertx.jdbcclient;
 
-import io.vertx.core.Context;
-import io.vertx.ext.jdbc.JDBCClientTestBase;
+import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.*;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.time.LocalDate;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
-public class ClientTest extends JDBCClientTestBase {
+public abstract class ClientTest extends ClientTestBase {
 
-  private JDBCPool client;
-
-  @Before
-  public void setUp() throws Exception {
-    resetDb();
-    super.setUp();
-    client = JDBCPool.pool(vertx,
-      new JDBCConnectOptions()
-        .setJdbcUrl(config().getString("url")),
-      new PoolOptions().setMaxSize(1));
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
-  }
-
-  protected SqlConnection connection() {
-    return connection(vertx.getOrCreateContext());
-  }
-
-  protected SqlConnection connection(Context context) {
-    CountDownLatch latch = new CountDownLatch(1);
-    AtomicReference<SqlConnection> ref = new AtomicReference<>();
-    context.runOnContext(v -> {
-      client.getConnection(onSuccess(conn -> {
-        ref.set(conn);
-        latch.countDown();
-      }));
-    });
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    return ref.get();
+  protected SqlConnection connection() throws Exception {
+    return client.getConnection().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
   }
 
   @Test
-  public void testConnectionSelect() {
-    testSelect(connection());
+  public void testConnectionSelect(TestContext ctx) throws Exception {
+    testSelect(ctx, connection());
   }
 
   @Test
-  public void testClientSelect() {
-    testSelect(client);
+  public void testClientSelect(TestContext ctx) throws Exception {
+    testSelect(ctx, client);
   }
 
-  private void testSelect(SqlClient client) {
+  private void testSelect(TestContext ctx, SqlClient client) throws Exception {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     client
       .query(sql)
-      .execute(onSuccess(resultSet -> {
-        assertEquals(2, resultSet.size());
-        assertEquals("ID", resultSet.columnsNames().get(0));
-        assertEquals("FNAME", resultSet.columnsNames().get(1));
-        assertEquals("LNAME", resultSet.columnsNames().get(2));
+      .execute(ctx.asyncAssertSuccess(resultSet -> {
+        ctx.assertEquals(2, resultSet.size());
+        ctx.assertEquals("ID", resultSet.columnsNames().get(0));
+        ctx.assertEquals("FNAME", resultSet.columnsNames().get(1));
+        ctx.assertEquals("LNAME", resultSet.columnsNames().get(2));
         RowIterator<Row> it = resultSet.iterator();
         Row result0 = it.next();
-        assertEquals(1, (int) result0.getInteger(0));
-        assertEquals("john", result0.getString(1));
-        assertEquals("doe", result0.getString(2));
+        ctx.assertEquals(1, (int) result0.getInteger(0));
+        ctx.assertEquals("john", result0.getString(1));
+        ctx.assertEquals("doe", result0.getString(2));
         Row result1 = it.next();
-        assertEquals(2, (int) result1.getInteger(0));
-        assertEquals("jane", result1.getString(1));
-        assertEquals("doe", result1.getString(2));
-        testComplete();
+        ctx.assertEquals(2, (int) result1.getInteger(0));
+        ctx.assertEquals("jane", result1.getString(1));
+        ctx.assertEquals("doe", result1.getString(2));
       }));
-    await();
   }
 
   @Test
-  public void testInsertWithParameters() {
+  public void testInsertWithParameters(TestContext ctx) throws Exception {
     // final TimeZone tz = TimeZone.getDefault();
     // TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     SqlClient conn = connection();
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     LocalDate expected = LocalDate.of(2002, 2, 2);
-    conn.preparedQuery(sql).execute(Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
+    conn.preparedQuery(sql).execute(Tuple.of(0, "doe", "jane", expected), ctx.asyncAssertSuccess(rowSet -> {
       // assertUpdate(result, 1);
-      conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?").execute(Tuple.of(0), onSuccess(rs -> {
-        assertEquals(1, rs.size());
-        assertEquals(expected, rs.iterator().next().getLocalDate(0));
-        testComplete();
+      conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?").execute(Tuple.of(0), ctx.asyncAssertSuccess(rs -> {
+        ctx.assertEquals(1, rs.size());
+        ctx.assertEquals(expected, rs.iterator().next().getLocalDate(0));
       }));
     }));
-    await();
   }
 
   @Test
-  public void testTransactionCommit() {
-    testTransaction(true);
+  public void testTransactionCommit(TestContext ctx) throws Exception {
+    testTransaction(ctx, true);
   }
 
   @Test
-  public void testTransactionRollback() {
-    testTransaction(false);
+  public void testTransactionRollback(TestContext ctx) throws Exception {
+    testTransaction(ctx, false);
   }
 
-  private void testTransaction(boolean commit) {
-    Context ctx = vertx.getOrCreateContext();
-    SqlConnection conn = connection(ctx);
-    ctx.runOnContext(v -> {
-      conn.begin(onSuccess(tx -> {
-        String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
-        LocalDate expected = LocalDate.of(2002, 2, 2);
-        conn
-          .preparedQuery(sql)
-          .execute(Tuple.of(0, "doe", "jane", expected), onSuccess(rowSet -> {
-            if (commit) {
-              tx.commit(onSuccess(v2 -> {
-                conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
-                  .execute(Tuple.of(0), onSuccess(rs -> {
-                    assertEquals(1, rs.size());
-                    assertEquals(expected, rs.iterator().next().getLocalDate(0));
-                    testComplete();
-                  }));
-              }));
-            } else {
-              tx.rollback(onSuccess(v2 -> {
-                conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
-                  .execute(Tuple.of(0), onSuccess(rs -> {
-                    assertEquals(0, rs.size());
-                    testComplete();
-                  }));
-              }));
-            }
-          }));
-      }));
-    });
-    await();
+  private void testTransaction(TestContext testCtx, boolean commit) throws Exception {
+    SqlConnection conn = connection();
+    conn.begin(testCtx.asyncAssertSuccess(tx -> {
+      String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
+      LocalDate expected = LocalDate.of(2002, 2, 2);
+      conn
+        .preparedQuery(sql)
+        .execute(Tuple.of(0, "doe", "jane", expected), testCtx.asyncAssertSuccess(rowSet -> {
+          if (commit) {
+            tx.commit(testCtx.asyncAssertSuccess(v2 -> {
+              conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                .execute(Tuple.of(0), testCtx.asyncAssertSuccess(rs -> {
+                  testCtx.assertEquals(1, rs.size());
+                  testCtx.assertEquals(expected, rs.iterator().next().getLocalDate(0));
+                }));
+            }));
+          } else {
+            tx.rollback(testCtx.asyncAssertSuccess(v2 -> {
+              conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                .execute(Tuple.of(0), testCtx.asyncAssertSuccess(rs -> {
+                  testCtx.assertEquals(0, rs.size());
+                }));
+            }));
+          }
+        }));
+    }));
   }
 }

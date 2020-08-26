@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
@@ -47,8 +46,6 @@ import java.util.logging.Level;
  */
 public class JDBCClientTest extends JDBCClientTestBase {
 
-  protected SQLClient client;
-
   @BeforeClass
   public static void createDb() throws Exception {
     resetDb();
@@ -57,13 +54,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, config());
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
+    client = JDBCClient.create(vertx, DBConfigs.hsqldb());
   }
 
   @Test

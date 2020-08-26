@@ -16,11 +16,8 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
-import io.vertx.test.core.VertxTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,26 +27,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
-public class JDBCQueryTimeoutTest extends VertxTestBase {
-
-  protected SQLClient client;
+public class JDBCQueryTimeoutTest extends JDBCClientTestBase {
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, config());
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
-  }
-
-  protected static JsonObject config() {
-    return new JsonObject()
-            .put("url", "jdbc:derby:memory:myDB2;create=true")
-            .put("driver_class", "org.apache.derby.jdbc.EmbeddedDriver");
+    client = JDBCClient.create(vertx, DBConfigs.derby());
   }
 
   @Test

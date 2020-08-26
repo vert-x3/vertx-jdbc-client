@@ -11,7 +11,7 @@ import org.junit.Test;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class RefCountTest extends VertxTestBase {
+public class RefCountTest extends JDBCClientTestBase {
 
   private LocalMap<String, Object> map;
 

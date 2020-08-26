@@ -30,26 +30,12 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
-public class JDBCCustomTXIsolationTest extends VertxTestBase {
-
-  protected SQLClient client;
+public class JDBCCustomTXIsolationTest extends JDBCClientTestBase {
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, config());
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
-  }
-
-  protected static JsonObject config() {
-    return new JsonObject()
-        .put("url", "jdbc:h2:mem:test?shutdown=true")
-        .put("driver_class", "org.h2.Driver");
+    client = JDBCClient.create(vertx, DBConfigs.h2());
   }
 
   @Test

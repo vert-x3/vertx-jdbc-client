@@ -21,7 +21,7 @@ public class SharedClientTest extends JDBCClientTestBase {
 
   @Test(timeout = 60000)
   public void testDeadlock() throws Exception {
-    JsonObject config = config();
+    JsonObject config = DBConfigs.hsqldb();
     int num = 6;
     int iter = 5000;
     AtomicInteger count = new AtomicInteger();
@@ -33,7 +33,7 @@ public class SharedClientTest extends JDBCClientTestBase {
           for (int i = 0;i < iter;i++) {
             count.incrementAndGet();
             SQLClient client = JDBCClient.createShared(vertx, config);
-            client.close();
+            close(client);
           }
         }
       };

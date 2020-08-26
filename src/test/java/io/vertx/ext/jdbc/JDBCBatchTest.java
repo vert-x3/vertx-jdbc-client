@@ -17,10 +17,8 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
-import io.vertx.test.core.VertxTestBase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,9 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
-public class JDBCBatchTest extends VertxTestBase {
-
-  protected SQLClient client;
+public class JDBCBatchTest extends JDBCClientTestBase {
 
   public static void proc() {
     System.out.println("Fake Proc called");
@@ -45,19 +41,7 @@ public class JDBCBatchTest extends VertxTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, config());
-  }
-
-  @After
-  public void after() throws Exception {
-    client.close();
-    super.after();
-  }
-
-  protected static JsonObject config() {
-    return new JsonObject()
-        .put("url", "jdbc:h2:mem:test3")
-        .put("driver_class", "org.h2.Driver");
+    client = JDBCClient.create(vertx, DBConfigs.h2());
   }
 
   @Test

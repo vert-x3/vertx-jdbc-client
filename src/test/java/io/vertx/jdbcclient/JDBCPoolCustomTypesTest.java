@@ -18,13 +18,9 @@ package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
-import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,8 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@RunWith(VertxUnitRunner.class)
-public class JDBCPoolCustomTypesTest {
+public class JDBCPoolCustomTypesTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()
     .setJdbcUrl("jdbc:h2:mem:test-" + JDBCPoolCustomTypesTest.class.getSimpleName() + ";DB_CLOSE_DELAY=-1");
@@ -57,20 +52,15 @@ public class JDBCPoolCustomTypesTest {
     }
   }
 
-  @Rule
-  public RunTestOnContext rule = new RunTestOnContext();
-
-  private JDBCPool pool;
-
   @Before
-  public void before() throws Exception {
+  public void setUp() throws Exception {
     resetDb();
-    pool = JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
+    super.setUp();
   }
 
-  @After
-  public void after(TestContext should) {
-    pool.close(should.asyncAssertSuccess());
+  @Override
+  protected JDBCConnectOptions connectOptions() {
+    return options;
   }
 
   @Test
@@ -79,7 +69,7 @@ public class JDBCPoolCustomTypesTest {
 
     String sql = "SELECT u FROM t";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(should::fail)
@@ -100,7 +90,7 @@ public class JDBCPoolCustomTypesTest {
 
     String sql = "INSERT INTO t (u, t, d, ts) VALUES (?, ?, ?, ?)";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of(UUID.randomUUID(), LocalTime.of(9, 0, 0), LocalDate.of(2020, Month.JUNE, 19), Instant.now()))
       .onFailure(should::fail)
@@ -108,7 +98,7 @@ public class JDBCPoolCustomTypesTest {
         should.assertEquals(1, rows.rowCount());
 
         // load and see
-        pool
+        client
           .query("SELECT u, t, d, ts from t where ts is not null")
           .execute()
           .onFailure(should::fail)

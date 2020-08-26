@@ -18,13 +18,9 @@ package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
-import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,8 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@RunWith(VertxUnitRunner.class)
-public class JDBCPoolTest {
+public class JDBCPoolTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()
     .setJdbcUrl("jdbc:hsqldb:mem:" + JDBCPoolTest.class.getSimpleName() + "?shutdown=true");
@@ -76,19 +71,9 @@ public class JDBCPoolTest {
     }
   }
 
-  @Rule
-  public RunTestOnContext rule = new RunTestOnContext();
-
-  private JDBCPool pool;
-
-  @Before
-  public void before() {
-    pool = JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
-  }
-
-  @After
-  public void after(TestContext should) {
-    pool.close(should.asyncAssertSuccess());
+  @Override
+  protected JDBCConnectOptions connectOptions() {
+    return options;
   }
 
   @Test
@@ -97,7 +82,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(should::fail)
@@ -142,7 +127,7 @@ public class JDBCPoolTest {
 
     String sql = "INSERT INTO insert_table (FNAME, LNAME) VALUES (?,?)";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of("Paulo", "Lopes"))
       .onFailure(should::fail)
@@ -164,7 +149,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT ID, FNAME, LNAME FROM select_table WHERE FNAME = ?";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of("john"))
       .onFailure(should::fail)
@@ -192,7 +177,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT ID as \"IdLabel\", FNAME as \"first_name\", LNAME as \"LAST.NAME\" FROM select_table WHERE fname = ?";
 
-    pool
+    client
       .preparedQuery(sql)
       .execute(Tuple.of("john"))
       .onFailure(should::fail)
@@ -220,7 +205,7 @@ public class JDBCPoolTest {
 
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
 
-    pool
+    client
       .getConnection()
       .onFailure(should::fail)
       .onSuccess(conn -> {
@@ -255,7 +240,7 @@ public class JDBCPoolTest {
                           .onFailure(should::fail)
                           .onSuccess(v1 -> {
                             // connection is returned to the pool
-                            pool
+                            client
                               .preparedQuery("SELECT LNAME FROM insert_table WHERE id = ?")
                               .execute(Tuple.of(id))
                               .onFailure(should::fail)
@@ -277,7 +262,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT FROM WHERE FOO BAR";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(err -> test.complete())
@@ -290,7 +275,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT b FROM blob_table";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(should::fail)
@@ -311,7 +296,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT c FROM blob_table";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(should::fail)
@@ -332,7 +317,7 @@ public class JDBCPoolTest {
 
     String sql = "SELECT a FROM blob_table";
 
-    pool
+    client
       .query(sql)
       .execute()
       .onFailure(should::fail)

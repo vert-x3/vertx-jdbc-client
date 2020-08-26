@@ -7,7 +7,6 @@ import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.sql.SQLClient;
-import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakemetrics.FakePoolMetrics;
 import org.junit.Test;
 
@@ -21,21 +20,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class JDBCPoolMetricsTest extends VertxTestBase {
+public class JDBCPoolMetricsTest extends JDBCClientTestBase {
 
   private String dataSourceName = UUID.randomUUID().toString();
-  private SQLClient client;
-
-  public void after() throws Exception {
-    if (client != null) {
-      client.close();
-    }
-    super.after();
-  }
 
   private SQLClient getClient() {
     if (client == null) {
-      client = JDBCClient.createShared(vertx, JDBCClientTestBase.config().put("max_pool_size", 10), dataSourceName);
+      client = JDBCClient.createShared(vertx, DBConfigs.hsqldb().put("max_pool_size", 10), dataSourceName);
     }
     return client;
   }
@@ -77,7 +68,6 @@ public class JDBCPoolMetricsTest extends VertxTestBase {
       assertEquals(10, getMetrics().getPoolSize());
       conn.close(onSuccess(connClosed -> {
         client.close(onSuccess(clientClose -> {
-          client = null;
           assertEquals(0, metricsMap.size());
           testComplete();
         }));

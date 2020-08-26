@@ -16,15 +16,19 @@
 
 package io.vertx.ext.jdbc;
 
+import io.vertx.ThreadLeakCheckerRule;
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Rule;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,16 +68,22 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   }
 
   public static void resetDb() throws Exception {
-    Connection conn = DriverManager.getConnection(config().getString("url"));
+    Connection conn = DriverManager.getConnection(DBConfigs.hsqldb().getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }
   }
 
-  protected static JsonObject config() {
-    return new JsonObject()
-      .put("url", "jdbc:hsqldb:mem:test?shutdown=true")
-      .put("driver_class", "org.hsqldb.jdbcDriver");
+  @Rule
+  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
+
+  protected SQLClient client;
+
+  public void tearDown() throws Exception {
+    if (client != null) {
+      close(client);
+    }
+    super.tearDown();
   }
 
   protected void assertUpdate(UpdateResult result, int updated) {
@@ -92,6 +102,18 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
         assertTrue(keys.getValue(i) instanceof Integer);
         assertTrue(numbers.add(i));
       }
+    }
+  }
+
+  public void close(SQLClient client) {
+    Promise<Void> promise = Promise.promise();
+    client.close(promise);
+    try {
+      promise.future().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (Exception e) {
+      fail(e);
     }
   }
 

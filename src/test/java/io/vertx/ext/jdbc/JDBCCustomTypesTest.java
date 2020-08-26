@@ -18,10 +18,7 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
-import io.vertx.test.core.VertxTestBase;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
-public class JDBCCustomTypesTest extends VertxTestBase {
+public class JDBCCustomTypesTest extends JDBCClientTestBase {
 
   private static final List<String> SQL = new ArrayList<>();
 
@@ -49,7 +46,6 @@ public class JDBCCustomTypesTest extends VertxTestBase {
   }
 
   private JsonObject config;
-  private SQLClient client;
 
   @Before
   public void setUp() throws Exception {
@@ -65,15 +61,13 @@ public class JDBCCustomTypesTest extends VertxTestBase {
     client = JDBCClient.create(vertx, config);
   }
 
-  @After
-  public void after() throws Exception {
-    client.close();
+  public void tearDown() throws Exception {
+    super.tearDown();
     try (Connection conn = DriverManager.getConnection(config.getString("url"))) {
       try (Statement statement = conn.createStatement()) {
         statement.execute("SHUTDOWN");
       }
     }
-    super.after();
   }
 
   @Test
