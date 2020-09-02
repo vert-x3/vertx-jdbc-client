@@ -36,12 +36,12 @@ public interface JDBCPool extends Pool {
   /**
    * The property to be used to retrieve the generated keys
    */
-  PropertyKind<Row> GENERATED_KEYS = () -> Row.class;
+  PropertyKind<Row> GENERATED_KEYS = PropertyKind.create("generated-keys", Row.class);
 
   /**
-   * The property to be used to retreive the output of the callable statement
+   * The property to be used to retrieve the output of the callable statement
    */
-  PropertyKind<Boolean> OUTPUT = () -> Boolean.class;
+  PropertyKind<Boolean> OUTPUT = PropertyKind.create("callable-statement-output", Boolean.class);
 
   /**
    * Create a JDBC pool which maintains its own data source.
