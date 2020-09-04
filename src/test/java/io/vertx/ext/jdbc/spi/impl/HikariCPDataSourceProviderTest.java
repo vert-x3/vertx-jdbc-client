@@ -1,6 +1,8 @@
 package io.vertx.ext.jdbc.spi.impl;
 
+import io.vertx.ThreadLeakCheckerRule;
 import io.vertx.core.json.JsonObject;
+import org.junit.Rule;
 import org.junit.Test;
 
 import javax.sql.DataSource;
@@ -16,6 +18,8 @@ import static org.junit.Assert.assertNotNull;
  */
 public class HikariCPDataSourceProviderTest {
 
+  @Rule
+  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
 
   @Test
   public void testCreationOfTheHikariCPDataSource() throws SQLException {

@@ -16,10 +16,12 @@
 
 package io.vertx.ext.jdbc.spi.impl;
 
+import io.vertx.ThreadLeakCheckerRule;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.test.core.VertxTestBase;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.sql.SQLException;
@@ -30,6 +32,9 @@ import static org.hamcrest.CoreMatchers.instanceOf;
  * @author Thomas Segismont
  */
 public class C3P0DataSourceProviderTest extends VertxTestBase {
+
+  @Rule
+  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
 
   private SQLClient client;
 

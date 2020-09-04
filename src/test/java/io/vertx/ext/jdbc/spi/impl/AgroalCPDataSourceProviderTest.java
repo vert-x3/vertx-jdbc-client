@@ -1,6 +1,8 @@
 package io.vertx.ext.jdbc.spi.impl;
 
+import io.vertx.ThreadLeakCheckerRule;
 import io.vertx.core.json.JsonObject;
+import org.junit.Rule;
 import org.junit.Test;
 
 import javax.sql.DataSource;
@@ -13,6 +15,9 @@ import static org.junit.Assert.assertNotNull;
  * Checks the behavior of {@link AgroalCPDataSourceProvider}.
  */
 public class AgroalCPDataSourceProviderTest {
+
+  @Rule
+  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
 
   @Test
   public void testCreationOfTheAgroalDataSource() throws SQLException {
