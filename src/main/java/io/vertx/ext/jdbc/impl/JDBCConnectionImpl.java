@@ -206,4 +206,8 @@ class JDBCConnectionImpl implements SQLConnection {
   public <C> C unwrap() {
     return (C) conn;
   }
+
+  protected <T> void schedule(AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
+    action.execute(conn, statementsQueue, handler);
+  }
 }

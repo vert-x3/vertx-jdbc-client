@@ -175,12 +175,12 @@ public class JDBCClientImpl implements JDBCClient {
       promise.future().setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
       if (ar1.succeeded()) {
         JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
-        try {
-          T result = action.execute(conn.conn);
-          promise.complete(result);
-        } catch (Exception e) {
-          promise.fail(e);
-        } finally {
+        conn.schedule(action, ar3 -> {
+          if (ar3.succeeded()) {
+            promise.complete(ar3.result());
+          } else {
+            promise.fail(ar3.cause());
+          }
           if (conn.metrics != null) {
             conn.metrics.end(conn.metric, true);
           }
@@ -189,7 +189,7 @@ public class JDBCClientImpl implements JDBCClient {
           } catch (Exception e) {
             JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
           }
-        }
+        });
       } else {
         promise.fail(ar1.cause());
       }
