@@ -105,15 +105,14 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     }
   }
 
-  public void close(SQLClient client) {
+  public static void close(SQLClient client) {
     Promise<Void> promise = Promise.promise();
     client.close(promise);
     try {
       promise.future().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-    } catch (Exception e) {
-      fail(e);
+    } catch (Exception ignore) {
     }
   }
 

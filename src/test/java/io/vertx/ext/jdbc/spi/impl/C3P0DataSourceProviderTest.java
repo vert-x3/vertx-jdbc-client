@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.spi.impl;
 import io.vertx.ThreadLeakCheckerRule;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.jdbc.JDBCClientTestBase;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.Rule;
@@ -40,7 +41,7 @@ public class C3P0DataSourceProviderTest extends VertxTestBase {
 
   @Override
   protected void tearDown() throws Exception {
-    client.close();
+    JDBCClientTestBase.close(client);
     super.tearDown();
   }
 
