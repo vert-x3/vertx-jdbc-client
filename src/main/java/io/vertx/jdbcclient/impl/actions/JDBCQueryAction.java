@@ -58,8 +58,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
         returnedResultSet = statement.getMoreResults();
       }
     } else {
-      BiConsumer<C, Row> accumulator = collector.accumulator();
-
+      collector.accumulator();
       // first rowset includes the output results
       C container = collector.supplier().get();
 
@@ -72,6 +71,29 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     if (out.size() > 0) {
       decodeOutput((CallableStatement) statement, out, response);
+    }
+
+    return response;
+  }
+
+  protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult, boolean returnedKeys) throws SQLException {
+    final JDBCResponse<R> response = new JDBCResponse<>(returnedBatchResult.length);
+
+    BiConsumer<C, Row> accumulator = collector.accumulator();
+
+    RowDesc desc = new RowDesc(Collections.emptyList());
+    C container = collector.supplier().get();
+    for (int result : returnedBatchResult) {
+      Row row = new JDBCRow(desc);
+      row.addValue(result);
+      accumulator.accept(container, row);
+    }
+
+    response
+      .push(collector.finisher().apply(container), desc, returnedBatchResult.length);
+
+    if (returnedKeys) {
+      decodeReturnedKeys(statement, response);
     }
 
     return response;
@@ -134,7 +156,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     C container = collector.supplier().get();
 
     // the result is unlabeled
-    Row row = new JDBCRow(new RowDesc(new ArrayList<>()));
+    Row row = new JDBCRow(new RowDesc(Collections.emptyList()));
     for (Integer idx : out) {
       if (cs.getObject(idx) instanceof ResultSet) {
         row.addValue(decodeRawResultSet((ResultSet) cs.getObject(idx)));
