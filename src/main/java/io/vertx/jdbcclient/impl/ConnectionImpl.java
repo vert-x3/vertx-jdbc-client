@@ -97,12 +97,16 @@ public class ConnectionImpl implements Connection {
   }
 
   private <R> void handle(ExtendedQueryCommand<R> command, Promise<Boolean> promise) {
-    JDBCPreparedQuery<?, R> action = new JDBCPreparedQuery<>(helper, sqlOptions, command, command.collector(), command.params());
+    JDBCQueryAction<?, R> action =
+      command.isBatch() ?
+        new JDBCPreparedBatch<>(helper, sqlOptions, command, command.collector(), command.paramsList()) :
+        new JDBCPreparedQuery<>(helper, sqlOptions, command, command.collector(), command.params());
+
     handle(action, command.resultHandler(), promise);
   }
 
   private <R> void handle(SimpleQueryCommand<R> command, Promise<Boolean> promise) {
-    JDBCSimpleQueryAction<?, R> action = new JDBCSimpleQueryAction<>(helper, sqlOptions, command.sql(), command.collector());
+    JDBCQueryAction<?, R> action = new JDBCSimpleQueryAction<>(helper, sqlOptions, command.sql(), command.collector());
     handle(action, command.resultHandler(), promise);
   }
 
