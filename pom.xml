@@ -73,13 +73,13 @@
     <dependency>
       <groupId>io.agroal</groupId>
       <artifactId>agroal-api</artifactId>
-      <version>1.8</version>
+      <version>1.9</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.agroal</groupId>
       <artifactId>agroal-pool</artifactId>
-      <version>1.8</version>
+      <version>1.9</version>
       <optional>true</optional>
     </dependency>
 
@@ -87,7 +87,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
