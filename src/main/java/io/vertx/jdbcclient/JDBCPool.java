@@ -19,6 +19,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
@@ -59,7 +60,7 @@ public interface JDBCPool extends Pool {
       new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions)),
       context.tracer() == null ?
         null :
-        new QueryTracer(context.tracer(), connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getDatabase()));
+        new QueryTracer(context.tracer(), connectOptions.getTracingPolicy(), connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getDatabase()));
   }
 
   /**
@@ -77,6 +78,6 @@ public interface JDBCPool extends Pool {
       new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()),
       context.tracer() == null ?
         null :
-        new QueryTracer(context.tracer(), config.getString("jdbcUrl"), config.getString("user"), config.getString("database")));
+        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, config.getString("jdbcUrl"), config.getString("user"), config.getString("database")));
   }
 }

@@ -15,6 +15,9 @@
 |[[jdbcUrl]]`@jdbcUrl`|`String`|-
 |[[metricsEnabled]]`@metricsEnabled`|`Boolean`|-
 |[[password]]`@password`|`String`|-
+|[[tracingPolicy]]`@tracingPolicy`|`link:enums.html#TracingPolicy[TracingPolicy]`|+++
+Set the tracing policy for the client behavior when Vert.x has tracing enabled.
++++
 |[[user]]`@user`|`String`|-
 |===
 

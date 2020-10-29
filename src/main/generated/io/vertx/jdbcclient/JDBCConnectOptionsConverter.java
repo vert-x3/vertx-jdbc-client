@@ -51,6 +51,11 @@ public class JDBCConnectOptionsConverter {
             obj.setPassword((String)member.getValue());
           }
           break;
+        case "tracingPolicy":
+          if (member.getValue() instanceof String) {
+            obj.setTracingPolicy(io.vertx.core.tracing.TracingPolicy.valueOf((String)member.getValue()));
+          }
+          break;
         case "user":
           if (member.getValue() instanceof String) {
             obj.setUser((String)member.getValue());
@@ -79,6 +84,9 @@ public class JDBCConnectOptionsConverter {
     json.put("metricsEnabled", obj.isMetricsEnabled());
     if (obj.getPassword() != null) {
       json.put("password", obj.getPassword());
+    }
+    if (obj.getTracingPolicy() != null) {
+      json.put("tracingPolicy", obj.getTracingPolicy().name());
     }
     if (obj.getUser() != null) {
       json.put("user", obj.getUser());

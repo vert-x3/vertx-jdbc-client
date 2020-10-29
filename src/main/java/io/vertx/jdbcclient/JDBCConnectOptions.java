@@ -16,7 +16,9 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.tracing.TracingPolicy;
 
 @DataObject(generateConverter = true)
 public class JDBCConnectOptions {
@@ -29,6 +31,7 @@ public class JDBCConnectOptions {
   private String database;
   private int connectTimeout = 60000;
   private int idleTimeout;
+  private TracingPolicy tracingPolicy = TracingPolicy.PROPAGATE;
 
   public JDBCConnectOptions() {}
 
@@ -105,6 +108,24 @@ public class JDBCConnectOptions {
 
   public JDBCConnectOptions setIdleTimeout(int idleTimeout) {
     this.idleTimeout = idleTimeout;
+    return this;
+  }
+
+  /**
+   * @return the tracing policy
+   */
+  public TracingPolicy getTracingPolicy() {
+    return tracingPolicy;
+  }
+
+  /**
+   * Set the tracing policy for the client behavior when Vert.x has tracing enabled.
+   *
+   * @param tracingPolicy the tracing policy
+   * @return a reference to this, so the API can be used fluently
+   */
+  public JDBCConnectOptions setTracingPolicy(TracingPolicy tracingPolicy) {
+    this.tracingPolicy = tracingPolicy;
     return this;
   }
 
