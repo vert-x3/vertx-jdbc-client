@@ -41,6 +41,11 @@ public class SQLOptionsConverter {
             obj.setFetchSize(((Number)member.getValue()).intValue());
           }
           break;
+        case "maxRows":
+          if (member.getValue() instanceof Number) {
+            obj.setMaxRows(((Number)member.getValue()).intValue());
+          }
+          break;
         case "queryTimeout":
           if (member.getValue() instanceof Number) {
             obj.setQueryTimeout(((Number)member.getValue()).intValue());
@@ -91,6 +96,7 @@ public class SQLOptionsConverter {
       json.put("fetchDirection", obj.getFetchDirection().name());
     }
     json.put("fetchSize", obj.getFetchSize());
+    json.put("maxRows", obj.getMaxRows());
     json.put("queryTimeout", obj.getQueryTimeout());
     json.put("readOnly", obj.isReadOnly());
     if (obj.getResultSetConcurrency() != null) {

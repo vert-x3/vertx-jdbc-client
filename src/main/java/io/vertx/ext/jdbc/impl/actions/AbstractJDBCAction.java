@@ -53,6 +53,9 @@ public abstract class AbstractJDBCAction<T> {
       if (options.getFetchSize() > 0) {
         statement.setFetchSize(options.getFetchSize());
       }
+      if (options.getMaxRows() > 0) {
+        statement.setMaxRows(options.getMaxRows());
+      }
     }
   }
 

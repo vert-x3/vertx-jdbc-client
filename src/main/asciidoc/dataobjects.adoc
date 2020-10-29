@@ -80,6 +80,7 @@ Get the rows - each row represented as a JsonObject where the keys are the colum
 |[[catalog]]`@catalog`|`String`|-
 |[[fetchDirection]]`@fetchDirection`|`link:enums.html#FetchDirection[FetchDirection]`|-
 |[[fetchSize]]`@fetchSize`|`Number (int)`|-
+|[[maxRows]]`@maxRows`|`Number (int)`|-
 |[[queryTimeout]]`@queryTimeout`|`Number (int)`|-
 |[[readOnly]]`@readOnly`|`Boolean`|-
 |[[resultSetConcurrency]]`@resultSetConcurrency`|`link:enums.html#ResultSetConcurrency[ResultSetConcurrency]`|-
