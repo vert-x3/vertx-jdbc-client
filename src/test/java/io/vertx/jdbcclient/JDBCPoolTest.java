@@ -326,10 +326,10 @@ public class JDBCPoolTest extends ClientTestBase {
       .onSuccess(rows -> {
         should.assertEquals(1, rows.size());
         for (Row row : rows) {
-          should.assertNotNull(row.getIntegerArray(0));
-          should.assertEquals(1, row.getIntegerArray(0)[0]);
-          should.assertEquals(2, row.getIntegerArray(0)[1]);
-          should.assertEquals(3, row.getIntegerArray(0)[2]);
+          should.assertNotNull(row.getArrayOfIntegers(0));
+          should.assertEquals(1, row.getArrayOfIntegers(0)[0]);
+          should.assertEquals(2, row.getArrayOfIntegers(0)[1]);
+          should.assertEquals(3, row.getArrayOfIntegers(0)[2]);
         }
         test.complete();
 

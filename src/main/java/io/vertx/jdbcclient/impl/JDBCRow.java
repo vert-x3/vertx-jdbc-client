@@ -105,37 +105,37 @@ public class JDBCRow extends ArrayTuple implements Row {
 
   public <T> T[] getValues(Class<T> type, int pos) {
     if (type == Boolean.class) {
-      return (T[]) getBooleanArray(pos);
+      return (T[]) getArrayOfBooleans(pos);
     } else if (type == Short.class) {
-      return (T[]) getShortArray(pos);
+      return (T[]) getArrayOfShorts(pos);
     } else if (type == Integer.class) {
-      return (T[]) getIntegerArray(pos);
+      return (T[]) getArrayOfIntegers(pos);
     } else if (type == Long.class) {
-      return (T[]) getLongArray(pos);
+      return (T[]) getArrayOfLongs(pos);
     } else if (type == Float.class) {
-      return (T[]) getFloatArray(pos);
+      return (T[]) getArrayOfFloats(pos);
     } else if (type == Double.class) {
-      return (T[]) getDoubleArray(pos);
+      return (T[]) getArrayOfDoubles(pos);
     } else if (type == Character.class) {
-      return (T[]) getCharArray(pos);
+      return (T[]) getArrayOfChars(pos);
     } else if (type == String.class) {
-      return (T[]) getStringArray(pos);
+      return (T[]) getArrayOfStrings(pos);
     } else if (type == Buffer.class) {
-      return (T[]) getBufferArray(pos);
+      return (T[]) getArrayOfBuffers(pos);
     } else if (type == UUID.class) {
-      return (T[]) getUUIDArray(pos);
+      return (T[]) getArrayOfUUIDs(pos);
     } else if (type == LocalDate.class) {
-      return (T[]) getLocalDateArray(pos);
+      return (T[]) getArrayOfLocalDates(pos);
     } else if (type == LocalTime.class) {
-      return (T[]) getLocalTimeArray(pos);
+      return (T[]) getArrayOfLocalTimes(pos);
     } else if (type == OffsetTime.class) {
-      return (T[]) getOffsetTimeArray(pos);
+      return (T[]) getArrayOfOffsetTimes(pos);
     } else if (type == LocalDateTime.class) {
-      return (T[]) getLocalDateTimeArray(pos);
+      return (T[]) getArrayOfLocalDateTimes(pos);
     } else if (type == OffsetDateTime.class) {
-      return (T[]) getOffsetDateTimeArray(pos);
+      return (T[]) getArrayOfOffsetDateTimes(pos);
     } else if (type == Object.class) {
-      return (T[]) getJsonArray_(pos);
+      return (T[]) getArrayOfJsons(pos);
     }
     throw new UnsupportedOperationException("Unsupported type " + type.getName());
   }
@@ -145,19 +145,19 @@ public class JDBCRow extends ArrayTuple implements Row {
     return pos == -1 ? null : getNumeric(pos);
   }
 
-  public Object[] getJsonArray_(String name) {
+  public Object[] getArrayOfJsons(String name) {
     int pos = desc.columnIndex(name);
-    return pos == -1 ? null : getJsonArray_(pos);
+    return pos == -1 ? null : getArrayOfJsons(pos);
   }
 
-  public Numeric[] getNumericArray(String name) {
+  public Numeric[] getArrayOfNumerics(String name) {
     int pos = desc.columnIndex(name);
-    return pos == -1 ? null : getNumericArray(pos);
+    return pos == -1 ? null : getArrayOfNumerics(pos);
   }
 
-  public Character[] getCharArray(String name) {
+  public Character[] getArrayOfChars(String name) {
     int pos = desc.columnIndex(name);
-    return pos == -1 ? null : getCharArray(pos);
+    return pos == -1 ? null : getArrayOfChars(pos);
   }
 
   public Character getChar(int pos) {
@@ -193,7 +193,7 @@ public class JDBCRow extends ArrayTuple implements Row {
     }
   }
 
-  public Character[] getCharArray(int pos) {
+  public Character[] getArrayOfChars(int pos) {
     Object val = getValue(pos);
     if (val instanceof Character[]) {
       return (Character[]) val;
@@ -205,7 +205,7 @@ public class JDBCRow extends ArrayTuple implements Row {
   /**
    * Get a {@code Json} array value, the {@code Json} value may be a string, number, JSON object, array, boolean or null.
    */
-  public Object[] getJsonArray_(int pos) {
+  public Object[] getArrayOfJsons(int pos) {
     Object val = getValue(pos);
     if (val instanceof Object[]) {
       return (Object[]) val;
@@ -214,7 +214,7 @@ public class JDBCRow extends ArrayTuple implements Row {
     }
   }
 
-  public Numeric[] getNumericArray(int pos) {
+  public Numeric[] getArrayOfNumerics(int pos) {
     Object val = getValue(pos);
     if (val instanceof Numeric[]) {
       return (Numeric[]) val;
