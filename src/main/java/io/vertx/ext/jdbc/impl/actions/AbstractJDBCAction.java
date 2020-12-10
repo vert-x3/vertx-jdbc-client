@@ -50,7 +50,7 @@ public abstract class AbstractJDBCAction<T> {
       if (options.getFetchDirection() != null) {
         statement.setFetchDirection(options.getFetchDirection().getType());
       }
-      if (options.getFetchSize() > 0) {
+      if (options.getFetchSize() != 0) {
         statement.setFetchSize(options.getFetchSize());
       }
       if (options.getMaxRows() > 0) {
