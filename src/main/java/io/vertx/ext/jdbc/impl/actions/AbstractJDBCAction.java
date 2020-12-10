@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -79,7 +78,7 @@ public abstract class AbstractJDBCAction<T> {
       if (options.getFetchDirection() != null) {
         statement.setFetchDirection(options.getFetchDirection().getType());
       }
-      if (options.getFetchSize() > 0) {
+      if (options.getFetchSize() != 0) {
         statement.setFetchSize(options.getFetchSize());
       }
       if (options.getMaxRows() > 0) {
