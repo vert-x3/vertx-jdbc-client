@@ -55,6 +55,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
         try (ResultSet rs = statement.getResultSet()) {
           decodeResultSet(rs, response);
         }
+        if (returnedKeys) {
+          decodeReturnedKeys(statement, response);
+        }
         returnedResultSet = statement.getMoreResults();
       }
     } else {
@@ -63,10 +66,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       C container = collector.supplier().get();
 
       response.empty(collector.finisher().apply(container));
-    }
-
-    if (returnedKeys) {
-      decodeReturnedKeys(statement, response);
+      if (returnedKeys) {
+        decodeReturnedKeys(statement, response);
+      }
     }
 
     if (out.size() > 0) {
