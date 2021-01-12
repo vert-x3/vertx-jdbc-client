@@ -37,10 +37,10 @@ public class JDBCResponse<R> {
     }
   }
 
-  private int update;
-  private List<RS> rs;
+  private final int update;
+  private List<RS<R>> rs;
   private Row ids;
-  private List<RS> output;
+  private List<RS<R>> output;
   private R empty;
 
   public JDBCResponse(int updateCount) {

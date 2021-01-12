@@ -74,6 +74,9 @@ public class JDBCPrepareStatementAction extends AbstractJDBCAction<io.vertx.sqlc
       ps = conn.prepareStatement(sql);
     }
 
+    // apply statement options
+    applyStatementOptions(ps);
+
     return new JDBCPreparedStatement(sql, ps);
   }
 }

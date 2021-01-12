@@ -43,8 +43,6 @@ public class JDBCPreparedStatement implements PreparedStatement {
         columnNames.add(metaData.getColumnLabel(i));
       }
     }
-    // apply statement options
-    // applyStatementOptions(statement);
 
     this.sql = sql;
     this.rowDesc = new RowDesc(columnNames);
