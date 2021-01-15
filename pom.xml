@@ -131,5 +131,18 @@
       <artifactId>vertx-unit</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mssqlserver</artifactId>
+      <version>1.12.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>7.2.2.jre8</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

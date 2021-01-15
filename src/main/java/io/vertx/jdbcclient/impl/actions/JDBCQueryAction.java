@@ -55,6 +55,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
         try (ResultSet rs = statement.getResultSet()) {
           decodeResultSet(rs, response);
         }
+        if (returnedKeys) {
+          decodeReturnedKeys(statement, response);
+        }
         returnedResultSet = statement.getMoreResults();
       }
     } else {
@@ -63,10 +66,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       C container = collector.supplier().get();
 
       response.empty(collector.finisher().apply(container));
-    }
-
-    if (returnedKeys) {
-      decodeReturnedKeys(statement, response);
+      if (returnedKeys) {
+        decodeReturnedKeys(statement, response);
+      }
     }
 
     if (out.size() > 0) {
@@ -76,7 +78,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     return response;
   }
 
-  protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult, boolean returnedKeys) throws SQLException {
+  protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult) throws SQLException {
     final JDBCResponse<R> response = new JDBCResponse<>(returnedBatchResult.length);
 
     BiConsumer<C, Row> accumulator = collector.accumulator();
@@ -92,9 +94,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     response
       .push(collector.finisher().apply(container), desc, returnedBatchResult.length);
 
-    if (returnedKeys) {
-      decodeReturnedKeys(statement, response);
-    }
+    decodeReturnedKeys(statement, response);
 
     return response;
   }
@@ -179,25 +179,25 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     ResultSet keysRS = statement.getGeneratedKeys();
 
     if (keysRS != null) {
-      List<String> keysColumnNames = new ArrayList<>();
-      RowDesc keysDesc = new RowDesc(keysColumnNames);
-
       ResultSetMetaData metaData = keysRS.getMetaData();
       int cols = metaData.getColumnCount();
-      for (int i = 1; i <= cols; i++) {
-        keysColumnNames.add(metaData.getColumnLabel(i));
-      }
-
-      if (keysRS.next()) {
-        keys = new JDBCRow(keysDesc);
+      if (cols > 0) {
+        List<String> keysColumnNames = new ArrayList<>();
+        RowDesc keysDesc = new RowDesc(keysColumnNames);
         for (int i = 1; i <= cols; i++) {
-          Object res = convertSqlValue(keysRS.getObject(i));
-          keys.addValue(res);
+          keysColumnNames.add(metaData.getColumnLabel(i));
         }
+
+        if (keysRS.next()) {
+          keys = new JDBCRow(keysDesc);
+          for (int i = 1; i <= cols; i++) {
+            Object res = convertSqlValue(keysRS.getObject(i));
+            keys.addValue(res);
+          }
+        }
+        response.returnedKeys(keys);
       }
     }
-
-    response.returnedKeys(keys);
   }
 
   public static Object convertSqlValue(Object value) throws SQLException {
