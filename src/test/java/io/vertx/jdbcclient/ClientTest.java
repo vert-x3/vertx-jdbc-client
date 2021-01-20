@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.time.LocalDate;
 import java.util.concurrent.TimeUnit;
 
-public abstract class ClientTest extends ClientTestBase {
+public class ClientTest extends ClientTestBase {
 
   protected SqlConnection connection() throws Exception {
     return client.getConnection().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
