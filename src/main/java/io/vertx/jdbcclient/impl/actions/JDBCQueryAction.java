@@ -272,11 +272,12 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     if (value instanceof Array) {
       Array a = (Array) value;
       try {
-        Object[] arr = (Object[]) a.getArray();
+        Object arr = a.getArray();
         if (arr != null) {
-          Object[] castedArray = new Object[arr.length];
-          for (int i = 0; i < arr.length; i++) {
-            castedArray[i] = convertSqlValue(arr[i]);
+          int len = java.lang.reflect.Array.getLength(arr);
+          Object[] castedArray = new Object[len];
+          for (int i = 0; i < len; i++) {
+            castedArray[i] = convertSqlValue(java.lang.reflect.Array.get(arr, i));
           }
           return castedArray;
         }

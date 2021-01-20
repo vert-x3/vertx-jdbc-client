@@ -256,9 +256,10 @@ public final class JDBCStatementHelper {
       try {
         Object[] arr = (Object[]) a.getArray();
         if (arr != null) {
+          int len = java.lang.reflect.Array.getLength(arr);
           JsonArray jsonArray = new JsonArray();
-          for (Object o : arr) {
-            jsonArray.add(convertSqlValue(o));
+          for (int i = 0; i < len; i++) {
+            jsonArray.add(convertSqlValue(java.lang.reflect.Array.get(arr, i)));;
           }
           return jsonArray;
         }
