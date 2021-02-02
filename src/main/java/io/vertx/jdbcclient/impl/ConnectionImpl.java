@@ -123,7 +123,7 @@ public class ConnectionImpl implements Connection {
         ar.result()
           .handle(handler);
 
-        promise.complete(true);
+        promise.complete(false);
       } else {
         promise.fail(ar.cause());
       }

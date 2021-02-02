@@ -1,10 +1,13 @@
 package io.vertx.jdbcclient;
 
+import io.vertx.core.Future;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.*;
 import org.junit.Test;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ClientTest extends ClientTestBase {
@@ -96,5 +99,27 @@ public class ClientTest extends ClientTestBase {
           }
         }));
     }));
+  }
+
+  @Test
+  public void testStream(TestContext should) {
+    client.<List<Row>>withTransaction(tx ->
+      tx.prepare("SELECT CURRENT_DATE AS today, CURRENT_TIME AS now FROM (VALUES(0))")
+        .map(pS -> pS.createStream(200))
+        .flatMap(stream -> Future
+          .future(promise -> {
+            List<Row> rows = new ArrayList<>();
+            stream.exceptionHandler(promise::fail);
+            stream.endHandler(v -> promise.complete(rows));
+            stream.handler(row -> {
+              should.assertEquals(0, rows.size());
+              rows.add(row);
+            });
+          })
+        )
+    )
+      .onComplete(should.asyncAssertSuccess(rows -> {
+        should.assertEquals(1, rows.size());
+      }));
   }
 }
