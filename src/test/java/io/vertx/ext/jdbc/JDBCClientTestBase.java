@@ -22,10 +22,6 @@ import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.BeforeClass;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
@@ -60,17 +56,7 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     SQL.add("insert into delete_table values (1, 'doe', 'john', '2001-01-01');");
     SQL.add("insert into delete_table values (2, 'doe', 'jane', '2002-02-02');");
     SQL.add("create table blob_table (b blob, c clob, a int array default array[]);");
-    try {
-      File tempFile = File.createTempFile("prefix-", "-suffix");
-      tempFile.deleteOnExit();
-      try (PrintWriter writer = new PrintWriter(tempFile)) {
-        writer.println("Hello World");
-      }
-      SQL.add("insert into blob_table (b, c, a) values (load_file('" + tempFile.getAbsolutePath() + "'), convert('Hello', clob),  ARRAY[1,2,3])");
-    } catch (Exception failure) {
-      failure.printStackTrace();
-    }
-
+    SQL.add("insert into blob_table (b, c, a) values (null, convert('Hello', clob),  ARRAY[1,2,3])");
     SQL.add("create table big_table(id int primary key, name varchar(255))");
     for (int i = 0; i < 200; i++) {
       SQL.add("insert into big_table values(" + i + ", 'Hello')");

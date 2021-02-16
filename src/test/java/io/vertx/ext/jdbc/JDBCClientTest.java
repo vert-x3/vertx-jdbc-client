@@ -659,7 +659,7 @@ public class JDBCClientTest extends JDBCClientTestBase {
     connection().query(sql, onSuccess(resultSet -> {
       assertNotNull(resultSet);
       assertEquals(1, resultSet.getResults().size());
-      assertNotNull(resultSet.getResults().get(0).getBinary(0));
+      assertNull(resultSet.getResults().get(0).getBinary(0));
       testComplete();
     }));
 
