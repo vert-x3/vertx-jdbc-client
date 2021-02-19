@@ -151,7 +151,7 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
     } else if (value instanceof Buffer) {
       // -> java.sql.Blob
       Buffer blob = (Buffer) value;
-      return conn.createBlob().setBytes(0, blob.getBytes());
+      return conn.createBlob().setBytes(1, blob.getBytes());
     }
 
     return value;
