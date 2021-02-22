@@ -355,35 +355,28 @@ public class JDBCPoolTest extends ClientTestBase {
   
   @Test
   public void testPreparedStatementWithBufferParam(TestContext should) {
-    final Async test = should.async();
-    
     Buffer buffer = Buffer.buffer("Hello world!");
     
     client
       .query("drop table if exists t")
       .execute()
-      .onFailure(should::fail)
       .compose(res1 -> client
         .query("create table t (b BLOB)")
         .execute()
-        .onFailure(should::fail)
         .compose(res2 -> client
           .preparedQuery("insert into t (b) values (?)")
           .execute(Tuple.of(buffer))
-          .onFailure(should::fail)
           .compose(res3 -> client
             .query("select b from t")
             .execute()
-            .onFailure(should::fail)
-            .onSuccess(rows -> {
+            .onComplete(should.asyncAssertSuccess(rows -> {
               should.assertEquals(1, rows.size());
               rows.forEach(row -> {
                 Buffer actual = row.getBuffer(0);
                 should.assertNotNull(actual);
                 should.assertEquals(buffer, actual);
               });
-              test.complete();
-            })
+            }))
           )
         )
       );
