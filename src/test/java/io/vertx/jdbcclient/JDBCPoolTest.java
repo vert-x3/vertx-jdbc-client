@@ -16,6 +16,7 @@
 
 package io.vertx.jdbcclient;
 
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.unit.Async;
@@ -350,5 +351,34 @@ public class JDBCPoolTest extends ClientTestBase {
         }));
       }));
     }));
+  }
+  
+  @Test
+  public void testPreparedStatementWithBufferParam(TestContext should) {
+    Buffer buffer = Buffer.buffer("Hello world!");
+    
+    client
+      .query("drop table if exists t")
+      .execute()
+      .compose(res1 -> client
+        .query("create table t (b BLOB)")
+        .execute()
+        .compose(res2 -> client
+          .preparedQuery("insert into t (b) values (?)")
+          .execute(Tuple.of(buffer))
+          .compose(res3 -> client
+            .query("select b from t")
+            .execute()
+            .onComplete(should.asyncAssertSuccess(rows -> {
+              should.assertEquals(1, rows.size());
+              rows.forEach(row -> {
+                Buffer actual = row.getBuffer(0);
+                should.assertNotNull(actual);
+                should.assertEquals(buffer, actual);
+              });
+            }))
+          )
+        )
+      );
   }
 }
