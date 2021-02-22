@@ -150,8 +150,10 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
       return Timestamp.from(timestamp);
     } else if (value instanceof Buffer) {
       // -> java.sql.Blob
-      Buffer blob = (Buffer) value;
-      return conn.createBlob().setBytes(1, blob.getBytes());
+      Buffer buffer = (Buffer) value;
+      Blob blob = conn.createBlob();
+      blob.setBytes(1, buffer.getBytes());
+      return blob;
     }
 
     return value;
