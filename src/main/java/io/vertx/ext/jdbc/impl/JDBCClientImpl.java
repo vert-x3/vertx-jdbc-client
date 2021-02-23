@@ -126,8 +126,10 @@ public class JDBCClientImpl implements JDBCClient {
           break;
         }
       } while (true);
-    }
-    if (completionHandler != null) {
+      if (completionHandler != null) {
+        completionHandler.handle(Future.succeededFuture());
+      }
+    } else if (completionHandler != null) {
       completionHandler.handle(Future.succeededFuture());
     }
   }
@@ -170,28 +172,28 @@ public class JDBCClientImpl implements JDBCClient {
   }
 
   private <T> void executeDirect(ContextInternal ctx, AbstractJDBCAction<T> action, Handler<AsyncResult<T>> handler) {
-    getConnection(ctx, ar1 -> {
-      Promise<T> promise = Promise.promise();
-      promise.future().setHandler(ar2 -> ctx.runOnContext(v -> handler.handle(ar2)));
-      if (ar1.succeeded()) {
-        JDBCConnectionImpl conn = (JDBCConnectionImpl) ar1.result();
-        try {
-          T result = action.execute(conn.conn);
-          promise.complete(result);
-        } catch (Exception e) {
-          promise.fail(e);
-        } finally {
-          if (conn.metrics != null) {
-            conn.metrics.end(conn.metric, true);
-          }
+    getConnection(ctx, ar -> {
+      if (ar.succeeded()) {
+        JDBCConnectionImpl conn = (JDBCConnectionImpl) ar.result();
+        ctx.executeBlocking(prom -> {
           try {
-            conn.conn.close();
+            T result = action.execute(conn.conn);
+            prom.complete(result);
           } catch (Exception e) {
-            JDBCConnectionImpl.log.error("Failure in closing connection", ar1.cause());
+            prom.fail(e);
+          } finally {
+            if (conn.metrics != null) {
+              conn.metrics.end(conn.metric, true);
+            }
+            try {
+              conn.conn.close();
+            } catch (Exception e) {
+              JDBCConnectionImpl.log.error("Failure in closing connection", e);
+            }
           }
-        }
+        }, false, handler);
       } else {
-        promise.fail(ar1.cause());
+        ctx.runOnContext(v -> handler.handle(Future.failedFuture(ar.cause())));
       }
     });
   }
