@@ -19,6 +19,9 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -56,11 +59,15 @@ public class ThreadLeakCheckerRule implements TestRule {
     // Make a check
     List<Thread> threads = findThreads(predicate);
     if (threads.size() > 0) {
-      String msg = threads
+      StringBuilder msg = new StringBuilder(threads
         .stream()
         .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
-        .collect(Collectors.joining(", ", "Unexpected threads " + when + " test:", "."));
-      fail(msg);
+        .collect(Collectors.joining(", ", "Unexpected threads " + when + " test:", ".")));
+      ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
+      for (ThreadInfo ti : threadMxBean.dumpAllThreads(true, true)) {
+        msg.append(System.getProperty("line.separator")).append(ti.toString());
+      }
+      fail(msg.toString());
     }
   }
 
