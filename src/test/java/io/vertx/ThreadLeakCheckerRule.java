@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.*;
 import static org.junit.Assert.fail;
 
 public class ThreadLeakCheckerRule implements TestRule {
@@ -56,19 +57,34 @@ public class ThreadLeakCheckerRule implements TestRule {
   }
 
   private void check(String when) {
-    // Make a check
-    List<Thread> threads = findThreads(predicate);
-    if (threads.size() > 0) {
-      StringBuilder msg = new StringBuilder(threads
-        .stream()
-        .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
-        .collect(Collectors.joining(", ", "Unexpected threads " + when + " test:", ".")));
-      ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
-      for (ThreadInfo ti : threadMxBean.dumpAllThreads(true, true)) {
-        msg.append(System.getProperty("line.separator")).append(ti.toString());
+    long start = System.nanoTime(), stop;
+    List<Thread> threads;
+    for (; ; ) {
+      // Make a check
+      threads = findThreads(predicate);
+      if (threads.isEmpty()) {
+        return;
       }
-      fail(msg.toString());
+      stop = System.nanoTime();
+      if (SECONDS.convert(stop - start, NANOSECONDS) >= 5) {
+        break;
+      } else {
+        try {
+          MILLISECONDS.sleep(10);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
     }
+    StringBuilder msg = new StringBuilder(threads.stream()
+      .map(t -> t.getName() + ": state=" + t.getState().name() + "/alive=" + t.isAlive())
+      .collect(Collectors.joining(", ", "Unexpected threads " + when + " test:", ".")));
+    ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
+    for (ThreadInfo ti : threadMxBean.dumpAllThreads(true, true)) {
+      msg.append(System.getProperty("line.separator")).append(ti.toString());
+    }
+    fail(msg.toString());
   }
 
   public static List<Thread> findThreads(Predicate<Thread> predicate) {
