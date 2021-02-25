@@ -151,8 +151,10 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
           break;
         }
       } while (true);
-    }
-    if (completionHandler != null) {
+      if (completionHandler != null) {
+        completionHandler.handle(Future.succeededFuture());
+      }
+    } else if (completionHandler != null) {
       completionHandler.handle(Future.succeededFuture());
     }
   }
