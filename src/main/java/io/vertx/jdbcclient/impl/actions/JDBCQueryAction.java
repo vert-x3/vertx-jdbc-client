@@ -182,22 +182,24 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     if (keysRS != null) {
       ResultSetMetaData metaData = keysRS.getMetaData();
-      int cols = metaData.getColumnCount();
-      if (cols > 0) {
-        List<String> keysColumnNames = new ArrayList<>();
-        RowDesc keysDesc = new RowDesc(keysColumnNames);
-        for (int i = 1; i <= cols; i++) {
-          keysColumnNames.add(metaData.getColumnLabel(i));
-        }
-
-        if (keysRS.next()) {
-          keys = new JDBCRow(keysDesc);
+      if (metaData != null) {
+        int cols = metaData.getColumnCount();
+        if (cols > 0) {
+          List<String> keysColumnNames = new ArrayList<>();
+          RowDesc keysDesc = new RowDesc(keysColumnNames);
           for (int i = 1; i <= cols; i++) {
-            Object res = convertSqlValue(keysRS.getObject(i));
-            keys.addValue(res);
+            keysColumnNames.add(metaData.getColumnLabel(i));
           }
+
+          if (keysRS.next()) {
+            keys = new JDBCRow(keysDesc);
+            for (int i = 1; i <= cols; i++) {
+              Object res = convertSqlValue(keysRS.getObject(i));
+              keys.addValue(res);
+            }
+          }
+          response.returnedKeys(keys);
         }
-        response.returnedKeys(keys);
       }
     }
   }
