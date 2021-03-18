@@ -53,7 +53,7 @@ public class JDBCPreparedBatch<C, R> extends JDBCQueryAction<C, R> {
         fillStatement(ps, conn, params);
         ps.addBatch();
       }
-      return decode(ps, ps.executeBatch());
+      return decode(ps, ps.executeBatch(), supportsGetGeneratedKeys(conn));
     }
   }
 

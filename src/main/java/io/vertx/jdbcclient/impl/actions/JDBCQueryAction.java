@@ -78,7 +78,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     return response;
   }
 
-  protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult) throws SQLException {
+  protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult, boolean returnedKeys) throws SQLException {
     final JDBCResponse<R> response = new JDBCResponse<>(returnedBatchResult.length);
 
     BiConsumer<C, Row> accumulator = collector.accumulator();
@@ -94,7 +94,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     response
       .push(collector.finisher().apply(container), desc, returnedBatchResult.length);
 
-    decodeReturnedKeys(statement, response);
+    if (returnedKeys) {
+      decodeReturnedKeys(statement, response);
+    }
 
     return response;
   }
@@ -298,5 +300,17 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     // fallback to String
     return value.toString();
+  }
+
+  protected boolean supportsGetGeneratedKeys(Connection conn) {
+    try {
+      DatabaseMetaData dbmd = conn.getMetaData();
+      if (dbmd != null) {
+        return dbmd.supportsGetGeneratedKeys();
+      }
+    } catch (SQLException e) {
+      // ignore...
+    }
+    return false;
   }
 }

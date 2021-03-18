@@ -66,7 +66,7 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
   public JDBCResponse<R> execute(Connection conn) throws SQLException {
     try (PreparedStatement ps = prepare(conn)) {
       fillStatement(ps, conn);
-      return decode(ps, ps.execute(), true, outParams);
+      return decode(ps, ps.execute(), supportsGetGeneratedKeys(conn), outParams);
     }
   }
 
