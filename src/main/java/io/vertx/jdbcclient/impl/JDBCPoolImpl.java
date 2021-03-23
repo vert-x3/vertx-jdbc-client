@@ -37,14 +37,13 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
 
   private final VertxInternal vertx;
   private final JDBCClientImpl client;
-  private final SQLOptions queryOptions;
+  private final SQLOptions sqlOptions;
 
-  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, QueryTracer tracer) {
+  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, SQLOptions sqlOptions, QueryTracer tracer) {
     super(tracer, null);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
-    // need to get access to the options to create a SQLOptions
-    queryOptions = new SQLOptions();
+    this.sqlOptions = sqlOptions;
   }
 
   @Override
@@ -60,8 +59,8 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
 
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
-      .<SqlConnection>getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, queryOptions, (JDBCConnectionImpl) c), tracer, null));
+      .getConnection(ctx)
+      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), tracer, null));
   }
 
   @Override
