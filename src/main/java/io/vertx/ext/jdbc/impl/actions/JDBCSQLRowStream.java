@@ -20,6 +20,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
@@ -44,6 +45,7 @@ class JDBCSQLRowStream implements SQLRowStream {
   private static final Logger log = LoggerFactory.getLogger(JDBCSQLRowStream.class);
 
   private final ContextInternal ctx;
+  private final TaskQueue statementsQueue;
   private final Statement st;
   private final int fetchSize;
   private final InboundBuffer<JsonArray> pending;
@@ -61,8 +63,9 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(ContextInternal ctx, Statement st, ResultSet rs, int fetchSize) throws SQLException {
+  JDBCSQLRowStream(ContextInternal ctx, TaskQueue statementsQueue, Statement st, ResultSet rs, int fetchSize) throws SQLException {
     this.ctx = ctx;
+    this.statementsQueue = statementsQueue;
     this.st = st;
     this.fetchSize = fetchSize;
     this.rs = rs;
@@ -170,7 +173,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         } catch (SQLException e) {
           fut.fail(e);
         }
-      }, ar -> {
+      }, statementsQueue, ar -> {
         if (ar.succeeded()) {
           List<JsonArray> rows = ar.result();
           if (rows.isEmpty()) {
@@ -258,7 +261,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       // pause streaming if rs is not complete
       pause();
 
-      ctx.executeBlocking(this::getNextResultSet, res -> {
+      ctx.executeBlocking(this::getNextResultSet, statementsQueue, res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -312,7 +315,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         } catch (Exception e) {
           f.fail(e);
         }
-      }, handler);
+      }, statementsQueue, handler);
     } else {
       if (handler != null) {
         handler.handle(Future.succeededFuture());
