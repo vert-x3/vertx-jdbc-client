@@ -17,8 +17,6 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.JsonArray;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.Row;
@@ -352,11 +350,11 @@ public class JDBCPoolTest extends ClientTestBase {
       }));
     }));
   }
-  
+
   @Test
   public void testPreparedStatementWithBufferParam(TestContext should) {
     Buffer buffer = Buffer.buffer("Hello world!");
-    
+
     client
       .query("drop table if exists t")
       .execute()
