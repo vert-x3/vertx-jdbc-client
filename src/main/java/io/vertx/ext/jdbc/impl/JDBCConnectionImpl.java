@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
@@ -41,6 +42,7 @@ public class JDBCConnectionImpl implements SQLConnection {
   private final ContextInternal ctx;
   private final PoolMetrics metrics;
   private final Object metric;
+  private final TaskQueue statementsQueue = new TaskQueue();
 
   private final JDBCStatementHelper helper;
 
@@ -84,13 +86,13 @@ public class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
-    schedule(new StreamQuery(helper, getOptions(), ctx, sql, null)).onComplete(handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, statementsQueue, sql, null)).onComplete(handler);
     return this;
   }
 
   @Override
   public SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
-    schedule(new StreamQuery(helper, getOptions(), ctx, sql, params)).onComplete(handler);
+    schedule(new StreamQuery(helper, getOptions(), ctx, statementsQueue, sql, params)).onComplete(handler);
     return this;
   }
 
@@ -164,7 +166,7 @@ public class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, handler);
+    }, statementsQueue, handler);
 
     return this;
   }
@@ -196,7 +198,7 @@ public class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, handler);
+    }, statementsQueue, handler);
 
     return this;
   }
@@ -219,7 +221,7 @@ public class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         promise.fail(e);
       }
-    });
+    }, statementsQueue);
   }
 
   private static void applyConnectionOptions(Connection conn, SQLOptions sqlOptions) throws SQLException {
