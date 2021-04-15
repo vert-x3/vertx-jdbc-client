@@ -76,57 +76,49 @@ public class ConnectionImpl implements Connection {
   }
 
   @Override
-  public <R> void schedule(CommandBase<R> commandBase, Promise<R> promise) {
+  public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
     if (commandBase instanceof SimpleQueryCommand<?>) {
-      handle((SimpleQueryCommand<?>) commandBase, (Promise<Boolean>) promise);
+      return (Future<R>)handle((SimpleQueryCommand<?>) commandBase);
     } else if (commandBase instanceof PrepareStatementCommand) {
-      handle((PrepareStatementCommand) commandBase, (Promise<PreparedStatement>) promise);
+      return (Future<R>) handle((PrepareStatementCommand) commandBase);
     } else if (commandBase instanceof ExtendedQueryCommand) {
-      handle((ExtendedQueryCommand<?>) commandBase, (Promise<Boolean>) promise);
+      return (Future<R>) handle((ExtendedQueryCommand<?>) commandBase);
     } else if (commandBase instanceof TxCommand) {
-      handle((TxCommand<R>) commandBase, promise);
+      return handle((TxCommand<R>) commandBase);
     } else {
-      promise.fail("Not yet implemented " + commandBase);
+      return Future.failedFuture("Not yet implemented " + commandBase);
     }
   }
 
-  private void handle(PrepareStatementCommand command, Promise<PreparedStatement> promise) {
+  private Future<PreparedStatement> handle(PrepareStatementCommand command) {
     JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.sql());
-    Future<PreparedStatement> fut = conn.schedule(action);
-    fut.onComplete(promise);
+    return conn.schedule(action);
   }
 
-  private <R> void handle(ExtendedQueryCommand<R> command, Promise<Boolean> promise) {
+  private <R> Future<Boolean> handle(ExtendedQueryCommand<R> command) {
     JDBCQueryAction<?, R> action =
       command.isBatch() ?
         new JDBCPreparedBatch<>(helper, sqlOptions, command, command.collector(), command.paramsList()) :
         new JDBCPreparedQuery<>(helper, sqlOptions, command, command.collector(), command.params());
 
-    handle(action, command.resultHandler(), promise);
+    return handle(action, command.resultHandler());
   }
 
-  private <R> void handle(SimpleQueryCommand<R> command, Promise<Boolean> promise) {
+  private <R> Future<Boolean> handle(SimpleQueryCommand<R> command) {
     JDBCQueryAction<?, R> action = new JDBCSimpleQueryAction<>(helper, sqlOptions, command.sql(), command.collector());
-    handle(action, command.resultHandler(), promise);
+    return handle(action, command.resultHandler());
   }
 
-  private <R> void handle(TxCommand<R> command, Promise<R> promise) {
+  private <R> Future<R> handle(TxCommand<R> command) {
     JDBCTxOp<R> action = new JDBCTxOp<>(helper, command, sqlOptions);
-    Future<R> fut = conn.schedule(action);
-    fut.onComplete(promise);
+    return conn.schedule(action);
   }
 
-  private <R> void handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler, Promise<Boolean> promise) {
+  private <R> Future<Boolean> handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler) {
     Future<JDBCResponse<R>> fut = conn.schedule(action);
-    fut.onComplete(ar -> {
-      if (ar.succeeded()) {
-        ar.result()
-          .handle(handler);
-
-        promise.complete(false);
-      } else {
-        promise.fail(ar.cause());
-      }
+    fut.onSuccess(ar -> {
+      ar.handle(handler);
     });
+    return fut.map(false);
   }
 }

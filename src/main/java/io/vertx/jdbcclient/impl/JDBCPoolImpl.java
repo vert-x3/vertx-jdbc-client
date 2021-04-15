@@ -47,6 +47,11 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   }
 
   @Override
+  protected ContextInternal context() {
+    return vertx.getOrCreateContext();
+  }
+
+  @Override
   public void getConnection(Handler<AsyncResult<SqlConnection>> handler) {
     getConnection().onComplete(handler);
   }
@@ -87,12 +92,8 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   }
 
   @Override
-  public <R> void schedule(CommandBase<R> commandBase, Promise<R> promise) {
+  public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    getConnectionInternal(ctx).flatMap(conn -> {
-      Promise<R> p = ctx.promise();
-      ((SqlConnectionImpl<?>) conn).schedule(commandBase, p);
-      return p.future().flatMap(r -> conn.close().map(r));
-    }).onComplete(promise);
+    return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionImpl<?>) conn).schedule(ctx, commandBase).flatMap(r -> conn.close().map(r)));
   }
 }
