@@ -1,11 +1,14 @@
 package io.vertx.it;
 
+import static io.vertx.jdbcclient.JDBCPool.GENERATED_KEYS;
+
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Tuple;
 import org.junit.After;
@@ -13,7 +16,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.containers.OracleContainer;
 
 /**
@@ -89,6 +91,12 @@ public class OracleTest {
     .preparedQuery("INSERT INTO product(id, name, url, company, area, category, channel, active) VALUES ('id', 'name', 'url', 'company', 'area', 'category', 'channel', 1)")
       .execute(should.asyncAssertSuccess(resultSet -> {
         should.assertEquals(1, resultSet.rowCount());
+
+        JDBCRow row = (JDBCRow) resultSet.property(GENERATED_KEYS);
+        should.assertNotNull(row);
+        should.assertEquals("ROWID", row.getColumnName(0));
+        should.assertEquals(1, row.size());
+
         test.complete();
       }));
   }

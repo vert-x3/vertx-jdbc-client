@@ -176,27 +176,23 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   }
 
   private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {
-    Row keys = null;
-
     ResultSet keysRS = statement.getGeneratedKeys();
 
-    if (keysRS != null) {
+    if (keysRS != null && keysRS.next()) {
       ResultSetMetaData metaData = keysRS.getMetaData();
       if (metaData != null) {
         int cols = metaData.getColumnCount();
         if (cols > 0) {
           List<String> keysColumnNames = new ArrayList<>();
-          RowDesc keysDesc = new RowDesc(keysColumnNames);
           for (int i = 1; i <= cols; i++) {
             keysColumnNames.add(metaData.getColumnLabel(i));
           }
+          RowDesc keysDesc = new RowDesc(keysColumnNames);
 
-          if (keysRS.next()) {
-            keys = new JDBCRow(keysDesc);
-            for (int i = 1; i <= cols; i++) {
-              Object res = convertSqlValue(keysRS.getObject(i));
-              keys.addValue(res);
-            }
+          Row keys = new JDBCRow(keysDesc);
+          for (int i = 1; i <= cols; i++) {
+            Object res = convertSqlValue(keysRS.getObject(i));
+            keys.addValue(res);
           }
           response.returnedKeys(keys);
         }
