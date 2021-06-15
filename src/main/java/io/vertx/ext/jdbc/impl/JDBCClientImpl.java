@@ -175,12 +175,6 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
   }
 
   @Override
-  protected void finalize() throws Throwable {
-    close();
-    super.finalize();
-  }
-
-  @Override
   public JDBCClient updateWithParams(String sql, JsonArray in, Handler<AsyncResult<UpdateResult>> resultHandler) {
     executeDirect(new JDBCUpdate(helper, null, sql, in), resultHandler);
     return this;

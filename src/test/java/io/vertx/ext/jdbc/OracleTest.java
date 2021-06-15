@@ -7,11 +7,14 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Tuple;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(VertxUnitRunner.class)
 public class OracleTest {
@@ -73,5 +76,68 @@ public class OracleTest {
       .onSuccess(rowSet -> {
         test.complete();
       });
+  }
+
+  @Test
+  @Ignore
+  public void slowDecode(TestContext should) {
+//    CREATE TABLE "CONFIG" (
+//      "ID"     NUMBER(10, 0),
+//      "KEY1"   CLOB DEFAULT NULL,
+//      "KEY2"   CLOB DEFAULT NULL,
+//      "KEY3"   CLOB DEFAULT NULL,
+//      "KEY4"   CLOB DEFAULT NULL,
+//      "KEY5"   CLOB DEFAULT NULL,
+//      "KEY6"   CLOB DEFAULT NULL
+//)
+
+    final Async test = should.async();
+
+    final JDBCPool pool = JDBCPool.pool(
+      rule.vertx(),
+      new JDBCConnectOptions()
+        .setJdbcUrl("jdbc:oracle:thin:@127.0.0.1:1521:xe")
+        .setUser("sys as sysdba")
+        .setPassword("vertx"),
+      new PoolOptions());
+
+    StringBuilder sb = new StringBuilder();
+    for(int i = 0; i < 30000; i++) {
+      sb.append('a');
+    }
+
+    final Runnable queryIt = () -> {
+      final long start = System.currentTimeMillis();
+      pool.preparedQuery("select * FROM CONFIG")
+        .execute()
+        .onFailure(should::fail)
+        .onSuccess(rowSet -> {
+          long end = System.currentTimeMillis();
+          System.out.println(end - start);
+          test.complete();
+        });
+    };
+
+    queryIt.run();
+
+//    final AtomicInteger cnt = new AtomicInteger();
+//    PreparedQuery<?> query = pool.preparedQuery("insert into CONFIG (ID, KEY3) VALUES (? , ?)");
+//    final Runnable insertIt = new Runnable() {
+//      @Override
+//      public void run() {
+//        query
+//          .execute(Tuple.of(cnt.get(), sb.toString()))
+//          .onFailure(should::fail)
+//          .onSuccess(rowSet -> {
+//            if (cnt.incrementAndGet() == 2000) {
+//              queryIt.run();
+//            } else {
+//              run();
+//            }
+//          });
+//      }
+//    };
+//
+//    insertIt.run();
   }
 }

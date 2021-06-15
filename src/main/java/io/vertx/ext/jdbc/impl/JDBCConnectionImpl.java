@@ -210,7 +210,7 @@ public class JDBCConnectionImpl implements SQLConnection {
   }
 
   public <T> Future<T> schedule(AbstractJDBCAction<T> action) {
-    SQLOptions sqlOptions = getOptions();
+    final SQLOptions sqlOptions = getOptions();
     return ctx.executeBlocking(promise -> {
       try {
         // apply connection options

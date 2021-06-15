@@ -16,6 +16,7 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
+import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
@@ -24,6 +25,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.impl.RowDesc;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.ZoneOffset;
@@ -117,7 +121,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       size++;
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        Object res = convertSqlValue(rs.getObject(i));
+        Object res = convertSqlValue(rs, i);
         row.addValue(res);
       }
       accumulator.accept(container, row);
@@ -142,7 +146,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     while (rs.next()) {
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        Object res = convertSqlValue(rs.getObject(i));
+        Object res = convertSqlValue(rs, i);
         row.addValue(res);
       }
       accumulator.accept(container, row);
@@ -160,10 +164,11 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     // the result is unlabeled
     Row row = new JDBCRow(new RowDesc(Collections.emptyList()));
     for (Integer idx : out) {
-      if (cs.getObject(idx) instanceof ResultSet) {
-        row.addValue(decodeRawResultSet((ResultSet) cs.getObject(idx)));
+      final Object o = cs.getObject(idx);
+      if (o instanceof ResultSet) {
+        row.addValue(decodeRawResultSet((ResultSet) o));
       } else {
-        Object res = convertSqlValue(cs.getObject(idx));
+        Object res = convertSqlValue(o);
         row.addValue(res);
       }
     }
@@ -195,7 +200,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
             keys = new JDBCRow(keysDesc);
             for (int i = 1; i <= cols; i++) {
-              Object res = convertSqlValue(keysRS.getObject(i));
+              Object res = convertSqlValue(keysRS, i);
               keys.addValue(res);
             }
           }
@@ -205,7 +210,25 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     }
   }
 
-  public static Object convertSqlValue(Object value) throws SQLException {
+  private static Object convertSqlValue(Object o) throws SQLException {
+    try {
+      return convertSqlValue(null, -1, o);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      return null;
+    }
+  }
+
+  private static Object convertSqlValue(ResultSet rs, int pos) throws SQLException {
+    try {
+      return convertSqlValue(rs, pos, rs.getObject(pos));
+    } catch (Throwable t) {
+      t.printStackTrace();
+      return null;
+    }
+  }
+
+  private static Object convertSqlValue(ResultSet rs, int pos, Object value) throws SQLException {
     if (value == null) {
       return null;
     }
@@ -246,31 +269,21 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     // large objects
     if (value instanceof Clob) {
-      Clob c = (Clob) value;
-      try {
-        // result might be truncated due to downcasting to int
-        return c.getSubString(1, (int) c.length());
-      } finally {
-        try {
-          c.free();
-        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
-          // ignore since it is an optional feature since 1.6 and non existing before 1.6
-        }
+      if (rs != null) {
+        return rs.getString(pos);
       }
+
+      Clob c = (Clob) value;
+      return getString(c);
     }
 
     if (value instanceof Blob) {
-      Blob b = (Blob) value;
-      try {
-        // result might be truncated due to downcasting to int
-        return b.getBytes(1, (int) b.length());
-      } finally {
-        try {
-          b.free();
-        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
-          // ignore since it is an optional feature since 1.6 and non existing before 1.6
-        }
+      if (rs != null) {
+        return Buffer.buffer(rs.getBytes(pos));
       }
+
+      Blob b = (Blob) value;
+      return getBinary(b);
     }
 
     // arrays
@@ -320,5 +333,49 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       }
     }
     return false;
+  }
+
+  private static String getString(Clob data) throws SQLException {
+    if (data == null) {
+      return null;
+    }
+
+    if (data.length() == 0L) {
+      return "";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+    char[] buf = new char[1024];
+    try (Reader in = data.getCharacterStream()) {
+      int l;
+      while ((l = in.read(buf)) > -1) {
+        buffer.append(buf, 0, l);
+      }
+    } catch (IOException ioe) {
+      throw new SQLException("Unable to read character stream from Clob.", ioe);
+    }
+    return buffer.toString();
+  }
+
+  private static Buffer getBinary(Blob data) throws SQLException {
+    if (data == null) {
+      return null;
+    }
+
+    if (data.length() == 0L) {
+      return Buffer.buffer(0);
+    }
+
+    Buffer buffer = Buffer.buffer(1024);
+    byte[] buf = new byte[1024];
+    try (InputStream in = data.getBinaryStream()) {
+      int l;
+      while ((l = in.read(buf)) > -1) {
+        buffer.appendBytes(buf, 0, l);
+      }
+    } catch (IOException ioe) {
+      throw new SQLException("Unable to read binary stream from Blob.", ioe);
+    }
+    return buffer;
   }
 }
