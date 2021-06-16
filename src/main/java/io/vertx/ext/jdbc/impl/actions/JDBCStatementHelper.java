@@ -254,14 +254,14 @@ public final class JDBCStatementHelper {
     if (value instanceof Array) {
       Array a = (Array) value;
       try {
-        Object[] arr = (Object[]) a.getArray();
+        Object arr = a.getArray();
         if (arr != null) {
           int len = java.lang.reflect.Array.getLength(arr);
-          JsonArray jsonArray = new JsonArray();
+          Object[] castedArray = new Object[len];
           for (int i = 0; i < len; i++) {
-            jsonArray.add(convertSqlValue(java.lang.reflect.Array.get(arr, i)));;
+            castedArray[i] = convertSqlValue(java.lang.reflect.Array.get(arr, i));
           }
-          return jsonArray;
+          return castedArray;
         }
       } finally {
         a.free();

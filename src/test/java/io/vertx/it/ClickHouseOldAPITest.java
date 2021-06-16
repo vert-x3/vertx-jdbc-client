@@ -3,6 +3,7 @@ package io.vertx.it;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -15,11 +16,11 @@ import org.junit.runner.RunWith;
 import org.testcontainers.containers.ClickHouseContainer;
 
 @RunWith(VertxUnitRunner.class)
-public class ClickHouseTest {
+public class ClickHouseOldAPITest {
 
   private Vertx vertx;
   private ClickHouseContainer container;
-  protected JDBCPool client;
+  protected JDBCClient client;
 
   @Before
   public void setUp() {
@@ -30,7 +31,7 @@ public class ClickHouseTest {
     JsonObject config = new JsonObject()
       .put("driver_class", "ru.yandex.clickhouse.ClickHouseDriver")
       .put("url", "jdbc:clickhouse://localhost:" + container.getMappedPort(8123) + "/default");
-    client = JDBCPool.pool(vertx, config);
+    client = JDBCClient.create(vertx, config);
   }
 
   @After
@@ -43,13 +44,12 @@ public class ClickHouseTest {
   @Test
   public void simpleTest(TestContext should) {
     Async test = should.async();
-    client.query("select * from arr_test")
-      .execute(should.asyncAssertSuccess(res -> {
-        should.assertEquals(1, res.size());
-        Row row = res.iterator().next();
+    client.query("select * from arr_test", should.asyncAssertSuccess(res -> {
+        should.assertEquals(1, res.getNumRows());
+        JsonObject row = res.getRows().get(0);
         should.assertEquals(new JsonObject()
           .put("id", "1ff954bb-9808-4309-9955-fccf1a26266e")
-          .put("value", new JsonArray().add(0.0d).add(1.0d)), row.toJson());
+          .put("value", new JsonArray().add(0.0d).add(1.0d)).encode(), row.encode());
         test.complete();
       }));
   }
