@@ -6,16 +6,15 @@ import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.sqlclient.Cursor;
-import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.MSSQLServerContainer;
+
+import java.util.ArrayList;
 
 @RunWith(VertxUnitRunner.class)
 public class MSSQLTest {
@@ -78,5 +77,21 @@ public class MSSQLTest {
         should.assertEquals(12, resultSet.size());
         test.complete();
       }));
+  }
+
+  @Test
+  public void simpleRSAfterUpdate(TestContext should) {
+    final Async test = should.async();
+    client
+      .preparedQuery(//"set nocount on;\n" +
+        "INSERT INTO test (field1)\n" +
+        "SELECT ?")
+      .executeBatch(new ArrayList<Tuple>() {{
+        Tuple.of(1);
+      }})
+      .onFailure(should::fail)
+      .onSuccess(rowSet -> {
+        test.complete();
+      });
   }
 }

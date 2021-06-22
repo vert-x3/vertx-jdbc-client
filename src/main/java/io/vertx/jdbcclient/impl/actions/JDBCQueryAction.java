@@ -98,8 +98,11 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     response
       .push(collector.finisher().apply(container), desc, returnedBatchResult.length);
 
-    if (returnedKeys) {
-      decodeReturnedKeys(statement, response);
+    if (returnedBatchResult.length != 0) {
+      // no queries were executed
+      if (returnedKeys) {
+        decodeReturnedKeys(statement, response);
+      }
     }
 
     return response;
