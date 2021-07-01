@@ -18,6 +18,7 @@ package io.vertx.jdbcclient.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.actions.*;
@@ -44,6 +45,16 @@ public class ConnectionImpl implements Connection {
     this.helper = helper;
     this.context = context;
     this.sqlOptions = sqlOptions;
+  }
+
+  @Override
+  public SocketAddress server() {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
+  public boolean isValid() {
+    return true;
   }
 
   @Override

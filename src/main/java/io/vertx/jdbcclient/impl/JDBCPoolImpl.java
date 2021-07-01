@@ -16,6 +16,7 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -27,11 +28,14 @@ import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.impl.SqlClientBase;
 import io.vertx.sqlclient.impl.SqlConnectionImpl;
 import io.vertx.sqlclient.impl.command.CommandBase;
 import io.vertx.sqlclient.impl.tracing.QueryTracer;
+
+import java.util.function.Function;
 
 public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPool {
 
@@ -65,7 +69,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), tracer, null));
+      .map(c -> new SqlConnectionImpl<>(ctx, null, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), tracer, null));
   }
 
   @Override
@@ -95,5 +99,20 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
     ContextInternal ctx = vertx.getOrCreateContext();
     return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionImpl<?>) conn).schedule(ctx, commandBase).flatMap(r -> conn.close().map(r)));
+  }
+
+  @Override
+  public Pool connectHandler(Handler<SqlConnection> handler) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
+  public Pool connectionProvider(Function<Context, Future<SqlConnection>> function) {
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
+
+  @Override
+  public int size() {
+    return 0;
   }
 }
