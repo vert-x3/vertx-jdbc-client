@@ -25,6 +25,7 @@ import org.junit.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -378,5 +379,66 @@ public class JDBCPoolTest extends ClientTestBase {
           )
         )
       );
+  }
+  
+  /**
+   * This test checks if a connections is returned to the connection pool when the according queries is failing.
+   * 
+   * <p>The superclass {@link io.vertx.jdbcclient.ClientTestBase} configures a pool with max size 1 (see {@link io.vertx.jdbcclient.ClientTestBase#poolOptions()}).
+   * In this test two failing queries created by {@link io.vertx.sqlclient.Pool#query(String)} are executed. 
+   * The first one will fail with a {@link java.sql.SQLSyntaxErrorException}. 
+   * If the according connection is returned to the pool, the second query will fail immediately with the same {@link java.sql.SQLSyntaxErrorException}. 
+   * If the according connection is not closed, the pool will be exhausted and an according {@link java.sql.SQLException} is thrown after acquisition timeout.</p>
+   */
+  @Test
+  public void testConnectionReturnedToPoolOnFailingQueryExecution(TestContext should) {
+    final Async test = should.async();
+
+    String sql = "SELECT FROM WHERE FOO BAR";
+
+    client
+      .query(sql)
+      .execute()
+      .onFailure(err -> {
+        should.assertTrue(err instanceof SQLSyntaxErrorException, "Broken SQL should fail with SQLSyntaxErrorException");
+        client
+          .query(sql)
+          .execute()
+          .onFailure(err2 -> {
+            should.assertTrue(err2 instanceof SQLSyntaxErrorException, "Broken SQL should fail with SQLSyntaxErrorException");
+            test.complete();
+          })
+          .onSuccess(rows -> should.fail("Broken SQL should fail"));
+      })
+      .onSuccess(rows -> should.fail("Broken SQL should fail"));
+  }
+
+  /**
+   * Same as {@link io.vertx.jdbcclient.JDBCPoolTest#testConnectionReturnedToPoolOnFailingQueryExecution(TestContext)} but uses queries created by 
+   * {@link io.vertx.sqlclient.Pool#withConnection(Function)} together with {@link io.vertx.sqlclient.SqlClient#query(String)}.
+   */
+  @Test
+  public void testConnectionReturnedToPoolOnFailingQueryExecutionWhenUsingWithConnection(TestContext should) {
+    final Async test = should.async();
+
+    String sql = "SELECT FROM WHERE FOO BAR";
+
+    client
+      .withConnection(conn -> conn
+        .query(sql)
+        .execute()
+        .onFailure(err -> {
+          should.assertTrue(err instanceof SQLSyntaxErrorException, "Broken SQL should fail with SQLSyntaxErrorException");
+          client
+            .withConnection(conn2 -> conn2
+              .query(sql)
+              .execute()
+              .onFailure(err2 -> {
+                should.assertTrue(err2 instanceof SQLSyntaxErrorException, "Broken SQL should fail with SQLSyntaxErrorException");
+                test.complete();
+              })
+              .onSuccess(rows -> should.fail("Broken SQL should fail")));
+      })
+      .onSuccess(rows -> should.fail("Broken SQL should fail")));
   }
 }
