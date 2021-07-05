@@ -17,6 +17,13 @@
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -97,10 +104,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.hsqldb</groupId>
+      <groupId>com.github.vietj</groupId>
       <artifactId>hsqldb</artifactId>
-      <version>2.6.0</version>
-      <scope>test</scope>
+      <version>custom</version>
     </dependency>
     <dependency>
       <groupId>org.apache.derby</groupId>
