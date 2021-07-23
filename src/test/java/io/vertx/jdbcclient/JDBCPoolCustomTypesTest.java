@@ -24,7 +24,6 @@ import org.junit.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -109,7 +108,7 @@ public class JDBCPoolCustomTypesTest extends ClientTestBase {
               should.assertNotNull(row.getUUID("U"));
               should.assertNotNull(row.getLocalTime("T"));
               should.assertNotNull(row.getLocalDate("D"));
-              should.assertNotNull(row.getOffsetDateTime("TS"));
+              should.assertNotNull(row.getLocalDateTime("TS"));
             }
             test.complete();
           });

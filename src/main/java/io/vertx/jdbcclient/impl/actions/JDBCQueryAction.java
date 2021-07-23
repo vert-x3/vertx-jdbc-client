@@ -30,7 +30,11 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.time.ZoneOffset;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -257,34 +261,32 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     }
 
     // JDBC temporal values
-
-    if (value instanceof Time) {
-      return ((Time) value).toLocalTime();
+    final int columnType = rs.getMetaData().getColumnType(pos);
+    if (value instanceof Time || Types.TIME_WITH_TIMEZONE == columnType || Types.TIME == columnType) {
+      if (Types.TIME_WITH_TIMEZONE == columnType) {
+        return rs.getObject(pos, OffsetTime.class);
+      }
+      return rs.getObject(pos, LocalTime.class);
     }
 
-    if (value instanceof Date) {
-      return ((Date) value).toLocalDate();
+    if (value instanceof Date || Types.DATE == columnType) {
+      return rs.getObject(pos, LocalDate.class);
     }
 
-    if (value instanceof Timestamp) {
-      return ((Timestamp) value).toLocalDateTime();
+    if (value instanceof Timestamp || Types.TIMESTAMP_WITH_TIMEZONE == columnType || Types.TIMESTAMP == columnType) {
+      if (Types.TIMESTAMP_WITH_TIMEZONE == columnType) {
+        return rs.getObject(pos, OffsetDateTime.class);
+      }
+      return rs.getObject(pos, LocalDateTime.class);
     }
 
     // large objects
     if (value instanceof Clob) {
-      if (rs != null) {
-        return rs.getString(pos);
-      }
-
       Clob c = (Clob) value;
       return getString(c);
     }
 
     if (value instanceof Blob) {
-      if (rs != null) {
-        return Buffer.buffer(rs.getBytes(pos));
-      }
-
       Blob b = (Blob) value;
       return getBinary(b);
     }
