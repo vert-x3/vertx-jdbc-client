@@ -23,18 +23,32 @@ import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public class HikariCPDataSourceProvider implements DataSourceProvider {
 
+  private JsonObject initConfig;
+
+  @Override
+  public DataSourceProvider init(JsonObject sqlConfig) {
+    this.initConfig = sqlConfig;
+    return this;
+  }
+
+  @Override
+  public JsonObject getInitialConfig() {
+    return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
+  }
+
   @Override
   public DataSource getDataSource(JsonObject json) throws SQLException {
-
+    JsonObject cfg = json == null || json.isEmpty() ? initConfig : json;
     final HikariConfig config = new HikariConfig();
 
-    for (Map.Entry<String, Object> entry : json) {
+    for (Map.Entry<String, Object> entry : cfg) {
       switch (entry.getKey()) {
         case "dataSourceClassName":
           config.setDataSourceClassName((String) entry.getValue());

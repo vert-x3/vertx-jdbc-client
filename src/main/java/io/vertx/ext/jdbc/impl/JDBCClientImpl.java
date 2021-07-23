@@ -90,7 +90,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     this.datasourceName = datasourceName;
     this.config = config;
     holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
-    DataSourceProvider provider = createProvider();
+    DataSourceProvider provider = DataSourceProvider.create(config);
     holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(provider) : h.increment());
     this.helper = new JDBCStatementHelper(config);
     setupCloseHook();
@@ -108,7 +108,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     this.config = new JsonObject();
     holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
     holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(dataSourceProvider) : h.increment());
-    this.helper = new JDBCStatementHelper(config);
+    this.helper = new JDBCStatementHelper(dataSourceProvider.getInitialConfig());
     setupCloseHook();
   }
 
@@ -293,33 +293,6 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
   public SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler) {
     getConnection().onComplete(handler);
     return this;
-  }
-
-  private DataSourceProvider createProvider() {
-    String providerClass = config.getString("provider_class");
-    if (providerClass == null) {
-      providerClass = JDBCClient.DEFAULT_PROVIDER_CLASS;
-    }
-
-    if (Thread.currentThread().getContextClassLoader() != null) {
-      try {
-        // Try with the TCCL
-        Class clazz = Thread.currentThread().getContextClassLoader().loadClass(providerClass);
-        return (DataSourceProvider) clazz.newInstance();
-      } catch (ClassNotFoundException e) {
-        // Next try.
-      } catch (InstantiationException | IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    try {
-      // Try with the classloader of the current class.
-      Class clazz = this.getClass().getClassLoader().loadClass(providerClass);
-      return (DataSourceProvider) clazz.newInstance();
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private PoolMetrics createMetrics(String poolName, int maxPoolSize) {

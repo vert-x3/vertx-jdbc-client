@@ -26,13 +26,29 @@ import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.sql.SQLException;
+import java.util.Optional;
 
-/**
+ /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class C3P0DataSourceProvider implements DataSourceProvider {
+
+  private JsonObject initConfig;
+
   @Override
-  public DataSource getDataSource(JsonObject config) throws SQLException {
+  public DataSourceProvider init(JsonObject sqlConfig) {
+   this.initConfig = sqlConfig;
+   return this;
+  }
+
+  @Override
+  public JsonObject getInitialConfig() {
+   return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
+  }
+
+  @Override
+  public DataSource getDataSource(JsonObject cfg) throws SQLException {
+    JsonObject config = cfg == null || cfg.isEmpty() ? initConfig : cfg;
     String url = config.getString("url");
     if (url == null) throw new NullPointerException("url cannot be null");
     String driverClass = config.getString("driver_class");

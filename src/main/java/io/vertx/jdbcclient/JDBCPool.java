@@ -21,6 +21,7 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
+import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
@@ -74,13 +75,36 @@ public interface JDBCPool extends Pool {
    */
   static JDBCPool pool(Vertx vertx, JsonObject config) {
     final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
-
+    String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
+    String user = config.getString("username", config.getString("user"));
     return new JDBCPoolImpl(
       vertx,
       new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()),
       new SQLOptions(config),
       context.tracer() == null ?
         null :
-        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, config.getString("jdbcUrl"), config.getString("user"), config.getString("database")));
+        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, config.getString("database")));
+  }
+
+  /**
+   * Create a JDBC pool which maintains its own data source.
+   *
+   * @param vertx  the Vert.x instance
+   * @param dataSourceProvider the options to configure the client using the same format as {@link io.vertx.ext.jdbc.JDBCClient}
+   * @return the client
+   * @since 4.2.0
+   */
+  static JDBCPool pool(Vertx vertx, DataSourceProvider dataSourceProvider) {
+    final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
+    final JsonObject config = dataSourceProvider.getInitialConfig();
+    String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
+    String user = config.getString("username", config.getString("user"));
+    return new JDBCPoolImpl(
+      vertx,
+      new JDBCClientImpl(vertx, dataSourceProvider),
+      new SQLOptions(config),
+      context.tracer() == null ?
+        null :
+        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, config.getString("database")));
   }
 }

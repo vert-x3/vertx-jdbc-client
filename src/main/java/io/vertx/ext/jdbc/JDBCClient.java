@@ -21,6 +21,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
+import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.sql.SQLClient;
 
 import javax.sql.DataSource;
@@ -90,4 +91,18 @@ public interface JDBCClient extends SQLClient {
   static JDBCClient create(Vertx vertx, DataSource dataSource) {
     return new JDBCClientImpl(vertx, dataSource);
   }
+
+  /**
+   * Create a client using a data source provider
+   *
+   * @param vertx  the Vert.x instance
+   * @param dataSourceProvider  the datasource provider
+   * @return the client
+   * @since 4.2.0
+   */
+  @GenIgnore
+  static JDBCClient create(Vertx vertx, DataSourceProvider dataSourceProvider) {
+    return new JDBCClientImpl(vertx, dataSourceProvider);
+  }
+
 }
