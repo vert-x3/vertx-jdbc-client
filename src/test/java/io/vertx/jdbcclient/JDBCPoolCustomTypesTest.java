@@ -26,6 +26,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public class JDBCPoolCustomTypesTest extends ClientTestBase {
 
     client
       .preparedQuery(sql)
-      .execute(Tuple.of(UUID.randomUUID(), LocalTime.of(9, 0, 0), LocalDate.of(2020, Month.JUNE, 19), Instant.now()))
+      .execute(Tuple.of(UUID.randomUUID(), LocalTime.of(9, 0, 0), LocalDate.of(2020, Month.JUNE, 19), LocalDateTime.now()))
       .onFailure(should::fail)
       .onSuccess(rows -> {
         should.assertEquals(1, rows.rowCount());
