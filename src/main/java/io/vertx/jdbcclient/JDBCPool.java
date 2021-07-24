@@ -15,6 +15,7 @@
  */
 package io.vertx.jdbcclient;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
@@ -94,6 +95,7 @@ public interface JDBCPool extends Pool {
    * @return the client
    * @since 4.2.0
    */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   static JDBCPool pool(Vertx vertx, DataSourceProvider dataSourceProvider) {
     final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
     final JsonObject config = dataSourceProvider.getInitialConfig();
