@@ -70,7 +70,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
           fetchSize = DEFAULT_ROW_STREAM_FETCH_SIZE;
         }
 
-        return new JDBCSQLRowStream(ctx, this.statementsQueue, st, rs, fetchSize);
+        return new JDBCSQLRowStream(ctx, this.statementsQueue, st, rs, helper.getDecoder(), fetchSize);
       } catch (SQLException e) {
         if (rs != null) {
           rs.close();

@@ -55,7 +55,7 @@ public class SQLConvertTest {
     Object cast = helper.optimisticCast(value);
     assertThat(cast, instanceOf(expectedSqlType));
 
-    Object convert = JDBCStatementHelper.convertSqlValue(cast);
+    Object convert = helper.getDecoder().cast(cast);
     assertEquals(value, convert);
   }
 }

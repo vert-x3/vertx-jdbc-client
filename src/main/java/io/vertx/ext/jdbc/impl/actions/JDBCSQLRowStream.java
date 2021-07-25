@@ -26,6 +26,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
+import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLRowStream;
 
 import java.sql.ResultSet;
@@ -56,6 +57,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private ResultSet rs;
   private ResultSetMetaData metaData;
+  private JDBCDecoder decoder;
   private List<String> columns;
   private int cols;
 
@@ -63,12 +65,13 @@ class JDBCSQLRowStream implements SQLRowStream {
   private Handler<Void> endHandler;
   private Handler<Void> rsClosedHandler;
 
-  JDBCSQLRowStream(ContextInternal ctx, TaskQueue statementsQueue, Statement st, ResultSet rs, int fetchSize) throws SQLException {
+  JDBCSQLRowStream(ContextInternal ctx, TaskQueue statementsQueue, Statement st, ResultSet rs, JDBCDecoder decoder, int fetchSize) throws SQLException {
     this.ctx = ctx;
     this.statementsQueue = statementsQueue;
     this.st = st;
     this.fetchSize = fetchSize;
     this.rs = rs;
+    this.decoder = decoder;
     this.pending = new InboundBuffer<JsonArray>(ctx, fetchSize)
       .drainHandler(v -> readBatch())
       .emptyHandler(v -> checkEndHandler());
@@ -157,10 +160,10 @@ class JDBCSQLRowStream implements SQLRowStream {
       ctx.<List<JsonArray>>executeBlocking(fut -> {
         try {
           List<JsonArray> rows = new ArrayList<>(fetchSize);
-          for (int i = 0;i < fetchSize && rs.next();i++) {
+          for (int i = 0; i < fetchSize && rs.next(); i++) {
             JsonArray result = new JsonArray();
             for (int j = 1; j <= cols; j++) {
-              Object res = JDBCStatementHelper.convertSqlValue(rs.getObject(j));
+              Object res = decoder.parse(metaData, j, rs);
               if (res != null) {
                 result.add(res);
               } else {

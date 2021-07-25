@@ -56,10 +56,10 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
           try (ResultSet rs = statement.getResultSet()) {
             // 1st rs
             if (ref == null) {
-              resultSet = helper.asList(rs);
+              resultSet = asList(rs);
               ref = resultSet;
             } else {
-              ref.setNext(helper.asList(rs));
+              ref.setNext(asList(rs));
               ref = ref.getNext();
             }
           }

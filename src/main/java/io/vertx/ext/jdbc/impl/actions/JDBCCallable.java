@@ -21,6 +21,7 @@ import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ParameterMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -61,10 +62,10 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
           try (ResultSet rs = statement.getResultSet()) {
             // 1st rs
             if (ref == null) {
-              resultSet = helper.asList(rs);
+              resultSet = asList(rs);
               ref = resultSet;
             } else {
-              ref.setNext(helper.asList(rs));
+              ref.setNext(asList(rs));
               ref = ref.getNext();
             }
             if (outResult) {
@@ -89,6 +90,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private JsonArray convertOutputs(CallableStatement statement) throws SQLException {
     JsonArray result = new JsonArray();
 
+    ParameterMetaData metaData = statement.getParameterMetaData();
     for (int i = 0; i < out.size(); i++) {
       Object var = out.getValue(i);
 
@@ -97,9 +99,9 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         if (value == null) {
           result.addNull();
         } else if (value instanceof ResultSet) {
-          result.add(helper.asList((ResultSet) value).toJson());
+          result.add(asList((ResultSet) value).toJson());
         } else {
-          result.add(JDBCStatementHelper.convertSqlValue(value));
+          result.add(helper.getDecoder().parse(metaData, i + 1, statement));
         }
       } else {
         result.addNull();

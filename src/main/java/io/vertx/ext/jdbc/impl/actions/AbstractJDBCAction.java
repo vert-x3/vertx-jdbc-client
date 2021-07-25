@@ -16,11 +16,16 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -57,6 +62,33 @@ public abstract class AbstractJDBCAction<T> {
         statement.setMaxRows(options.getMaxRows());
       }
     }
+  }
+
+  protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
+
+    List<String> columnNames = new ArrayList<>();
+    ResultSetMetaData metaData = rs.getMetaData();
+    int cols = metaData.getColumnCount();
+    for (int i = 1; i <= cols; i++) {
+      columnNames.add(metaData.getColumnLabel(i));
+    }
+
+    List<JsonArray> results = new ArrayList<>();
+
+    while (rs.next()) {
+      JsonArray result = new JsonArray();
+      for (int i = 1; i <= cols; i++) {
+        Object res = helper.getDecoder().parse(metaData, i, rs);
+        if (res != null) {
+          result.add(res);
+        } else {
+          result.addNull();
+        }
+      }
+      results.add(result);
+    }
+
+    return new io.vertx.ext.sql.ResultSet(columnNames, results, null);
   }
 
 }

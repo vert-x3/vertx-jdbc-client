@@ -24,7 +24,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.sql.*;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -682,8 +681,18 @@ public class JDBCClientTest extends JDBCClientTestBase {
     String sql = "SELECT a FROM blob_table";
     connection().query(sql, onSuccess(resultSet -> {
       assertNotNull(resultSet);
+      assertEquals(1, resultSet.getNumColumns());
+      assertEquals(1, resultSet.getColumnNames().size());
+      assertEquals("A", resultSet.getColumnNames().get(0));
+
+      assertEquals(1, resultSet.getNumRows());
       assertEquals(1, resultSet.getResults().size());
-      assertNotNull(resultSet.getResults().get(0).getJsonArray(0));
+      assertEquals(1, resultSet.getResults().get(0).size());
+
+      Object array = resultSet.getResults().get(0).getValue(0);
+      assertNotNull(array);
+      assertEquals(3, ((Object[]) array).length);
+      assertNotNull(((Object[]) array)[0]);
       testComplete();
     }));
 

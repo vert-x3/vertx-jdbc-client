@@ -16,36 +16,30 @@
 
 package io.vertx.ext.jdbc.impl.actions;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.ServiceHelper;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.spi.JDBCDecoder;
+import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 
-import java.math.BigDecimal;
-import java.sql.Array;
-import java.sql.Blob;
 import java.sql.CallableStatement;
-import java.sql.Clob;
 import java.sql.Date;
 import java.sql.JDBCType;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
 import java.util.TimeZone;
-import java.util.regex.Pattern;
 
 import static java.time.format.DateTimeFormatter.*;
 
@@ -59,15 +53,11 @@ public final class JDBCStatementHelper {
 
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
-  private static final Pattern DATETIME = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3,9})?Z$");
-  private static final Pattern DATE = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}$");
-  private static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
-  private static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
-
   private final boolean castUUID;
   private final boolean castDate;
   private final boolean castTime;
   private final boolean castDatetime;
+  private final JDBCDecoder decoder;
 
   public JDBCStatementHelper() {
     this(new JsonObject());
@@ -78,6 +68,11 @@ public final class JDBCStatementHelper {
     this.castDate = config.getBoolean("castDate", true);
     this.castTime = config.getBoolean("castTime", true);
     this.castDatetime = config.getBoolean("castDatetime", true);
+    this.decoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCDecoder.class)).orElseGet(JDBCDecoderImpl::new);
+  }
+
+  public JDBCDecoder getDecoder() {
+    return decoder;
   }
 
   public void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
@@ -156,122 +151,6 @@ public final class JDBCStatementHelper {
     }
   }
 
-  public io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
-
-    List<String> columnNames = new ArrayList<>();
-    ResultSetMetaData metaData = rs.getMetaData();
-    int cols = metaData.getColumnCount();
-    for (int i = 1; i <= cols; i++) {
-      columnNames.add(metaData.getColumnLabel(i));
-    }
-
-    List<JsonArray> results = new ArrayList<>();
-
-    while (rs.next()) {
-      JsonArray result = new JsonArray();
-      for (int i = 1; i <= cols; i++) {
-        Object res = convertSqlValue(rs.getObject(i));
-        if (res != null) {
-          result.add(res);
-        } else {
-          result.addNull();
-        }
-      }
-      results.add(result);
-    }
-
-    return new io.vertx.ext.sql.ResultSet(columnNames, results, null);
-  }
-
-  public static Object convertSqlValue(Object value) throws SQLException {
-    if (value == null) {
-      return null;
-    }
-
-    // valid json types are just returned as is
-    if (value instanceof Boolean || value instanceof String || value instanceof byte[]) {
-      return value;
-    }
-
-    // numeric values
-    if (value instanceof Number) {
-      if (value instanceof BigDecimal) {
-        BigDecimal d = (BigDecimal) value;
-        if (d.scale() == 0) {
-          return ((BigDecimal) value).toBigInteger();
-        } else {
-          // we might loose precision here
-          return ((BigDecimal) value).doubleValue();
-        }
-      }
-
-      return value;
-    }
-
-    // temporal values
-    if (value instanceof Time) {
-      return ((Time) value).toLocalTime().atOffset(ZoneOffset.UTC).format(ISO_LOCAL_TIME);
-    }
-
-    if (value instanceof Date) {
-      return ((Date) value).toLocalDate().format(ISO_LOCAL_DATE);
-    }
-
-    if (value instanceof Timestamp) {
-      return OffsetDateTime.ofInstant(((Timestamp) value).toInstant(), ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME);
-    }
-
-    // large objects
-    if (value instanceof Clob) {
-      Clob c = (Clob) value;
-      try {
-        // result might be truncated due to downcasting to int
-        return c.getSubString(1, (int) c.length());
-      } finally {
-        try {
-          c.free();
-        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
-          // ignore since it is an optional feature since 1.6 and non existing before 1.6
-        }
-      }
-    }
-
-    if (value instanceof Blob) {
-      Blob b = (Blob) value;
-      try {
-        // result might be truncated due to downcasting to int
-        return b.getBytes(1, (int) b.length());
-      } finally {
-        try {
-          b.free();
-        } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
-          // ignore since it is an optional feature since 1.6 and non existing before 1.6
-        }
-      }
-    }
-
-    // arrays
-    if (value instanceof Array) {
-      Array a = (Array) value;
-      try {
-        Object arr = a.getArray();
-        if (arr != null) {
-          int len = java.lang.reflect.Array.getLength(arr);
-          JsonArray jsonArray = new JsonArray();
-          for (int i = 0; i < len; i++) {
-            jsonArray.add(convertSqlValue(java.lang.reflect.Array.get(arr, i)));;
-          }
-          return jsonArray;
-        }
-      } finally {
-        a.free();
-      }
-    }
-
-    // fallback to String
-    return value.toString();
-  }
-
   public Object optimisticCast(String value) {
     if (value == null) {
       return null;
@@ -279,7 +158,7 @@ public final class JDBCStatementHelper {
 
     try {
       // sql time
-      if (castTime && TIME.matcher(value).matches()) {
+      if (castTime && JDBCDecoder.TIME.matcher(value).matches()) {
         // convert from local time to instant
         Instant instant = LocalTime.parse(value).atDate(LocalDate.of(1970, 1, 1)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -289,7 +168,7 @@ public final class JDBCStatementHelper {
       }
 
       // sql date
-      if (castDate && DATE.matcher(value).matches()) {
+      if (castDate && JDBCDecoder.DATE.matcher(value).matches()) {
         // convert from local date to instant
         Instant instant = LocalDate.parse(value).atTime(LocalTime.of(0, 0, 0, 0)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -299,13 +178,13 @@ public final class JDBCStatementHelper {
       }
 
       // sql timestamp
-      if (castDatetime && DATETIME.matcher(value).matches()) {
+      if (castDatetime && JDBCDecoder.DATETIME.matcher(value).matches()) {
         Instant instant = Instant.from(ISO_INSTANT.parse(value));
         return Timestamp.from(instant);
       }
 
       // sql uuid
-      if (castUUID && UUID.matcher(value).matches()) {
+      if (castUUID && JDBCDecoder.UUID.matcher(value).matches()) {
         return java.util.UUID.fromString(value);
       }
 
