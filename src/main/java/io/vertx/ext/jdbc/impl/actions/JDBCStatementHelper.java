@@ -17,31 +17,22 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.ServiceHelper;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
+import io.vertx.ext.jdbc.spi.JDBCEncoder;
 import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
+import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 
 import java.sql.CallableStatement;
-import java.sql.Date;
 import java.sql.JDBCType;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.TimeZone;
-
-import static java.time.format.DateTimeFormatter.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -49,14 +40,9 @@ import static java.time.format.DateTimeFormatter.*;
  */
 public final class JDBCStatementHelper {
 
-  private static final Logger log = LoggerFactory.getLogger(JDBCStatementHelper.class);
-
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
-  private final boolean castUUID;
-  private final boolean castDate;
-  private final boolean castTime;
-  private final boolean castDatetime;
+  private final JDBCEncoder encoder;
   private final JDBCDecoder decoder;
 
   public JDBCStatementHelper() {
@@ -64,11 +50,14 @@ public final class JDBCStatementHelper {
   }
 
   public JDBCStatementHelper(JsonObject config) {
-    this.castUUID = config.getBoolean("castUUID", false);
-    this.castDate = config.getBoolean("castDate", true);
-    this.castTime = config.getBoolean("castTime", true);
-    this.castDatetime = config.getBoolean("castDatetime", true);
+    this.encoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCEncoder.class)).orElseGet(JDBCEncoderImpl::new)
+      .setup(config.getBoolean("castUUID", false), config.getBoolean("castDate", true),
+        config.getBoolean("castTime", true), config.getBoolean("castDatetime", true));
     this.decoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCDecoder.class)).orElseGet(JDBCDecoderImpl::new);
+  }
+
+  public JDBCEncoder getEncoder() {
+    return encoder;
   }
 
   public JDBCDecoder getDecoder() {
@@ -80,18 +69,9 @@ public final class JDBCStatementHelper {
       in = EMPTY;
     }
 
-    for (int i = 0; i < in.size(); i++) {
-      Object value = in.getValue(i);
-
-      if (value != null) {
-        if (value instanceof String) {
-          statement.setObject(i + 1, optimisticCast((String) value));
-        } else {
-          statement.setObject(i + 1, value);
-        }
-      } else {
-        statement.setObject(i + 1, null);
-      }
+    ParameterMetaData metaData = statement.getParameterMetaData();
+    for (int pos = 1; pos <= in.size(); pos++) {
+      statement.setObject(pos, encoder.convert(JDBCType.valueOf(metaData.getParameterType(pos)), in.getValue(pos)));
     }
   }
 
@@ -105,7 +85,7 @@ public final class JDBCStatementHelper {
     }
 
     int max = Math.max(in.size(), out.size());
-
+    ParameterMetaData metaData = statement.getParameterMetaData();
     for (int i = 0; i < max; i++) {
       Object value = null;
       boolean set = false;
@@ -116,11 +96,7 @@ public final class JDBCStatementHelper {
 
       // found a in value, use it as a input parameter
       if (value != null) {
-        if (value instanceof String) {
-          statement.setObject(i + 1, optimisticCast((String) value));
-        } else {
-          statement.setObject(i + 1, value);
-        }
+        statement.setObject(i + 1, encoder.convert(JDBCType.valueOf(metaData.getParameterType(i + 1)), value));
         set = true;
       }
 
@@ -151,48 +127,4 @@ public final class JDBCStatementHelper {
     }
   }
 
-  public Object optimisticCast(String value) {
-    if (value == null) {
-      return null;
-    }
-
-    try {
-      // sql time
-      if (castTime && JDBCDecoder.TIME.matcher(value).matches()) {
-        // convert from local time to instant
-        Instant instant = LocalTime.parse(value).atDate(LocalDate.of(1970, 1, 1)).toInstant(ZoneOffset.UTC);
-        // calculate the timezone offset in millis
-        int offset = TimeZone.getDefault().getOffset(instant.toEpochMilli());
-        // need to remove the offset since time has no TZ component
-        return new Time(instant.toEpochMilli() - offset);
-      }
-
-      // sql date
-      if (castDate && JDBCDecoder.DATE.matcher(value).matches()) {
-        // convert from local date to instant
-        Instant instant = LocalDate.parse(value).atTime(LocalTime.of(0, 0, 0, 0)).toInstant(ZoneOffset.UTC);
-        // calculate the timezone offset in millis
-        int offset = TimeZone.getDefault().getOffset(instant.toEpochMilli());
-        // need to remove the offset since time has no TZ component
-        return new Date(instant.toEpochMilli() - offset);
-      }
-
-      // sql timestamp
-      if (castDatetime && JDBCDecoder.DATETIME.matcher(value).matches()) {
-        Instant instant = Instant.from(ISO_INSTANT.parse(value));
-        return Timestamp.from(instant);
-      }
-
-      // sql uuid
-      if (castUUID && JDBCDecoder.UUID.matcher(value).matches()) {
-        return java.util.UUID.fromString(value);
-      }
-
-    } catch (RuntimeException e) {
-      log.debug(e);
-    }
-
-    // unknown
-    return value;
-  }
 }

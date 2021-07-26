@@ -175,8 +175,8 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       }
       try {
         // Some JDBC drivers (PG driver) treats Timestamp with TimeZone/Time with TimeZone
-        // to java.sql.timestamp/java.sql.time/String
-        // and handle date time data type internally
+        // to java.sql.timestamp/java.sql.time/String at UTC
+        // and handles date time data type internally
         // then this code will try parse to OffsetTime/OffsetDateTime
         if (value instanceof Time) {
           return ((Time) value).toLocalTime().atOffset(ZoneOffset.UTC);

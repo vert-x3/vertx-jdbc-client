@@ -5,6 +5,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.sql.JDBCType;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -45,7 +47,7 @@ public class OptimisticCastTest {
   }
 
   @Test
-  public void testOptimisticCast() {
-    assertEquals(value, expectedType, helper.optimisticCast(value).getClass().getName());
+  public void testOptimisticCast() throws SQLException {
+    assertEquals(value, expectedType, helper.getEncoder().convert(JDBCType.OTHER, value).getClass().getName());
   }
 }

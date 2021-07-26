@@ -8,9 +8,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 /**
- * Represents for JDBC decoder
+ * Represents for JDBC decoder from SQL value to Java value
  * <p>
- * The default decoder provides best efforts to convert {@code SQL type} to standard {@code Java} type as JDBC 4.2.
+ * The default decoder provides best efforts to convert {@code SQL type} to standard {@code Java type} as {@code JDBC 4.2} spec.
  * <p>
  * You can replace it to adapt to an specific SQL driver by creating your owns then includes in the SPI file
  * ({@code META-INF/services/io.vertx.ext.jdbc.spi.JDBCDecoder})

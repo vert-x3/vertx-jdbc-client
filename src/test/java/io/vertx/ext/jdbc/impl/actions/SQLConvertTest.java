@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.sql.JDBCType;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -52,7 +53,7 @@ public class SQLConvertTest {
 
   @Test
   public void testSQLConvert() throws SQLException {
-    Object cast = helper.optimisticCast(value);
+    Object cast = helper.getEncoder().convert(JDBCType.OTHER, value);
     assertThat(cast, instanceOf(expectedSqlType));
 
     Object convert = helper.getDecoder().cast(cast);
