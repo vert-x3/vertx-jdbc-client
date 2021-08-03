@@ -56,7 +56,7 @@ public class StreamQuery extends AbstractJDBCAction<SQLRowStream> {
       // apply statement options
       applyStatementOptions(st);
 
-      helper.fillStatement(st, in);
+      fillStatement(st, in);
       ResultSet rs = null;
 
       try {

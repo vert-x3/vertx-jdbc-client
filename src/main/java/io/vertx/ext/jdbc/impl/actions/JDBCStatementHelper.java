@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.ServiceHelper;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
@@ -25,19 +24,12 @@ import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 
 import java.math.BigDecimal;
-import java.sql.CallableStatement;
 import java.sql.JDBCType;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -87,7 +79,6 @@ public final class JDBCStatementHelper {
     }
   };
   public static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
-  private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
   private final JDBCEncoder encoder;
   private final JDBCDecoder decoder;
@@ -109,67 +100,6 @@ public final class JDBCStatementHelper {
 
   public JDBCDecoder getDecoder() {
     return decoder;
-  }
-
-  public void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
-    if (in == null) {
-      in = EMPTY;
-    }
-
-    ParameterMetaData metaData = statement.getParameterMetaData();
-    for (int pos = 1; pos <= in.size(); pos++) {
-      statement.setObject(pos, getEncoder().convert(metaData, pos, in));
-    }
-  }
-
-  public void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
-    if (in == null) {
-      in = EMPTY;
-    }
-
-    if (out == null) {
-      out = EMPTY;
-    }
-
-    int max = Math.max(in.size(), out.size());
-    ParameterMetaData metaData = statement.getParameterMetaData();
-    for (int i = 0; i < max; i++) {
-      Object value;
-      boolean set = false;
-
-      if (i < in.size()) {
-        value = getEncoder().convert(metaData, i + 1, in);
-        if (value != null) {
-          statement.setObject(i + 1, value);
-          set = true;
-        }
-      }
-
-      // reset
-      value = null;
-
-      if (i < out.size()) {
-        value = out.getValue(i);
-      }
-
-      // found a out value, use it as a output parameter
-      if (value != null) {
-        // We're using the int from the enum instead of the enum itself to allow working with Drivers
-        // that have not been upgraded to Java8 yet.
-        if (value instanceof String) {
-          statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
-        } else if (value instanceof Number) {
-          // for cases where vendors have special codes (e.g.: Oracle)
-          statement.registerOutParameter(i + 1, ((Number) value).intValue());
-        }
-        set = true;
-      }
-
-      if (!set) {
-        // assume null input
-        statement.setNull(i + 1, Types.NULL);
-      }
-    }
   }
 
 }

@@ -19,12 +19,18 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.JDBCType;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,6 +41,7 @@ public abstract class AbstractJDBCAction<T> {
 
   protected final SQLOptions options;
   protected final JDBCStatementHelper helper;
+  private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
   protected AbstractJDBCAction(SQLOptions options) {
     this(null, options);
@@ -91,4 +98,64 @@ public abstract class AbstractJDBCAction<T> {
     return new io.vertx.ext.sql.ResultSet(columnNames, results, null);
   }
 
+  protected void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
+    if (in == null) {
+      in = EMPTY;
+    }
+
+    ParameterMetaData metaData = statement.getParameterMetaData();
+    for (int pos = 1; pos <= in.size(); pos++) {
+      statement.setObject(pos, helper.getEncoder().convert(metaData, pos, in));
+    }
+  }
+
+  protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
+    if (in == null) {
+      in = EMPTY;
+    }
+
+    if (out == null) {
+      out = EMPTY;
+    }
+
+    int max = Math.max(in.size(), out.size());
+    ParameterMetaData metaData = statement.getParameterMetaData();
+    for (int i = 0; i < max; i++) {
+      Object value;
+      boolean set = false;
+
+      if (i < in.size()) {
+        value = helper.getEncoder().convert(metaData, i + 1, in);
+        if (value != null) {
+          statement.setObject(i + 1, value);
+          set = true;
+        }
+      }
+
+      // reset
+      value = null;
+
+      if (i < out.size()) {
+        value = out.getValue(i);
+      }
+
+      // found a out value, use it as a output parameter
+      if (value != null) {
+        // We're using the int from the enum instead of the enum itself to allow working with Drivers
+        // that have not been upgraded to Java8 yet.
+        if (value instanceof String) {
+          statement.registerOutParameter(i + 1, JDBCType.valueOf((String) value).getVendorTypeNumber());
+        } else if (value instanceof Number) {
+          // for cases where vendors have special codes (e.g.: Oracle)
+          statement.registerOutParameter(i + 1, ((Number) value).intValue());
+        }
+        set = true;
+      }
+
+      if (!set) {
+        // assume null input
+        statement.setNull(i + 1, Types.NULL);
+      }
+    }
+  }
 }

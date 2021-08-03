@@ -44,7 +44,7 @@ public class JDBCQuery extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet> {
       // apply statement options
       applyStatementOptions(statement);
 
-      helper.fillStatement(statement, in);
+      fillStatement(statement, in);
       boolean retResult = statement.execute();
 
       io.vertx.ext.sql.ResultSet resultSet = null;

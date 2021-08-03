@@ -85,7 +85,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
       // apply statement options
       applyStatementOptions(statement);
 
-      helper.fillStatement(statement, in);
+      fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
       JsonArray keys = new JsonArray();

@@ -83,7 +83,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           applyStatementOptions(stmt);
 
           for (JsonArray in : this.in) {
-            helper.fillStatement(stmt, in);
+            fillStatement(stmt, in);
             stmt.addBatch();
           }
 
@@ -101,7 +101,7 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           for (int i = 0; i < Math.max(max_in, max_out); i++) {
             final JsonArray jin = i < max_in ? in.get(i) : null;
             final JsonArray jout = i < max_out ? out.get(i) : null;
-            helper.fillStatement(stmt, jin, jout);
+            fillStatement(stmt, jin, jout);
             stmt.addBatch();
           }
 

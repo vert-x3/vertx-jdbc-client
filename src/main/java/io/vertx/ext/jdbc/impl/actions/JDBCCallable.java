@@ -48,7 +48,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
       // apply statement options
       applyStatementOptions(statement);
 
-      helper.fillStatement(statement, in, out);
+      fillStatement(statement, in, out);
 
       boolean retResult = statement.execute();
       boolean outResult = out != null && out.size() > 0;
