@@ -105,7 +105,7 @@ public abstract class AbstractJDBCAction<T> {
 
     ParameterMetaData metaData = statement.getParameterMetaData();
     for (int pos = 1; pos <= in.size(); pos++) {
-      statement.setObject(pos, helper.getEncoder().convert(metaData, pos, in));
+      statement.setObject(pos, helper.getEncoder().encode(metaData, pos, in));
     }
   }
 
@@ -125,7 +125,7 @@ public abstract class AbstractJDBCAction<T> {
       boolean set = false;
 
       if (i < in.size()) {
-        value = helper.getEncoder().convert(metaData, i + 1, in);
+        value = helper.getEncoder().encode(metaData, i + 1, in);
         if (value != null) {
           statement.setObject(i + 1, value);
           set = true;

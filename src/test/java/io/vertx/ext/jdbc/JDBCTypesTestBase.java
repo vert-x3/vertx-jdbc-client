@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc;
 
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLOptions;
 import org.junit.Before;
@@ -24,7 +25,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.JDBCType;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -43,10 +47,22 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
     SQL.add("create table insert_tableNoIdentity (id int not null primary key, lname varchar(255), fname varchar(255), dob date )");
   }
 
+  //TODO: https://issues.apache.org/jira/browse/DERBY-6920
+  public static class DerbyEncoder extends JDBCEncoderImpl {
+    @Override
+    protected Object castDateTime(JDBCType jdbcType, Object value) {
+      Object v = super.castDateTime(jdbcType, value);
+      if (jdbcType == JDBCType.DATE) {
+        return Date.valueOf((LocalDate) v);
+      }
+      return v;
+    }
+  }
+
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.derby());
+    client = JDBCClient.create(vertx, DBConfigs.derby().put("encoderCls", DerbyEncoder.class.getName()));
   }
 
   @BeforeClass
@@ -70,7 +86,7 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
         conn.queryWithParams("SElECT DOB FROM insert_table WHERE id=?", new JsonArray().add(id), onSuccess(resultSet -> {
           assertNotNull(resultSet);
           assertEquals(1, resultSet.getResults().size());
-
+          assertEquals(LocalDate.class, resultSet.getResults().get(0).getValue(0).getClass());
           System.out.println(resultSet.getResults().get(0).getValue(0));
           testComplete();
         }));

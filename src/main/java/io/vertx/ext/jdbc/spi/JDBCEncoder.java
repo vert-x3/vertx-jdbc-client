@@ -21,8 +21,16 @@ import java.sql.SQLException;
  */
 public interface JDBCEncoder {
 
-  JDBCEncoder setup(boolean castUUID, boolean castDate, boolean castTime, boolean castDatetime);
-
-  Object convert(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException;
+  /**
+   * Convert Java input value to SQL value
+   *
+   * @param metaData parameter metadata
+   * @param pos      column position
+   * @param input    array input
+   * @return SQL value
+   * @throws SQLException if any error when convert
+   */
+  //TODO: maybe change JsonArray to List to allow many kinds of data type
+  Object encode(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException;
 
 }

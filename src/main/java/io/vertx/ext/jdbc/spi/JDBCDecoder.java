@@ -57,10 +57,10 @@ public interface JDBCDecoder {
    * @return java value
    * @see SQLValueProvider
    */
-  Object convert(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException;
+  Object decode(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException;
 
   /**
-   * Try cast SQL value to standard java depends on JDBC type mapping
+   * Try cast SQL value to standard Java value depends on standard JDBC 4.2 type mapping and compatible with Vertx
    * <p>
    * For example:
    * - java.sql.Time -> java.time.LocalTime

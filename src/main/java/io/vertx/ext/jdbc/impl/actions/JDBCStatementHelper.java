@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.ServiceHelper;
+import io.vertx.core.cli.impl.ReflectionUtils;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
@@ -30,6 +31,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -38,6 +41,9 @@ import java.util.regex.Pattern;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
+//FIXME Update document
+//TODO: - remove some config properties: castUUID/castDate/castDateTime/castTime
+//TODO: - Add 2 new properties: encoderCls and decoderCls
 public final class JDBCStatementHelper {
 
   public static final Function<JDBCType, Class> LOOKUP_SQL_NUMBER = jdbcType -> {
@@ -88,10 +94,24 @@ public final class JDBCStatementHelper {
   }
 
   public JDBCStatementHelper(JsonObject config) {
-    this.encoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCEncoder.class)).orElseGet(JDBCEncoderImpl::new)
-      .setup(config.getBoolean("castUUID", false), config.getBoolean("castDate", true),
-        config.getBoolean("castTime", true), config.getBoolean("castDatetime", true));
-    this.decoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCDecoder.class)).orElseGet(JDBCDecoderImpl::new);
+    this.encoder = initEncoder(config);
+    this.decoder = initDecoder(config);
+  }
+
+  private JDBCEncoder initEncoder(JsonObject config) {
+    JDBCEncoder encoder = initObject(config.getString("encoderCls"));
+    if (encoder == null) {
+      encoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCEncoder.class)).orElseGet(JDBCEncoderImpl::new);
+    }
+    return encoder;
+  }
+
+  private JDBCDecoder initDecoder(JsonObject config) {
+    JDBCDecoder decoder = initObject(config.getString("decoderCls"));
+    if (decoder == null) {
+      return Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCDecoder.class)).orElseGet(JDBCDecoderImpl::new);
+    }
+    return decoder;
   }
 
   public JDBCEncoder getEncoder() {
@@ -102,4 +122,24 @@ public final class JDBCStatementHelper {
     return decoder;
   }
 
+  private static <T> T initObject(String clsName) {
+    Class<T> cls = findClass(clsName);
+    return cls == null ? null : ReflectionUtils.newInstance(cls);
+  }
+
+  private static <T> Class<T> findClass(String cls) {
+    if (Objects.isNull(cls)) {
+      return null;
+    }
+    for (ClassLoader classLoader : Arrays.asList(Thread.currentThread().getContextClassLoader(), JDBCStatementHelper.class.getClassLoader())) {
+      try {
+        return (Class<T>) Class.forName(cls, true, classLoader);
+      } catch (ClassNotFoundException e) {
+        //ignore
+      } catch (ClassCastException e) {
+        return null;
+      }
+    }
+    return null;
+  }
 }

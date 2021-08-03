@@ -22,30 +22,16 @@ public class JDBCEncoderImpl implements JDBCEncoder {
 
   private static final Logger log = LoggerFactory.getLogger(JDBCEncoder.class);
 
-  private boolean castUUID;
-  private boolean castDate;
-  private boolean castTime;
-  private boolean castDatetime;
-
   @Override
-  public JDBCEncoder setup(boolean castUUID, boolean castDate, boolean castTime, boolean castDatetime) {
-    this.castUUID = castUUID;
-    this.castDate = castDate;
-    this.castTime = castTime;
-    this.castDatetime = castDatetime;
-    return this;
+  public Object encode(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException {
+    return encode(JDBCType.valueOf(metaData.getParameterType(pos)), input.getValue(pos - 1));
   }
 
-  @Override
-  public Object convert(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException {
-    return this.convert(JDBCType.valueOf(metaData.getParameterType(pos)), input.getValue(pos - 1));
-  }
-
-  protected Object convert(JDBCType jdbcType, Object javaValue) throws SQLException {
+  protected Object encode(JDBCType jdbcType, Object javaValue) throws SQLException {
     if (javaValue == null) {
       return null;
     }
-    if (isAbleToUUID(jdbcType) && javaValue instanceof String && castUUID && JDBCStatementHelper.UUID.matcher((String) javaValue).matches()) {
+    if (isAbleToUUID(jdbcType) && javaValue instanceof String && JDBCStatementHelper.UUID.matcher((String) javaValue).matches()) {
       return debug(jdbcType, java.util.UUID.fromString((String) javaValue));
     }
     try {
@@ -63,7 +49,7 @@ public class JDBCEncoderImpl implements JDBCEncoder {
 
   protected Object castDateTime(JDBCType jdbcType, Object value) {
     if (jdbcType == JDBCType.DATE) {
-      if (value instanceof String && castDate) {
+      if (value instanceof String) {
         return LocalDate.parse((String) value);
       }
       if (value instanceof java.util.Date) {
@@ -72,13 +58,13 @@ public class JDBCEncoderImpl implements JDBCEncoder {
       return value;
     }
     if (jdbcType == JDBCType.TIME_WITH_TIMEZONE) {
-      if (value instanceof String && castTime) {
+      if (value instanceof String) {
         return OffsetTime.parse((String) value);
       }
       return value;
     }
     if (jdbcType == JDBCType.TIME) {
-      if (value instanceof String && castTime) {
+      if (value instanceof String) {
         try {
           return LocalTime.parse((String) value);
         } catch (DateTimeParseException e) {
@@ -88,13 +74,13 @@ public class JDBCEncoderImpl implements JDBCEncoder {
       return value;
     }
     if (jdbcType == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
-      if (value instanceof String && castDatetime) {
+      if (value instanceof String) {
         return OffsetDateTime.parse((String) value);
       }
       return value;
     }
     if (jdbcType == JDBCType.TIMESTAMP) {
-      if (value instanceof String && castDatetime) {
+      if (value instanceof String) {
         try {
           return LocalDateTime.parse((String) value);
         } catch (DateTimeParseException e) {

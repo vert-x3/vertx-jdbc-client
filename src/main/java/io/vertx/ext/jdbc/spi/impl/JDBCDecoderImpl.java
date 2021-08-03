@@ -40,16 +40,16 @@ public class JDBCDecoderImpl implements JDBCDecoder {
 
   @Override
   public Object parse(ResultSetMetaData metaData, int pos, ResultSet rs) throws SQLException {
-    return convert(JDBCType.valueOf(metaData.getColumnType(pos)), cls -> cls == null ? rs.getObject(pos) : rs.getObject(pos, cls));
+    return decode(JDBCType.valueOf(metaData.getColumnType(pos)), cls -> cls == null ? rs.getObject(pos) : rs.getObject(pos, cls));
   }
 
   @Override
   public Object parse(ParameterMetaData metaData, int pos, CallableStatement cs) throws SQLException {
-    return convert(JDBCType.valueOf(metaData.getParameterType(pos)), cls -> cls == null ? cs.getObject(pos) : cs.getObject(pos, cls));
+    return decode(JDBCType.valueOf(metaData.getParameterType(pos)), cls -> cls == null ? cs.getObject(pos) : cs.getObject(pos, cls));
   }
 
   @Override
-  public Object convert(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException {
+  public Object decode(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException {
     switch (jdbcType) {
       case ARRAY:
         return cast(getCoerceObject(valueProvider, Array.class));
@@ -167,7 +167,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
         Object[] castedArray = new Object[len];
         for (int i = 0; i < len; i++) {
           int index = i;
-          castedArray[i] = convert(baseType, cls -> java.lang.reflect.Array.get(arr, index));
+          castedArray[i] = decode(baseType, cls -> java.lang.reflect.Array.get(arr, index));
         }
         return castedArray;
       }
