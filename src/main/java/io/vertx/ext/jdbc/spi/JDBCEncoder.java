@@ -1,6 +1,8 @@
 package io.vertx.ext.jdbc.spi;
 
-import java.sql.JDBCType;
+import io.vertx.core.json.JsonArray;
+
+import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 
 /**
@@ -21,6 +23,6 @@ public interface JDBCEncoder {
 
   JDBCEncoder setup(boolean castUUID, boolean castDate, boolean castTime, boolean castDatetime);
 
-  Object convert(JDBCType jdbcType, Object javaValue) throws SQLException;
+  Object convert(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException;
 
 }

@@ -1,6 +1,7 @@
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.ext.jdbc.spi.impl;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -53,7 +54,7 @@ public class SQLConvertTest {
 
   @Test
   public void testSQLConvert() throws SQLException {
-    Object cast = helper.getEncoder().convert(JDBCType.OTHER, value);
+    Object cast = ((JDBCEncoderImpl) helper.getEncoder()).convert(JDBCType.OTHER, value);
     assertThat(cast, instanceOf(expectedSqlType));
 
     Object convert = helper.getDecoder().cast(cast);

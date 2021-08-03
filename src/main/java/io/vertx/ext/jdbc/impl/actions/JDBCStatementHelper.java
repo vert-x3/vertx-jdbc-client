@@ -86,9 +86,6 @@ public final class JDBCStatementHelper {
         throw new IllegalArgumentException("Invalid Date Time JDBC Type");
     }
   };
-  public static final Pattern DATETIME = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3,9})?Z$");
-  public static final Pattern DATE = Pattern.compile("^\\d{4}-(?:0[0-9]|1[0-2])-[0-9]{2}$");
-  public static final Pattern TIME = Pattern.compile("^\\d{2}:\\d{2}:\\d{2}$");
   public static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
@@ -121,7 +118,7 @@ public final class JDBCStatementHelper {
 
     ParameterMetaData metaData = statement.getParameterMetaData();
     for (int pos = 1; pos <= in.size(); pos++) {
-      statement.setObject(pos, encoder.convert(JDBCType.valueOf(metaData.getParameterType(pos)), in.getValue(pos - 1)));
+      statement.setObject(pos, getEncoder().convert(metaData, pos, in));
     }
   }
 
@@ -137,17 +134,15 @@ public final class JDBCStatementHelper {
     int max = Math.max(in.size(), out.size());
     ParameterMetaData metaData = statement.getParameterMetaData();
     for (int i = 0; i < max; i++) {
-      Object value = null;
+      Object value;
       boolean set = false;
 
       if (i < in.size()) {
-        value = in.getValue(i);
-      }
-
-      // found a in value, use it as a input parameter
-      if (value != null) {
-        statement.setObject(i + 1, encoder.convert(JDBCType.valueOf(metaData.getParameterType(i + 1)), value));
-        set = true;
+        value = getEncoder().convert(metaData, i + 1, in);
+        if (value != null) {
+          statement.setObject(i + 1, value);
+          set = true;
+        }
       }
 
       // reset
