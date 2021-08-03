@@ -2,7 +2,7 @@ package io.vertx.ext.jdbc.spi.impl;
 
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
-import io.vertx.ext.jdbc.spi.JDBCDecoder;
+import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
 
 import java.sql.Date;
@@ -50,7 +50,7 @@ public class JDBCEncoderImpl implements JDBCEncoder {
   protected Object optimisticCast(String value) {
     try {
       // sql time
-      if (castTime && JDBCDecoder.TIME.matcher(value).matches()) {
+      if (castTime && JDBCStatementHelper.TIME.matcher(value).matches()) {
         // convert from local time to instant
         Instant instant = LocalTime.parse(value).atDate(LocalDate.of(1970, 1, 1)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -60,7 +60,7 @@ public class JDBCEncoderImpl implements JDBCEncoder {
       }
 
       // sql date
-      if (castDate && JDBCDecoder.DATE.matcher(value).matches()) {
+      if (castDate && JDBCStatementHelper.DATE.matcher(value).matches()) {
         // convert from local date to instant
         Instant instant = LocalDate.parse(value).atTime(LocalTime.of(0, 0, 0, 0)).toInstant(ZoneOffset.UTC);
         // calculate the timezone offset in millis
@@ -70,13 +70,13 @@ public class JDBCEncoderImpl implements JDBCEncoder {
       }
 
       // sql timestamp
-      if (castDatetime && JDBCDecoder.DATETIME.matcher(value).matches()) {
+      if (castDatetime && JDBCStatementHelper.DATETIME.matcher(value).matches()) {
         Instant instant = Instant.from(ISO_INSTANT.parse(value));
         return Timestamp.from(instant);
       }
 
       // sql uuid
-      if (castUUID && JDBCDecoder.UUID.matcher(value).matches()) {
+      if (castUUID && JDBCStatementHelper.UUID.matcher(value).matches()) {
         return java.util.UUID.fromString(value);
       }
 

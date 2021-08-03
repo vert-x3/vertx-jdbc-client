@@ -3,12 +3,14 @@ package io.vertx.ext.jdbc.spi.impl;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.sqlclient.Tuple;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -16,10 +18,12 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.JDBCType;
 import java.sql.ParameterMetaData;
+import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -48,22 +52,22 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   public Object convert(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException {
     switch (jdbcType) {
       case ARRAY:
-        return cast(valueProvider.apply(Array.class));
+        return cast(getCoerceObject(valueProvider, Array.class));
       case BLOB:
-        return cast(valueProvider.apply(Blob.class));
+        return cast(getCoerceObject(valueProvider, Blob.class));
       case CLOB:
       case NCLOB:
-        return cast(valueProvider.apply(Clob.class));
+        return cast(getCoerceObject(valueProvider, Clob.class));
       case BIT:
       case BOOLEAN:
-        return cast(valueProvider.apply(Boolean.class));
+        return cast(getCoerceObject(valueProvider, Boolean.class));
       case CHAR:
       case VARCHAR:
       case LONGVARCHAR:
       case NCHAR:
       case NVARCHAR:
       case LONGNVARCHAR:
-        return cast(valueProvider.apply(String.class));
+        return cast(getCoerceObject(valueProvider, String.class));
       case TINYINT:
       case SMALLINT:
       case INTEGER:
@@ -73,33 +77,36 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       case DOUBLE:
       case NUMERIC:
       case DECIMAL:
-        return convertNumber(jdbcType, valueProvider);
+        return convertNumber(valueProvider, jdbcType);
       case DATE:
       case TIME:
       case TIMESTAMP:
       case TIME_WITH_TIMEZONE:
       case TIMESTAMP_WITH_TIMEZONE:
-        return convertDateTime(jdbcType, valueProvider);
+        return convertDateTime(valueProvider, jdbcType);
       case BINARY:
       case VARBINARY:
       case LONGVARBINARY:
-        return cast(valueProvider.apply(null));
+        return convertBinary(valueProvider, jdbcType);
+      case DATALINK:
+        return convertLink(valueProvider);
       case ROWID:
-        return cast(valueProvider.apply(RowId.class));
+        return cast(getCoerceObject(valueProvider, RowId.class));
+      case REF:
+        return cast(getCoerceObject(valueProvider, Ref.class));
+      case SQLXML:
+        return convertXML(valueProvider);
       case STRUCT:
-        return cast(valueProvider.apply(Struct.class));
+        return convertStruct(valueProvider);
       case NULL:
       case OTHER:
-      case JAVA_OBJECT:
       case DISTINCT:
-      case REF:
-      case DATALINK:
-      case SQLXML:
       case REF_CURSOR:
+      case JAVA_OBJECT:
         log.debug("Fallback to string when handle JDBCType " + jdbcType);
         break;
     }
-    return Optional.ofNullable(cast(valueProvider.apply(null))).map(Object::toString).orElse(null);
+    return convertSpecialType(valueProvider, jdbcType);
   }
 
   @Override
@@ -113,11 +120,17 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     }
 
     if (value instanceof Blob) {
-      return convertBlob((Blob) value);
+      Blob v = (Blob) value;
+      return v.length() == 0L ? Buffer.buffer(0) : streamToBuffer(v.getBinaryStream(), Blob.class);
     }
 
     if (value instanceof Clob) {
-      return convertClob((Clob) value);
+      Clob v = (Clob) value;
+      return v.length() == 0L ? "" : streamToBuffer(v.getAsciiStream(), Clob.class).toString();
+    }
+
+    if (value instanceof Ref) {
+      return cast(((Ref) value).getObject());
     }
 
     // RowId
@@ -164,9 +177,14 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     }
   }
 
-  protected Object convertDateTime(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException {
+  /**
+   * Convert a value from date time JDBCType to Java date time
+   *
+   * @see JDBCStatementHelper#LOOKUP_SQL_DATETIME
+   */
+  protected Object convertDateTime(SQLValueProvider valueProvider, JDBCType jdbcType) throws SQLException {
     try {
-      return cast(valueProvider.apply(LOOKUP_SQL_DATETIME.apply(jdbcType)));
+      return cast(valueProvider.apply(JDBCStatementHelper.LOOKUP_SQL_DATETIME.apply(jdbcType)));
     } catch (SQLException e) {
       log.debug("Error when convert SQL date time. Try coerce value", e);
       Object value = valueProvider.apply(null);
@@ -197,57 +215,109 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     }
   }
 
-  protected Object convertNumber(JDBCType jdbcType, SQLValueProvider valueProvider) throws SQLException {
+  /**
+   * Convert a value from Number JDBCType to Number
+   *
+   * @see JDBCStatementHelper#LOOKUP_SQL_NUMBER
+   */
+  protected Object convertNumber(SQLValueProvider valueProvider, JDBCType jdbcType) throws SQLException {
     try {
-      return cast(valueProvider.apply(LOOKUP_SQL_NUMBER.apply(jdbcType)));
+      return cast(valueProvider.apply(JDBCStatementHelper.LOOKUP_SQL_NUMBER.apply(jdbcType)));
     } catch (SQLException e) {
       log.debug("Error when convert SQL number", e);
       return cast(valueProvider.apply(null));
     }
   }
 
-  protected String convertClob(Clob data) throws SQLException {
-    if (data == null) {
-      return null;
-    }
-
-    if (data.length() == 0L) {
-      return "";
-    }
-
-    StringBuilder buffer = new StringBuilder();
-    char[] buf = new char[1024];
-    try (Reader in = data.getCharacterStream()) {
-      int l;
-      while ((l = in.read(buf)) > -1) {
-        buffer.append(buf, 0, l);
-      }
-    } catch (IOException ioe) {
-      throw new SQLException("Unable to read character stream from Clob.", ioe);
-    }
-    return buffer.toString();
+  /**
+   * Convert a value from {@link JDBCType#BINARY}, {@link JDBCType#VARBINARY}, and {@link JDBCType#LONGVARBINARY} datatype to {@link Buffer}.
+   * <p>
+   * Keep value as it is if the actual value's type is not {@code byte[]}
+   */
+  protected Object convertBinary(SQLValueProvider valueProvider, JDBCType jdbcType) throws SQLException {
+    Object v = getCoerceObject(valueProvider, byte[].class);
+    return v instanceof byte[] ? Buffer.buffer((byte[]) v) : cast(v);
   }
 
-  protected Buffer convertBlob(Blob data) throws SQLException {
-    if (data == null) {
-      return null;
+  /**
+   * Convert a value from {@link JDBCType#STRUCT} datatype to {@link Tuple}
+   * <p>
+   * Fallback to {@link #convertSpecialType(SQLValueProvider, JDBCType)} if the actual value's type is not {@link Struct}
+   */
+  protected Object convertStruct(SQLValueProvider valueProvider) throws SQLException {
+    Object v = getCoerceObject(valueProvider, Struct.class);
+    if (v instanceof Struct) {
+      return cast(v);
     }
+    return convertSpecialType(valueProvider, JDBCType.STRUCT);
+  }
 
-    if (data.length() == 0L) {
-      return Buffer.buffer(0);
+  /**
+   * Convert a value from {@link JDBCType#DATALINK} datatype to {@link URL}
+   * <p>
+   * Keep value as it is if the actual value's type is not {@code URL} or {@code String}
+   */
+  protected Object convertLink(SQLValueProvider valueProvider) throws SQLException {
+    Object v = getCoerceObject(valueProvider, URL.class);
+    if (v instanceof URL) {
+      return v;
     }
+    if (v instanceof String) {
+      try {
+        return new URL((String) v);
+      } catch (MalformedURLException e) {
+        throw new SQLException("Unable read data link", e);
+      }
+    }
+    return cast(v);
+  }
 
-    Buffer buffer = Buffer.buffer(1024);
-    byte[] buf = new byte[1024];
-    try (InputStream in = data.getBinaryStream()) {
+  /**
+   * Convert a value from {@link JDBCType#SQLXML} datatype to {@link Buffer}
+   * <p>
+   * Fallback to {@link #convertSpecialType(SQLValueProvider, JDBCType)} if the actual value's type is not {@link SQLXML}
+   */
+  protected Object convertXML(SQLValueProvider valueProvider) throws SQLException {
+    Object v = getCoerceObject(valueProvider, SQLXML.class);
+    if (v instanceof SQLXML) {
+      return streamToBuffer(((SQLXML) v).getBinaryStream(), SQLXML.class);
+    }
+    return convertSpecialType(valueProvider, JDBCType.SQLXML);
+  }
+
+  /**
+   * Convert a value from the special jdbc types to string value
+   *
+   * @return string value
+   * @see JDBCType#NULL
+   * @see JDBCType#OTHER
+   * @see JDBCType#DISTINCT
+   * @see JDBCType#REF_CURSOR
+   * @see JDBCType#JAVA_OBJECT
+   */
+  protected Object convertSpecialType(SQLValueProvider valueProvider, JDBCType jdbcType) throws SQLException {
+    return Optional.ofNullable(cast(valueProvider.apply(null))).map(Object::toString).orElse(null);
+  }
+
+  protected Object getCoerceObject(SQLValueProvider valueProvider, Class<?> cls) throws SQLException {
+    try {
+      return valueProvider.apply(null);
+    } catch (SQLException e) {
+      return valueProvider.apply(cls);
+    }
+  }
+
+  protected Buffer streamToBuffer(InputStream is, Class<?> dataTypeClass) throws SQLException {
+    try (InputStream in = is) {
+      Buffer buffer = Buffer.buffer(1024);
+      byte[] buf = new byte[1024];
       int l;
       while ((l = in.read(buf)) > -1) {
         buffer.appendBytes(buf, 0, l);
       }
+      return buffer;
     } catch (IOException ioe) {
-      throw new SQLException("Unable to read binary stream from Blob.", ioe);
+      throw new SQLException("Unable to read binary stream from " + dataTypeClass.getName(), ioe);
     }
-    return buffer;
   }
-
 }

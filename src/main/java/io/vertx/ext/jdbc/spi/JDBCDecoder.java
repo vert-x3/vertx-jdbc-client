@@ -10,9 +10,9 @@ import java.sql.SQLException;
 /**
  * Represents for JDBC decoder from SQL value to Java value
  * <p>
- * The default decoder provides best efforts to convert {@code SQL type} to standard {@code Java type} as {@code JDBC 4.2} spec.
+ * The default decoder provides the best efforts to convert {@code SQL type} to standard {@code Java type} as {@code JDBC 4.2} spec.
  * <p>
- * You can replace it to adapt to an specific SQL driver by creating your owns then includes in the SPI file
+ * You can replace it to adapt to a specific SQL driver by creating your owns then includes in the SPI file
  * ({@code META-INF/services/io.vertx.ext.jdbc.spi.JDBCDecoder})
  *
  * @see <a href=https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html">Mapping of java.sql.Types to SQL types</a>
@@ -21,7 +21,7 @@ import java.sql.SQLException;
  * @see java.sql.SQLType
  * @since 4.2.0
  */
-public interface JDBCDecoder extends JDBCParser {
+public interface JDBCDecoder {
 
   /**
    * Parse SQL value to Java value
@@ -50,7 +50,7 @@ public interface JDBCDecoder extends JDBCParser {
   Object parse(ParameterMetaData metaData, int pos, CallableStatement cs) throws SQLException;
 
   /**
-   * Convert SQL value to java value based on jdbc type
+   * Convert the SQL value to Java value based on jdbc type
    *
    * @param jdbcType      JDBC type
    * @param valueProvider the value provider
