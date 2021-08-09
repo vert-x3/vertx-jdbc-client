@@ -42,7 +42,7 @@ public class PoolTest extends VertxTestBase {
     return new VertxOptions().setMetricsOptions(options);
   }
 
-  @Test(timeout = 5000)
+  @Test(timeout = 30000)
   public void testUseAvailableResources() {
     int poolSize = 3;
     waitFor(poolSize + 1);
