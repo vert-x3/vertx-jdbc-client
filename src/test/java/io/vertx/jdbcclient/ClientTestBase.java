@@ -15,8 +15,8 @@ import org.junit.runner.RunWith;
 @RunWith(VertxUnitRunner.class)
 public class ClientTestBase {
 
-  @Rule
-  public ThreadLeakCheckerRule leakRule = new ThreadLeakCheckerRule();
+//  @Rule
+//  public ThreadLeakCheckerRule leakRule = new ThreadLeakCheckerRule();
 
   protected Vertx vertx;
   protected JDBCPool client;

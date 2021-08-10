@@ -74,8 +74,8 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     }
   }
 
-  @Rule
-  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
+//  @Rule
+//  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
 
   protected SQLClient client;
 
