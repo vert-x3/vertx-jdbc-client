@@ -21,7 +21,6 @@ import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.ParameterMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -90,7 +89,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private JsonArray convertOutputs(CallableStatement statement) throws SQLException {
     JsonArray result = new JsonArray();
 
-    ParameterMetaData metaData = statement.getParameterMetaData();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
     for (int i = 0; i < out.size(); i++) {
       Object var = out.getValue(i);
 
@@ -101,7 +100,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
         } else if (value instanceof ResultSet) {
           result.add(asList((ResultSet) value).toJson());
         } else {
-          result.add(helper.getDecoder().parse(metaData, i + 1, statement));
+          result.add(helper.getDecoder().parse(statement, i + 1, provider));
         }
       } else {
         result.addNull();

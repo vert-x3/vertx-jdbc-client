@@ -1,10 +1,11 @@
 package io.vertx.ext.jdbc.spi;
 
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
+
 import java.sql.CallableStatement;
 import java.sql.JDBCType;
-import java.sql.ParameterMetaData;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 /**
@@ -26,28 +27,28 @@ public interface JDBCDecoder {
   /**
    * Parse SQL value to Java value
    *
-   * @param metaData JDBC result set metadata
-   * @param pos      the Database column position
-   * @param rs       JDBC result set
+   * @param rs             JDBC result set
+   * @param pos            the Database column position
+   * @param jdbcTypeLookup JDBCType provider
    * @return java value
    * @throws SQLException if any error in parsing
-   * @see ResultSetMetaData
    * @see ResultSet
+   * @see JDBCTypeProvider
    */
-  Object parse(ResultSetMetaData metaData, int pos, ResultSet rs) throws SQLException;
+  Object parse(ResultSet rs, int pos, JDBCTypeProvider jdbcTypeLookup) throws SQLException;
 
   /**
    * Parse SQL value to Java value
    *
-   * @param metaData JDBC parameter meta data
-   * @param pos      the parameter column position
-   * @param cs       JDBC callable statement
+   * @param cs             JDBC callable statement
+   * @param pos            the parameter column position
+   * @param jdbcTypeLookup JDBCType provider
    * @return java value
    * @throws SQLException if any error in parsing
-   * @see ParameterMetaData
    * @see CallableStatement
+   * @see JDBCTypeProvider
    */
-  Object parse(ParameterMetaData metaData, int pos, CallableStatement cs) throws SQLException;
+  Object parse(CallableStatement cs, int pos, JDBCTypeProvider jdbcTypeLookup) throws SQLException;
 
   /**
    * Convert the SQL value to Java value based on jdbc type
@@ -72,10 +73,4 @@ public interface JDBCDecoder {
    */
   Object cast(Object value) throws SQLException;
 
-  @FunctionalInterface
-  interface SQLValueProvider {
-
-    Object apply(Class cls) throws SQLException;
-
-  }
 }

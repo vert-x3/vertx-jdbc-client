@@ -4,6 +4,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.sqlclient.Tuple;
 
@@ -17,10 +19,8 @@ import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Date;
 import java.sql.JDBCType;
-import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLXML;
@@ -39,13 +39,13 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   private static final Logger log = LoggerFactory.getLogger(JDBCDecoder.class);
 
   @Override
-  public Object parse(ResultSetMetaData metaData, int pos, ResultSet rs) throws SQLException {
-    return decode(JDBCType.valueOf(metaData.getColumnType(pos)), cls -> cls == null ? rs.getObject(pos) : rs.getObject(pos, cls));
+  public Object parse(ResultSet rs, int pos, JDBCTypeProvider jdbcTypeLookup) throws SQLException {
+    return decode(jdbcTypeLookup.apply(pos), cls -> cls == null ? rs.getObject(pos) : rs.getObject(pos, cls));
   }
 
   @Override
-  public Object parse(ParameterMetaData metaData, int pos, CallableStatement cs) throws SQLException {
-    return decode(JDBCType.valueOf(metaData.getParameterType(pos)), cls -> cls == null ? cs.getObject(pos) : cs.getObject(pos, cls));
+  public Object parse(CallableStatement cs, int pos, JDBCTypeProvider jdbcTypeLookup) throws SQLException {
+    return decode(jdbcTypeLookup.apply(pos), cls -> cls == null ? cs.getObject(pos) : cs.getObject(pos, cls));
   }
 
   @Override

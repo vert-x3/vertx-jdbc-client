@@ -42,8 +42,8 @@ import java.util.regex.Pattern;
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 //FIXME Update document
-//TODO: - remove some config properties: castUUID/castDate/castDateTime/castTime
-//TODO: - Add 2 new properties: encoderCls and decoderCls
+//- Remove some config properties: castUUID/castDate/castDateTime/castTime
+//- Add 2 new properties: encoderCls and decoderCls
 public final class JDBCStatementHelper {
 
   public static final Function<JDBCType, Class> LOOKUP_SQL_NUMBER = jdbcType -> {
@@ -142,4 +142,5 @@ public final class JDBCStatementHelper {
     }
     return null;
   }
+
 }

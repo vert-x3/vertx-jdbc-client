@@ -98,11 +98,12 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           // specially on oracle DBMS
           rs = statement.getGeneratedKeys();
           if (rs != null) {
+            final JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columns = metaData != null ? metaData.getColumnCount() : 1;
             while (rs.next()) {
               for (int i = 1; i <= columns; i++) {
-                final Object key = helper.getDecoder().parse(metaData, i, rs);
+                final Object key = helper.getDecoder().parse(rs, i, provider);
                 if (key == null) {
                   keys.addNull();
                 } else {

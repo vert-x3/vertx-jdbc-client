@@ -29,6 +29,7 @@ import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLRowStream;
 
+import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -159,11 +160,12 @@ class JDBCSQLRowStream implements SQLRowStream {
     if (!rsClosed.get()) {
       ctx.<List<JsonArray>>executeBlocking(fut -> {
         try {
+          JDBCTypeProvider provider = col -> JDBCType.valueOf(metaData.getColumnType(col));
           List<JsonArray> rows = new ArrayList<>(fetchSize);
           for (int i = 0; i < fetchSize && rs.next(); i++) {
             JsonArray result = new JsonArray();
             for (int j = 1; j <= cols; j++) {
-              Object res = decoder.parse(metaData, j, rs);
+              Object res = decoder.parse(rs, j, provider);
               if (res != null) {
                 result.add(res);
               } else {

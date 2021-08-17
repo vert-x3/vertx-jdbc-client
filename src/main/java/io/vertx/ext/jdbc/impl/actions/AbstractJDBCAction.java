@@ -74,6 +74,7 @@ public abstract class AbstractJDBCAction<T> {
   protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -85,7 +86,7 @@ public abstract class AbstractJDBCAction<T> {
     while (rs.next()) {
       JsonArray result = new JsonArray();
       for (int i = 1; i <= cols; i++) {
-        Object res = helper.getDecoder().parse(metaData, i, rs);
+        Object res = helper.getDecoder().parse(rs, i, provider);
         if (res != null) {
           result.add(res);
         } else {
@@ -103,9 +104,9 @@ public abstract class AbstractJDBCAction<T> {
       in = EMPTY;
     }
 
-    ParameterMetaData metaData = statement.getParameterMetaData();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
     for (int pos = 1; pos <= in.size(); pos++) {
-      statement.setObject(pos, helper.getEncoder().encode(metaData, pos, in));
+      statement.setObject(pos, helper.getEncoder().encode(in, pos, provider));
     }
   }
 
@@ -119,13 +120,14 @@ public abstract class AbstractJDBCAction<T> {
     }
 
     int max = Math.max(in.size(), out.size());
-    ParameterMetaData metaData = statement.getParameterMetaData();
+
+    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
     for (int i = 0; i < max; i++) {
       Object value;
       boolean set = false;
 
       if (i < in.size()) {
-        value = helper.getEncoder().encode(metaData, i + 1, in);
+        value = helper.getEncoder().encode(in, i + 1, provider);
         if (value != null) {
           statement.setObject(i + 1, value);
           set = true;

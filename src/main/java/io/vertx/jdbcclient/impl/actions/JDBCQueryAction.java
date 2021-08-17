@@ -18,6 +18,7 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
@@ -116,6 +117,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
     int size = 0;
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -125,7 +127,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       size++;
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        row.addValue(helper.getDecoder().parse(metaData, i, rs));
+        row.addValue(helper.getDecoder().parse(rs, i, provider));
       }
       accumulator.accept(container, row);
     }
@@ -141,6 +143,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
 
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -149,7 +152,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     while (rs.next()) {
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        row.addValue(helper.getDecoder().parse(metaData, i, rs));
+        row.addValue(helper.getDecoder().parse(rs, i, provider));
       }
       accumulator.accept(container, row);
     }
@@ -165,13 +168,13 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     // the result is unlabeled
     Row row = new JDBCRow(new RowDesc(Collections.emptyList()));
     JDBCDecoder decoder = helper.getDecoder();
-    ParameterMetaData metaData = cs.getParameterMetaData();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(cs);
     for (Integer idx : out) {
       final Object o = cs.getObject(idx);
       if (o instanceof ResultSet) {
         row.addValue(decodeRawResultSet((ResultSet) o));
       } else {
-        row.addValue(decoder.parse(metaData, idx, cs));
+        row.addValue(decoder.parse(cs, idx, provider));
       }
     }
 
@@ -190,6 +193,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     if (keysRS != null) {
       if (keysRS.next()) {
         // only try to access metadata if there are rows
+        JDBCTypeProvider provider = JDBCTypeProvider.fromResult(keysRS);
         ResultSetMetaData metaData = keysRS.getMetaData();
         if (metaData != null) {
           int cols = metaData.getColumnCount();
@@ -202,7 +206,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
             keys = new JDBCRow(keysDesc);
             for (int i = 1; i <= cols; i++) {
-              keys.addValue(helper.getDecoder().parse(metaData, i, keysRS));
+              keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
             }
           }
           response.returnedKeys(keys);

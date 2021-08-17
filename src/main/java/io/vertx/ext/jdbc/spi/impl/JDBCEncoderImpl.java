@@ -4,10 +4,10 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
 
 import java.sql.JDBCType;
-import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,8 +23,8 @@ public class JDBCEncoderImpl implements JDBCEncoder {
   private static final Logger log = LoggerFactory.getLogger(JDBCEncoder.class);
 
   @Override
-  public Object encode(ParameterMetaData metaData, int pos, JsonArray input) throws SQLException {
-    return encode(JDBCType.valueOf(metaData.getParameterType(pos)), input.getValue(pos - 1));
+  public Object encode(JsonArray input, int pos, JDBCTypeProvider provider) throws SQLException {
+    return encode(provider.apply(pos), input.getValue(pos - 1));
   }
 
   protected Object encode(JDBCType jdbcType, Object javaValue) throws SQLException {
