@@ -11,11 +11,26 @@ import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
 public class AgroalCPDataSourceProvider implements DataSourceProvider {
+
+  private JsonObject initConfig;
+
+  @Override
+  public DataSourceProvider init(JsonObject sqlConfig) {
+    this.initConfig = sqlConfig;
+    return this;
+  }
+
+  @Override
+  public JsonObject getInitialConfig() {
+    return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
+  }
+
   @Override
   public int maximumPoolSize(DataSource dataSource, JsonObject config) throws SQLException {
     if (dataSource instanceof AgroalDataSource) {
@@ -25,8 +40,8 @@ public class AgroalCPDataSourceProvider implements DataSourceProvider {
   }
 
   @Override
-  public DataSource getDataSource(JsonObject config) throws SQLException {
-
+  public DataSource getDataSource(JsonObject cfg) throws SQLException {
+    JsonObject config = cfg == null || cfg.isEmpty() ? initConfig : cfg;
     AgroalDataSourceConfigurationSupplier dataSourceConfigurationBuilder = new AgroalDataSourceConfigurationSupplier()
       .dataSourceImplementation(AgroalDataSourceConfiguration.DataSourceImplementation.valueOf(config.getString("dataSourceImplementation", "AGROAL")))
       .metricsEnabled(config.getBoolean("metricsEnabled", false))
