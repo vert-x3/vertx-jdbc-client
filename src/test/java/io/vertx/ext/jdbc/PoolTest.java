@@ -48,7 +48,7 @@ public class PoolTest extends VertxTestBase {
     waitFor(poolSize + 1);
 
     JsonObject config = new JsonObject()
-      .put("url", "jdbc:h2:tcp://localhost/mem:test")
+      .put("url", "jdbc:h2:mem:test_mem")
       .put("driver_class", "org.h2.Driver")
       .put("initial_pool_size", poolSize)
       .put("max_pool_size", poolSize);

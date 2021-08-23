@@ -16,7 +16,7 @@ import java.sql.SQLException;
  * You can replace it to adapt to a specific SQL driver by creating your owns then includes in the SPI file
  * ({@code META-INF/services/io.vertx.ext.jdbc.spi.JDBCDecoder})
  *
- * @see <a href=https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html">Mapping of java.sql.Types to SQL types</a>
+ * @see <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html">Mapping of java.sql.Types to SQL types</a>
  * @see io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl
  * @see java.sql.JDBCType
  * @see java.sql.SQLType
