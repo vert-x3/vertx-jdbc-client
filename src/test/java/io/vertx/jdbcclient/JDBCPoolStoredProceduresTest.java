@@ -105,7 +105,7 @@ public class JDBCPoolStoredProceduresTest extends ClientTestBase {
               should.assertNotNull(row.getInteger(0));
               should.assertEquals("Paulo", row.getString(1));
               should.assertEquals("Lopes", row.getString(2));
-              should.assertNotNull(row.getOffsetDateTime(3));
+              should.assertNotNull(row.getLocalDateTime(3));
             }
             test.complete();
           });

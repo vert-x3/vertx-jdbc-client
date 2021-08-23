@@ -16,21 +16,23 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.time.ZoneOffset;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ParameterMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -115,6 +117,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
     int size = 0;
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -124,8 +127,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       size++;
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        Object res = convertSqlValue(rs, i);
-        row.addValue(res);
+        row.addValue(helper.getDecoder().parse(rs, i, provider));
       }
       accumulator.accept(container, row);
     }
@@ -141,6 +143,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
 
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -149,8 +152,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     while (rs.next()) {
       Row row = new JDBCRow(desc);
       for (int i = 1; i <= cols; i++) {
-        Object res = convertSqlValue(rs, i);
-        row.addValue(res);
+        row.addValue(helper.getDecoder().parse(rs, i, provider));
       }
       accumulator.accept(container, row);
     }
@@ -163,16 +165,16 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     // first rowset includes the output results
     C container = collector.supplier().get();
-
     // the result is unlabeled
     Row row = new JDBCRow(new RowDesc(Collections.emptyList()));
+    JDBCDecoder decoder = helper.getDecoder();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(cs);
     for (Integer idx : out) {
       final Object o = cs.getObject(idx);
       if (o instanceof ResultSet) {
         row.addValue(decodeRawResultSet((ResultSet) o));
       } else {
-        Object res = convertSqlValue(o);
-        row.addValue(res);
+        row.addValue(decoder.parse(cs, idx, provider));
       }
     }
 
@@ -191,6 +193,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     if (keysRS != null) {
       if (keysRS.next()) {
         // only try to access metadata if there are rows
+        JDBCTypeProvider provider = JDBCTypeProvider.fromResult(keysRS);
         ResultSetMetaData metaData = keysRS.getMetaData();
         if (metaData != null) {
           int cols = metaData.getColumnCount();
@@ -203,122 +206,13 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
             keys = new JDBCRow(keysDesc);
             for (int i = 1; i <= cols; i++) {
-              Object res = convertSqlValue(keysRS, i);
-              keys.addValue(res);
+              keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
             }
           }
           response.returnedKeys(keys);
         }
       }
     }
-  }
-
-  private static Object convertSqlValue(Object o) throws SQLException {
-    try {
-      return convertSqlValue(null, -1, o);
-    } catch (Throwable t) {
-      t.printStackTrace();
-      return null;
-    }
-  }
-
-  private static Object convertSqlValue(ResultSet rs, int pos) throws SQLException {
-    try {
-      return convertSqlValue(rs, pos, rs.getObject(pos));
-    } catch (Throwable t) {
-      t.printStackTrace();
-      return null;
-    }
-  }
-
-  private static Object convertSqlValue(ResultSet rs, int pos, Object value) throws SQLException {
-    if (value == null) {
-      return null;
-    }
-
-    // valid json types are just returned as is
-    if (value instanceof Boolean || value instanceof String || value instanceof byte[]) {
-      return value;
-    }
-
-    // numeric values
-    if (value instanceof Number) {
-      if (value instanceof BigDecimal) {
-        BigDecimal d = (BigDecimal) value;
-        if (d.scale() == 0) {
-          return ((BigDecimal) value).toBigInteger();
-        } else {
-          // we might loose precision here
-          return ((BigDecimal) value).doubleValue();
-        }
-      }
-
-      return value;
-    }
-
-    // JDBC temporal values
-
-    if (value instanceof Time) {
-      return ((Time) value).toLocalTime();
-    }
-
-    if (value instanceof Date) {
-      return ((Date) value).toLocalDate();
-    }
-
-    if (value instanceof Timestamp) {
-      return ((Timestamp) value).toInstant().atOffset(ZoneOffset.UTC);
-    }
-
-    // large objects
-    if (value instanceof Clob) {
-      if (rs != null) {
-        return rs.getString(pos);
-      }
-
-      Clob c = (Clob) value;
-      return getString(c);
-    }
-
-    if (value instanceof Blob) {
-      if (rs != null) {
-        return Buffer.buffer(rs.getBytes(pos));
-      }
-
-      Blob b = (Blob) value;
-      return getBinary(b);
-    }
-
-    // arrays
-    if (value instanceof Array) {
-      Array a = (Array) value;
-      try {
-        Object arr = a.getArray();
-        if (arr != null) {
-          int len = java.lang.reflect.Array.getLength(arr);
-          Object[] castedArray = new Object[len];
-          for (int i = 0; i < len; i++) {
-            castedArray[i] = convertSqlValue(java.lang.reflect.Array.get(arr, i));
-          }
-          return castedArray;
-        }
-      } finally {
-        a.free();
-      }
-    }
-
-    // RowId
-    if (value instanceof RowId) {
-      return ((RowId) value).getBytes();
-    }
-
-    // Struct
-    if (value instanceof Struct) {
-      return Tuple.of(((Struct) value).getAttributes());
-    }
-
-    // fallback to String
-    return value.toString();
   }
 
   boolean returnAutoGeneratedKeys(Connection conn) {
@@ -338,47 +232,4 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     return false;
   }
 
-  private static String getString(Clob data) throws SQLException {
-    if (data == null) {
-      return null;
-    }
-
-    if (data.length() == 0L) {
-      return "";
-    }
-
-    StringBuilder buffer = new StringBuilder();
-    char[] buf = new char[1024];
-    try (Reader in = data.getCharacterStream()) {
-      int l;
-      while ((l = in.read(buf)) > -1) {
-        buffer.append(buf, 0, l);
-      }
-    } catch (IOException ioe) {
-      throw new SQLException("Unable to read character stream from Clob.", ioe);
-    }
-    return buffer.toString();
-  }
-
-  private static Buffer getBinary(Blob data) throws SQLException {
-    if (data == null) {
-      return null;
-    }
-
-    if (data.length() == 0L) {
-      return Buffer.buffer(0);
-    }
-
-    Buffer buffer = Buffer.buffer(1024);
-    byte[] buf = new byte[1024];
-    try (InputStream in = data.getBinaryStream()) {
-      int l;
-      while ((l = in.read(buf)) > -1) {
-        buffer.appendBytes(buf, 0, l);
-      }
-    } catch (IOException ioe) {
-      throw new SQLException("Unable to read binary stream from Blob.", ioe);
-    }
-    return buffer;
-  }
 }

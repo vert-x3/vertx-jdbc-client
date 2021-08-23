@@ -85,7 +85,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
       // apply statement options
       applyStatementOptions(statement);
 
-      helper.fillStatement(statement, in);
+      fillStatement(statement, in);
 
       int updated = statement.executeUpdate();
       JsonArray keys = new JsonArray();
@@ -98,15 +98,16 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           // specially on oracle DBMS
           rs = statement.getGeneratedKeys();
           if (rs != null) {
+            final JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columns = metaData != null ? metaData.getColumnCount() : 1;
             while (rs.next()) {
               for (int i = 1; i <= columns; i++) {
-                final Object key = rs.getObject(i);
+                final Object key = helper.getDecoder().parse(rs, i, provider);
                 if (key == null) {
                   keys.addNull();
                 } else {
-                  keys.add(helper.convertSqlValue(key));
+                  keys.add(key);
                 }
               }
             }
