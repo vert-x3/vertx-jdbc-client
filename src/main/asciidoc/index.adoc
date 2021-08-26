@@ -92,6 +92,71 @@ Of course same is to say that prepared statements are also applicable to this mo
 {@link examples.JDBCSqlClientExamples#examplePreparedQueryManual}
 ----
 
+=== Working with Procedures and Functions
+
+Users that have used JDBC before are aware that in order to call either a function or a stored procedure, one must use
+the interface `CallableStatement`. This abstraction is, for most database engines, synthetic as popular engines like
+`PostgreSQL` or `MySQL` do not really have any special command to differentiate from callable statements from any other
+regular statement.
+
+The existing SQL client api was designed to be closed to what the reality of wire protocols shows, rather than adapt to
+the JDBC spec, therefore you will not find any specific way to deal with callable statements. This design choice
+introduces some complexities on the JDBC SQL client, as we need to adapt a regular call to respect the JDBC spec
+requirements and be compatible with clients out there.
+
+==== Simple IN mapping
+
+Mapping simple `IN` parameters is trivial. Consider the following procedure:
+
+[source,"sql"]
+----
+create procedure new_customer(firstname varchar(50), lastname varchar(50))
+  modifies sql data
+  insert into customers values (default, firstname, lastname, current_timestamp)
+----
+
+In order to call this procedure from the JDBC client, you would write some code as:
+
+[source,$lang]
+----
+{@link examples.JDBCSqlClientExamples#exampleCallableIN}
+----
+
+==== Complex IN / OUT mapping
+
+The previous example, showed how to create simple queries. However, there are some limitations with it. It will assume
+that arguments are always of type `IN` and that the argument type is the corresponding java type of the argument, which
+will not always work, for example, when dealing with `null`.
+
+In this case, the client has a helper {@link io.vertx.jdbcclient.SqlOutParam} that allows you to explicitly tag the
+desired type of the argument. Not only the data type but also if it is a `IN` or a `OUT`.
+
+Consider the following procedure:
+
+[source,"sql"]
+----
+create procedure customer_lastname(IN firstname varchar(50), OUT lastname varchar(50))
+  modifies sql data
+  select lastname into lastname from customers where firstname = firstname
+----
+
+This procedure will return all last names, from all customers, when looking for a first name. So we will need to map
+both `IN` parameters as well as `OUT` parameters.
+
+[source,$lang]
+----
+{@link examples.JDBCSqlClientExamples#exampleCallableINOUT}
+----
+
+Sometimes, you will need to map both `IN` and `OUT` parameters to the same variable. Again, it is all handled by the
+{@link io.vertx.jdbcclient.SqlOutParam} helper.
+
+[source,$lang]
+----
+{@link examples.JDBCSqlClientExamples#exampleOutParam}
+----
+
+
 == Legacy JDBC Client API
 
 The JDBC Client API created in Vert.x 3 is now deprecated and instead the new SQL Client API should be used.

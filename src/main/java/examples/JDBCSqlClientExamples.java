@@ -9,11 +9,13 @@ import io.vertx.ext.sql.SQLClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 
 import javax.sql.DataSource;
+import java.sql.JDBCType;
 import java.time.Instant;
 
 /**
@@ -131,5 +133,66 @@ public class JDBCSqlClientExamples {
             conn.close();
           });
       });
+  }
+
+  public void exampleCallableIN(JDBCPool pool) {
+
+    // callable statements must ad-here to the JDBC spec
+    // JDBC defines that callable statements are enclosed by { ... }
+    // and have a special "call" command
+    String sql = "{call new_customer(?, ?)}";
+
+    pool
+      .preparedQuery(sql)
+      // by default the "IN" argument types are extracted from the
+      // type of the data in the tuple, as well as the order
+      .execute(Tuple.of("Paulo", "Lopes"))
+      .onFailure(e -> {
+        // handle the failure
+      })
+      .onSuccess(rows -> {
+        // ... success handler
+      });
+  }
+
+  public void exampleCallableINOUT(JDBCPool pool) {
+
+    // callable statements must ad-here to the JDBC spec
+    // JDBC defines that callable statements are enclosed by { ... }
+    // and have a special "call" command
+    String sql = "{call customer_lastname(?, ?)}";
+
+    pool
+      .preparedQuery(sql)
+      // by default the "IN" argument types are extracted from the
+      // type of the data in the tuple, as well as the order
+      //
+      // Note that we now also declare the output parameter and it's
+      // type. The type can be a "String", "int" or "JDBCType" constant
+      .execute(Tuple.of("John", SqlOutParam.OUT(JDBCType.VARCHAR)))
+      .onFailure(e -> {
+        // handle the failure
+      })
+      .onSuccess(rows -> {
+        // we can verify if there was a output received from the callable statement
+        if (rows.property(JDBCPool.OUTPUT)) {
+          // and then iterate the results
+          for (Row row : rows) {
+            System.out.println(row.getString(0));
+          }
+        }
+      });
+  }
+
+  public void exampleOutParam() {
+    SqlOutParam param;
+
+    // map IN as "int" as well as "OUT" as VARCHAR
+    param = SqlOutParam.INOUT(123456, JDBCType.VARCHAR);
+    // or
+    param = SqlOutParam.INOUT(123456, "VARCHAR");
+
+    // and then just add to the tuple as usual:
+    Tuple.of(param);
   }
 }
