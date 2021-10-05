@@ -1,3 +1,28 @@
+CREATE procedure [dbo].[rsp_vertx_test_1]
+  @id int,
+  @echo varchar(16) out
+as
+begin
+  set NOCOUNT on
+
+  select * from Fortune where id = @id
+
+  set @echo = 'echo'
+
+  set NOCOUNT off
+end;
+
+CREATE procedure [dbo].[rsp_vertx_test_2]
+@echo varchar(16) out
+as
+begin
+  set NOCOUNT on
+
+  set @echo = 'echo'
+
+  set NOCOUNT off
+end;
+
 -- TCK usage --
 -- immutable for select query testing --
 DROP TABLE IF EXISTS immutable;
