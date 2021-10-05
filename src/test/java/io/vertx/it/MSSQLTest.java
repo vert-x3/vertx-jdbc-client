@@ -6,6 +6,7 @@ import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.*;
 import org.junit.After;
 import org.junit.Before;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.MSSQLServerContainer;
 
+import java.sql.JDBCType;
 import java.util.ArrayList;
 
 @RunWith(VertxUnitRunner.class)
@@ -91,6 +93,52 @@ public class MSSQLTest {
       }})
       .onFailure(should::fail)
       .onSuccess(rowSet -> {
+        test.complete();
+      });
+  }
+
+  @Test
+  public void testProcedures(TestContext should) {
+    final Async test = should.async();
+
+    client
+      .preparedQuery("{ call rsp_vertx_test_1(?, ?)}")
+      .execute(Tuple.of(1, SqlOutParam.OUT(JDBCType.VARCHAR)))
+        .onFailure(should::fail)
+          .onSuccess(rows -> {
+            // assert that the first result is received
+            should.assertNotNull(rows);
+            should.assertTrue(rows.size() > 0);
+            for (Row row : rows) {
+              should.assertNotNull(row);
+            }
+            // process the next response
+            rows = rows.next();
+            should.assertNotNull(rows);
+            should.assertTrue(rows.property(JDBCPool.OUTPUT));
+            should.assertTrue(rows.size() > 0);
+            for (Row row : rows) {
+              should.assertEquals("echo", row.getString(0));
+            }
+            test.complete();
+          });
+  }
+
+  @Test
+  public void testProcedures2(TestContext should) {
+    final Async test = should.async();
+
+    client
+      .preparedQuery("{ call rsp_vertx_test_2(?)}")
+      .execute(Tuple.of(SqlOutParam.OUT(JDBCType.VARCHAR)))
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        should.assertNotNull(rows);
+        should.assertTrue(rows.property(JDBCPool.OUTPUT));
+        should.assertTrue(rows.size() > 0);
+        for (Row row : rows) {
+          should.assertEquals("echo", row.getString(0));
+        }
         test.complete();
       });
   }
