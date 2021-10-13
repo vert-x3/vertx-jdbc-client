@@ -29,6 +29,7 @@ import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
 import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
+import javax.sql.DataSource;
 import java.util.UUID;
 
 /**
@@ -108,5 +109,27 @@ public interface JDBCPool extends Pool {
       context.tracer() == null ?
         null :
         new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, config.getString("database")));
+  }
+
+  /**
+   * Create a JDBC pool using a pre-initialized data source. The config expects that at least the following properties
+   * are set:
+   *
+   * <ul>
+   *   <li>{@code url} - the connection string</li>
+   *   <li>{@code user} - the connection user name</li>
+   *   <li>{@code database} - the database name</li>
+   *   <li>{@code maxPoolSize} - the max allowed number of connections in the pool</li>
+   * </ul>
+   *
+   * @param vertx  the Vert.x instance
+   * @param dataSource a pre-initialized data source
+   * @param config the pool configuration
+   * @return the client
+   * @since 4.2.0
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  static JDBCPool pool(Vertx vertx, DataSource dataSource, JsonObject config) {
+    return pool(vertx, DataSourceProvider.create(dataSource, config));
   }
 }

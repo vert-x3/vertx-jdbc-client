@@ -105,10 +105,10 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
 
     this.vertx = (VertxInternal) vertx;
     this.datasourceName = UUID.randomUUID().toString();
-    this.config = new JsonObject();
+    this.config = dataSourceProvider.getInitialConfig();
     holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
     holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(dataSourceProvider) : h.increment());
-    this.helper = new JDBCStatementHelper(dataSourceProvider.getInitialConfig());
+    this.helper = new JDBCStatementHelper(this.config);
     setupCloseHook();
   }
 

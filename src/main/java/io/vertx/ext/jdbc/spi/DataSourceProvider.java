@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.spi;
 
 import java.sql.SQLException;
+import java.util.Objects;
 import javax.sql.DataSource;
 
 import io.vertx.core.json.JsonObject;
@@ -83,4 +84,55 @@ public interface DataSourceProvider {
     }
   }
 
+  /**
+   * Init provider with specific {@link DataSource} and config. The config expects that several properties are set:
+   *
+   * <ul>
+   *   <li>{@code url} - the connection string</li>
+   *   <li>{@code user} - the connection user name</li>
+   *   <li>{@code database} - the database name</li>
+   *   <li>{@code maxPoolSize} - the max allowed number of connections in the pool</li>
+   * </ul>
+   *
+   * @param dataSource a pre initialized data source
+   * @param config the configuration for the datasource
+   * @return a reference to this for fluent API
+   * @since 4.2.0
+   */
+  static DataSourceProvider create(final DataSource dataSource, final JsonObject config) {
+    Objects.requireNonNull(config, "config must not be null");
+    Objects.requireNonNull(config.getValue("url"), "config.url cannot be null");
+    Objects.requireNonNull(config.getValue("user"), "config.user cannot be null");
+    Objects.requireNonNull(config.getValue("database"), "config.database cannot be null");
+    Objects.requireNonNull(config.getValue("maxPoolSize"), "config.maxPoolSize cannot be null");
+
+    return new DataSourceProvider() {
+
+      @Override
+      public JsonObject getInitialConfig() {
+        return config;
+      }
+
+      @Override
+      public int maximumPoolSize(DataSource arg0, JsonObject arg1) {
+        return config.getInteger("maxPoolSize");
+      }
+
+      @Override
+      public DataSource getDataSource(JsonObject arg0) {
+        return dataSource;
+      }
+
+      @Override
+      public void close(DataSource arg0) throws SQLException {
+        if (dataSource instanceof AutoCloseable) {
+          try {
+            ((AutoCloseable) dataSource).close();
+          } catch (Exception e) {
+            throw new SQLException("Failed to close data source", e);
+          }
+        }
+      }
+    };
+  }
 }

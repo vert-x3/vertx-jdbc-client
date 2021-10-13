@@ -1,5 +1,6 @@
 package io.vertx.jdbcclient;
 
+import com.zaxxer.hikari.HikariDataSource;
 import org.h2.Driver;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +12,8 @@ import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
 import io.vertx.ext.unit.TestContext;
+
+import javax.sql.DataSource;
 
 public class JDBCPoolInitTest extends ClientTestBase {
 
@@ -78,5 +81,19 @@ public class JDBCPoolInitTest extends ClientTestBase {
     client.query("SELECT * FROM INFORMATION_SCHEMA.TABLES")
           .execute()
           .onComplete(should.asyncAssertSuccess(rows -> should.assertTrue(rows.size() > 0)));
+  }
+
+  @Test
+  public void test_init_pool_by_existing_datasource(TestContext should) {
+    final JsonObject config = new JsonObject()
+      .put("url", "jdbc:h2:mem:testDB?shutdown=true")
+      .put("user", "")
+      .put("database", "testDB")
+      .put("maxPoolSize", 10);
+
+    HikariDataSource ds = new HikariDataSource();
+    ds.setJdbcUrl("jdbc:h2:mem:testDB?shutdown=true");
+    client = JDBCPool.pool(vertx, ds, config);
+    simpleAssertSuccess(should);
   }
 }
