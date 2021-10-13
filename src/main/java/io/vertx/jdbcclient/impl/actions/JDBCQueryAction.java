@@ -165,10 +165,14 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     // first rowset includes the output results
     C container = collector.supplier().get();
     // the result is unlabeled
-    Row row = new JDBCRow(new RowDesc(Collections.emptyList()));
+    List<String> labels = new ArrayList<>();
+    RowDesc desc = new RowDesc(labels);
+    Row row = new JDBCRow(desc);
     JDBCDecoder decoder = helper.getDecoder();
     JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(cs);
     for (Integer idx : out) {
+      // SQL client is 0 index based
+      labels.add(Integer.toString(idx - 1));
       final Object o = cs.getObject(idx);
       if (o instanceof ResultSet) {
         row.addValue(decodeRawResultSet((ResultSet) o));
@@ -181,7 +185,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     R result = collector.finisher().apply(container);
 
-    output.outputs(result, null, 1);
+    output.outputs(result, desc, 1);
   }
 
   private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {

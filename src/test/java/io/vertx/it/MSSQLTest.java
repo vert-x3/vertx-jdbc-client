@@ -138,6 +138,7 @@ public class MSSQLTest {
         should.assertTrue(rows.size() > 0);
         for (Row row : rows) {
           should.assertEquals("echo", row.getString(0));
+          should.assertEquals("echo", row.getString("0"));
         }
         test.complete();
       });
