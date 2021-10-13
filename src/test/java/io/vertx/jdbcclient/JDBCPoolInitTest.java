@@ -85,6 +85,14 @@ public class JDBCPoolInitTest extends ClientTestBase {
 
   @Test
   public void test_init_pool_by_existing_datasource(TestContext should) {
+    HikariDataSource ds = new HikariDataSource();
+    ds.setJdbcUrl("jdbc:h2:mem:testDB?shutdown=true");
+    client = JDBCPool.pool(vertx, ds);
+    simpleAssertSuccess(should);
+  }
+
+  @Test
+  public void test_init_pool_by_existing_datasource_custom_config(TestContext should) {
     final JsonObject config = new JsonObject()
       .put("url", "jdbc:h2:mem:testDB?shutdown=true")
       .put("user", "")

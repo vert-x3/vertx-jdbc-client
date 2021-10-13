@@ -101,10 +101,6 @@ public interface DataSourceProvider {
    */
   static DataSourceProvider create(final DataSource dataSource, final JsonObject config) {
     Objects.requireNonNull(config, "config must not be null");
-    Objects.requireNonNull(config.getValue("url"), "config.url cannot be null");
-    Objects.requireNonNull(config.getValue("user"), "config.user cannot be null");
-    Objects.requireNonNull(config.getValue("database"), "config.database cannot be null");
-    Objects.requireNonNull(config.getValue("maxPoolSize"), "config.maxPoolSize cannot be null");
 
     return new DataSourceProvider() {
 
@@ -115,7 +111,7 @@ public interface DataSourceProvider {
 
       @Override
       public int maximumPoolSize(DataSource arg0, JsonObject arg1) {
-        return config.getInteger("maxPoolSize");
+        return config.getInteger("maxPoolSize", -1);
       }
 
       @Override

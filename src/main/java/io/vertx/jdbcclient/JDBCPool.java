@@ -30,6 +30,7 @@ import io.vertx.sqlclient.*;
 import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import javax.sql.DataSource;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -102,13 +103,32 @@ public interface JDBCPool extends Pool {
     final JsonObject config = dataSourceProvider.getInitialConfig();
     String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
     String user = config.getString("username", config.getString("user"));
+    String database = config.getString("database");
+    if (context.tracer() != null) {
+      Objects.requireNonNull(jdbcUrl, "data source url config cannot be null");
+      Objects.requireNonNull(user, "data source user config cannot be null");
+      Objects.requireNonNull(database, "data source database config cannot be null");
+    }
     return new JDBCPoolImpl(
       vertx,
       new JDBCClientImpl(vertx, dataSourceProvider),
       new SQLOptions(config),
       context.tracer() == null ?
         null :
-        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, config.getString("database")));
+        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, database));
+  }
+
+  /**
+   * Create a JDBC pool using a pre-initialized data source.
+   *
+   * @param vertx  the Vert.x instance
+   * @param dataSource a pre-initialized data source
+   * @return the client
+   * @since 4.2.0
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  static JDBCPool pool(Vertx vertx, DataSource dataSource) {
+    return pool(vertx, DataSourceProvider.create(dataSource, new JsonObject()));
   }
 
   /**
