@@ -92,6 +92,17 @@ Of course same is to say that prepared statements are also applicable to this mo
 {@link examples.JDBCSqlClientExamples#examplePreparedQueryManual}
 ----
 
+=== Retrieving the generated keys
+
+Generated keys is a common feature of JDBC drivers. The pool allows you to retrieve the keys using a special property:
+`JDBCPool.GENERATED_KEYS`. For example:
+
+[source,$lang]
+----
+{@link examples.JDBCSqlClientExamples#exampleGeneratedKeys}
+----
+
+
 === Working with Procedures and Functions
 
 Users that have used JDBC before are aware that in order to call either a function or a stored procedure, one must use

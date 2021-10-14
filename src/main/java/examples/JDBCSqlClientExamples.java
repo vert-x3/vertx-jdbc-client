@@ -195,4 +195,19 @@ public class JDBCSqlClientExamples {
     // and then just add to the tuple as usual:
     Tuple.of(param);
   }
+
+  public void exampleGeneratedKeys(JDBCPool pool) {
+
+    String sql = "INSERT INTO insert_table (FNAME, LNAME) VALUES (?, ?)";
+
+    pool
+      .preparedQuery(sql)
+      .execute(Tuple.of("Paulo", "Lopes"))
+      .onSuccess(rows -> {
+        // the generated keys are returned as an extra row
+        Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS);
+        // just refer to the position as usual:
+        long newId = lastInsertId.getLong(0);
+      });
+  }
 }
