@@ -1,17 +1,12 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
- * ------------------------------------------------------
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
+ * Copyright (c) 2011-2021 Contributors to the Eclipse Foundation
  *
- *     The Eclipse Public License is available at
- *     http://www.eclipse.org/legal/epl-v10.html
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- *     The Apache License v2.0 is available at
- *     http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
 package io.vertx.jdbcclient.impl.actions;
@@ -23,15 +18,10 @@ import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,16 +102,20 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   private void decodeResultSet(ResultSet rs, JDBCResponse<R> response) throws SQLException {
     BiConsumer<C, Row> accumulator = collector.accumulator();
 
-    List<String> columnNames = new ArrayList<>();
-    RowDesc desc = new RowDesc(columnNames);
+    ResultSetMetaData metaData = rs.getMetaData();
+    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
+    int cols = metaData.getColumnCount();
+    List<String> columnNames = new ArrayList<>(cols);
+    List<ColumnDescriptor> columnDescriptors = new ArrayList<>(cols);
+    for (int i = 1; i <= cols; i++) {
+      JDBCColumnDescriptor columnDescriptor = new JDBCColumnDescriptor(metaData, provider, i);
+      columnDescriptors.add(columnDescriptor);
+      columnNames.add(columnDescriptor.name());
+    }
+    RowDesc desc = new RowDesc(columnNames, columnDescriptors);
+
     C container = collector.supplier().get();
     int size = 0;
-    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
-    ResultSetMetaData metaData = rs.getMetaData();
-    int cols = metaData.getColumnCount();
-    for (int i = 1; i <= cols; i++) {
-      columnNames.add(metaData.getColumnLabel(i));
-    }
     while (rs.next()) {
       size++;
       Row row = new JDBCRow(desc);
