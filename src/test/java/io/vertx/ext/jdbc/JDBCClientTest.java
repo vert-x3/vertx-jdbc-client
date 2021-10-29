@@ -129,6 +129,20 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
+  public void testStreamWithNoEndHandler() {
+    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
+      res.handler(row -> {
+        res.endHandler(null);
+      }).endHandler(v -> {
+        fail(new RuntimeException());
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
+    await();
+  }
+
+  @Test
   public void testSelect() {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     connection().query(sql, onSuccess(resultSet -> {
