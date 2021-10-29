@@ -16,7 +16,6 @@
 
 package io.vertx.ext.jdbc;
 
-import io.reactivex.disposables.Disposable;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -130,23 +129,16 @@ public class JDBCClientTest extends JDBCClientTestBase {
   }
 
   @Test
-  public void testDisposedFlowable() {
-    final AtomicInteger cnt = new AtomicInteger(0);
-    final AtomicReference<Disposable> disposableRef = new AtomicReference<>();
-    disposableRef.set(new io.vertx.reactivex.ext.sql.SQLClient(checker())
-      .rxQueryStream("SELECT * FROM big_table")
-      .flatMapPublisher(io.vertx.reactivex.ext.sql.SQLRowStream::toFlowable)
-      .doOnNext(a -> {
-        cnt.incrementAndGet();
-        Disposable d = disposableRef.getAndSet(null);
-        if (d != null) {
-          d.dispose();
-        }
-      })
-      .toList()
-      .subscribe(l -> {
-        System.out.println(cnt.get());
-      }, this::fail));
+  public void testStreamWithNoEndHandler() {
+    checker().queryStream("SELECT * FROM big_table", onSuccess(res -> {
+      res.handler(row -> {
+        res.endHandler(null);
+      }).endHandler(v -> {
+        fail(new RuntimeException());
+      }).exceptionHandler(t -> {
+        fail(t);
+      });
+    }));
     await();
   }
 
