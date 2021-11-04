@@ -3,11 +3,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 
-import java.sql.JDBCType;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.*;
 
 @FunctionalInterface
 public interface JDBCTypeProvider {
@@ -24,12 +20,21 @@ public interface JDBCTypeProvider {
   static JDBCTypeProvider fromParameter(PreparedStatement statement) {
     return col -> {
       try {
-        return JDBCType.valueOf(statement.getParameterMetaData().getParameterType(col));
+        return find(statement.getParameterMetaData().getParameterType(col));
       } catch (SQLFeatureNotSupportedException e) {
         LOG.warn("ParameterMetadata is unsupported by" + statement.getClass().getName(), e);
         return JDBCType.OTHER;
       }
     };
+  }
+
+  static JDBCType find(int vendorTypeNumber) {
+    for (JDBCType jdbcType : JDBCType.values()) {
+      if (jdbcType.getVendorTypeNumber() == vendorTypeNumber) {
+        return jdbcType;
+      }
+    }
+    return JDBCType.OTHER;
   }
 
   /**
@@ -42,7 +47,7 @@ public interface JDBCTypeProvider {
   static JDBCTypeProvider fromResult(ResultSet rs) {
     return col -> {
       try {
-        return JDBCType.valueOf(rs.getMetaData().getColumnType(col));
+        return find(rs.getMetaData().getColumnType(col));
       } catch (SQLFeatureNotSupportedException e) {
         LOG.warn("ResultSetMetadata is unsupported by" + rs.getClass().getName(), e);
         return JDBCType.OTHER;
