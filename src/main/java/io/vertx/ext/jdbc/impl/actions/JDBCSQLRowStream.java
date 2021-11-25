@@ -200,7 +200,7 @@ class JDBCSQLRowStream implements SQLRowStream {
 
     if (rsClosedHandler != null) {
       // only close the result set and notify
-      close0(c -> {
+      closeRS(pending.isEmpty(), c -> {
         if (err != null) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(err);
@@ -213,7 +213,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       });
     } else {
       // default behavior close result set + statement
-      close(c -> {
+      closeAll(pending.isEmpty(), c -> {
         if (err != null) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(err);
@@ -234,9 +234,11 @@ class JDBCSQLRowStream implements SQLRowStream {
     return this;
   }
 
-  private void close0(Handler<AsyncResult<Void>> handler) {
-    // make sure we stop pumping data
-    pause();
+  private void closeRS(boolean pause, Handler<AsyncResult<Void>> handler) {
+    // stop pumping data if needed
+    if (pause) {
+      pause();
+    }
     // close the cursor
     close(rs, rsClosed, handler);
   }
@@ -248,7 +250,11 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   @Override
   public void close(Handler<AsyncResult<Void>> handler) {
-    close0(res -> {
+    closeAll(true, handler);
+  }
+
+  private void closeAll(boolean pauseBuffer, Handler<AsyncResult<Void>> handler) {
+    closeRS(pauseBuffer, res -> {
       // close the statement
       close(st, stClosed, handler);
     });
