@@ -28,6 +28,7 @@ import io.vertx.sqlclient.PoolOptions;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
@@ -36,10 +37,22 @@ public class AgroalCPDataSourceProvider implements DataSourceProvider {
 
   private final JDBCConnectOptions connectOptions;
   private final PoolOptions poolOptions;
+  private JsonObject initConfig;
 
   public AgroalCPDataSourceProvider(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
     this.connectOptions = connectOptions;
     this.poolOptions = poolOptions;
+  }
+
+  @Override
+  public DataSourceProvider init(JsonObject sqlConfig) {
+    this.initConfig = sqlConfig;
+    return this;
+  }
+
+  @Override
+  public JsonObject getInitialConfig() {
+    return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
   }
 
   @Override
