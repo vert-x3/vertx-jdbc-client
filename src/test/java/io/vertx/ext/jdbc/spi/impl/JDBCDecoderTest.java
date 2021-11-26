@@ -1,6 +1,8 @@
 package io.vertx.ext.jdbc.spi.impl;
 
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 import static java.time.format.DateTimeFormatter.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -59,7 +62,7 @@ public class JDBCDecoderTest {
 
   @Test
   public void testSQLConvert() throws SQLException {
-    Object cast = ((JDBCEncoderImpl) helper.getEncoder()).encode(jdbcType, value);
+    Object cast = ((JDBCEncoderImpl) helper.getEncoder()).doEncode(JDBCColumnDescriptor.wrap(jdbcType), value);
     assertThat(cast, instanceOf(expectedSqlType));
 
     Object convert = helper.getDecoder().cast(cast);

@@ -24,17 +24,9 @@ import io.vertx.ext.jdbc.spi.JDBCEncoder;
 import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 
-import java.math.BigDecimal;
-import java.sql.JDBCType;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -46,44 +38,6 @@ import java.util.regex.Pattern;
 //- Add 2 new properties: encoderCls and decoderCls
 public final class JDBCStatementHelper {
 
-  public static final Function<JDBCType, Class> LOOKUP_SQL_NUMBER = jdbcType -> {
-    switch (jdbcType) {
-      case TINYINT:
-        return byte.class;
-      case SMALLINT:
-        return Short.class;
-      case INTEGER:
-        return Integer.class;
-      case BIGINT:
-        return Long.class;
-      case FLOAT:
-      case REAL:
-        return Float.class;
-      case DOUBLE:
-        return Double.class;
-      case NUMERIC:
-      case DECIMAL:
-        return BigDecimal.class;
-      default:
-        throw new IllegalArgumentException("Invalid Number JDBC Type");
-    }
-  };
-  public static final Function<JDBCType, Class> LOOKUP_SQL_DATETIME = jdbcType -> {
-    switch (jdbcType) {
-      case DATE:
-        return LocalDate.class;
-      case TIME:
-        return LocalTime.class;
-      case TIMESTAMP:
-        return LocalDateTime.class;
-      case TIME_WITH_TIMEZONE:
-        return OffsetTime.class;
-      case TIMESTAMP_WITH_TIMEZONE:
-        return OffsetDateTime.class;
-      default:
-        throw new IllegalArgumentException("Invalid Date Time JDBC Type");
-    }
-  };
   public static final Pattern UUID = Pattern.compile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$");
 
   private final JDBCEncoder encoder;

@@ -11,42 +11,70 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 
 import java.sql.JDBCType;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 public class JDBCColumnDescriptor implements ColumnDescriptor {
 
-  private final String name;
-  private final String typeName;
-  private final JDBCType jdbcType;
+  private final String columnLabel;
+  private final JDBCTypeWrapper jdbcTypeWrapper;
 
-  public JDBCColumnDescriptor(ResultSetMetaData metaData, JDBCTypeProvider provider, int i) throws SQLException {
-    name = metaData.getColumnLabel(i);
-    typeName = metaData.getColumnTypeName(i);
-    jdbcType = provider.apply(i);
+  private JDBCColumnDescriptor(String columnLabel, JDBCTypeWrapper jdbcTypeWrapper) {
+    this.columnLabel = columnLabel;
+    this.jdbcTypeWrapper = jdbcTypeWrapper;
   }
 
   @Override
   public String name() {
-    return name;
+    return columnLabel;
   }
 
   @Override
   public boolean isArray() {
-    return jdbcType == JDBCType.ARRAY;
+    return jdbcType() == JDBCType.ARRAY;
   }
 
   @Override
   public String typeName() {
-    return typeName;
+    return jdbcTypeWrapper.vendorTypeName();
+  }
+
+  /**
+   * Use {@link #jdbcTypeWrapper()} when converting an advanced data type depending on the specific database
+   *
+   * @return the most appropriate {@code JDBCType} or {@code null} if it is advanced type of specific database
+   */
+  @Override
+  public JDBCType jdbcType() {
+    return jdbcTypeWrapper.jdbcType();
+  }
+
+  /**
+   * @return the jdbc type wrapper
+   * @see JDBCTypeWrapper
+   */
+  public JDBCTypeWrapper jdbcTypeWrapper() {
+    return this.jdbcTypeWrapper;
   }
 
   @Override
-  public JDBCType jdbcType() {
-    return jdbcType;
+  public String toString() {
+    return "JDBCColumnDescriptor[columnName=(" + columnLabel + "), jdbcTypeWrapper=(" + jdbcTypeWrapper + ")]";
   }
+
+  public static JDBCColumnDescriptor create(JDBCPropertyAccessor<String> columnLabel,
+                                            JDBCPropertyAccessor<Integer> vendorTypeNumber,
+                                            JDBCPropertyAccessor<String> vendorTypeName,
+                                            JDBCPropertyAccessor<String> vendorTypeClassName) throws SQLException {
+    return new JDBCColumnDescriptor(columnLabel.get(), JDBCTypeWrapper.of(vendorTypeNumber.get(), vendorTypeName.get(),
+      vendorTypeClassName.get()));
+  }
+
+  public static JDBCColumnDescriptor wrap(JDBCType jdbcType) {
+    return new JDBCColumnDescriptor(null, JDBCTypeWrapper.of(jdbcType));
+  }
+
 }

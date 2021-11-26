@@ -1,7 +1,6 @@
 package io.vertx.ext.jdbc.spi;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
 
 import java.sql.SQLException;
 
@@ -29,9 +28,8 @@ public interface JDBCEncoder {
    * @param provider JDBCType provider
    * @return SQL value
    * @throws SQLException if any error when convert
-   * @see JDBCTypeProvider
+   * @see JDBCColumnDescriptorProvider
    */
-  //TODO: maybe change JsonArray to List to allow many kinds of data type
-  Object encode(JsonArray input, int pos, JDBCTypeProvider provider) throws SQLException;
+  Object encode(JsonArray input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException;
 
 }

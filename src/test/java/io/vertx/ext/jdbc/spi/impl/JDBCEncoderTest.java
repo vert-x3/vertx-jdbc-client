@@ -1,6 +1,7 @@
 package io.vertx.ext.jdbc.spi.impl;
 
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -8,7 +9,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.sql.JDBCType;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -73,8 +73,8 @@ public class JDBCEncoderTest {
   }
 
   @Test
-  public void testEncoder() throws SQLException {
-    final Object sqlValue = encoder.encode(jdbcType, value);
+  public void testEncoder() {
+    final Object sqlValue = encoder.doEncode(JDBCColumnDescriptor.wrap(jdbcType), value);
     assertEquals(value, expectedType, sqlValue.getClass());
     if (Objects.nonNull(expectedValue)) {
       assertEquals(value, expectedValue, sqlValue);

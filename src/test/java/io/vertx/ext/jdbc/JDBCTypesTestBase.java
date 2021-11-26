@@ -20,6 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,9 +51,9 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
   //TODO: https://issues.apache.org/jira/browse/DERBY-6920
   public static class DerbyEncoder extends JDBCEncoderImpl {
     @Override
-    protected Object castDateTime(JDBCType jdbcType, Object value) {
-      Object v = super.castDateTime(jdbcType, value);
-      if (jdbcType == JDBCType.DATE) {
+    protected Object encodeDateTime(JDBCColumnDescriptor descriptor, Object value) {
+      Object v = super.encodeDateTime(descriptor, value);
+      if (descriptor.jdbcType() == JDBCType.DATE) {
         return Date.valueOf((LocalDate) v);
       }
       return v;

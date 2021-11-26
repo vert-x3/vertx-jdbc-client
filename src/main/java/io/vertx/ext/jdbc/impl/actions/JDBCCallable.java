@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -89,7 +90,7 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
   private JsonArray convertOutputs(CallableStatement statement) throws SQLException {
     JsonArray result = new JsonArray();
 
-    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
     for (int i = 0; i < out.size(); i++) {
       Object var = out.getValue(i);
 
