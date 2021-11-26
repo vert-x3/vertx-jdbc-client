@@ -198,3 +198,15 @@ INSERT INTO Fortune (id, message)
 VALUES (11, '<script>alert("This should not be displayed in a browser alert box.");</script>');
 INSERT INTO Fortune (id, message)
 VALUES (12, 'フレームワークのベンチマーク');
+
+-- Fortune table
+DROP TABLE IF EXISTS special_datatype;
+CREATE TABLE special_datatype
+(
+  id      integer        NOT NULL,
+  dto     DateTimeOffset NOT NULL,
+  PRIMARY KEY (id)
+);
+
+INSERT INTO special_datatype (id, dto)
+VALUES (1, '2020-12-12 19:30:30.12345Z');

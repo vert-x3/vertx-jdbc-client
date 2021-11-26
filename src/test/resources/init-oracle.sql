@@ -10,3 +10,5 @@ create table insert_table
 
 insert into insert_table
 values (1, 'doe', 'john', TO_DATE('2001-01-01','YYYY-MM-DD'), TO_TIMESTAMP('2021-11-07 13:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+insert into insert_table
+values (2, 'hello', 'vertx', TO_DATE('2021-11-23','YYYY-MM-DD'), TO_TIMESTAMP('2021-11-23 13:30:00', 'YYYY-MM-DD HH24:MI:SS'));

@@ -106,7 +106,7 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
     JsonArray insertparams = new JsonArray().add(1).add("LastName1").addNull().add("2002-02-02");
     conn.updateWithParams(insertsql, insertparams, onSuccess(insertResultSet -> {
       assertUpdate(insertResultSet, 1);
-      int insertid = insertResultSet.getKeys().isEmpty() ? 1 : insertResultSet.getKeys().getInteger(0);
+      int insertid = insertResultSet.getKeys().isEmpty() ? 1 : insertResultSet.getKeys().size();
       conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(1), onSuccess(insertQueryResultSet -> {
         assertNotNull(insertQueryResultSet);
         assertEquals(1, insertQueryResultSet.getResults().size());
@@ -117,7 +117,7 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
         JsonArray updParams = new JsonArray().add("LastName2").add(insertid);
         conn.updateWithParams(updSql, updParams, onSuccess(updateResultSet -> {
           assertUpdate(updateResultSet, 1);
-          int updateid = updateResultSet.getKeys().isEmpty() ? 1 : updateResultSet.getKeys().getInteger(0);
+          int updateid = updateResultSet.getKeys().isEmpty() ? 1 : updateResultSet.getKeys().size();
           conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(updateid), onSuccess(updateQueryResultSet -> {
             assertNotNull(updateQueryResultSet);
             assertEquals(1, updateQueryResultSet.getResults().size());
