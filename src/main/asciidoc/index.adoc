@@ -568,7 +568,7 @@ Other Connection Pool providers are:
 * Agroal
 
 Similar to C3P0 they can be configured by passing the configuration values on the JSON config object. For the special
-case where you do not want to deploy your app as a fat jar but run with a vert.x distribution, then it is recommented
+case where you do not want to deploy your app as a fat jar but run with a vert.x distribution, then it is recommended
 to use Agroal if you have no write permissions to add the JDBC driver to the vert.x lib directory and are passing it
 using the `-cp` command line flag.
 
@@ -604,20 +604,26 @@ The behavior may be different when using a different connection pool.
 
 === Data types
 
-Due to the fact that Vert.x uses JSON as its standard message format there will be many limitations to the data types
-accepted by the client. You will get out of the box the standard:
+Since Vert.x supports many vendor SQL databases, we confide in https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html[JDBC 4.2 specification] to provide the best efforts in converting `Java type` to `SQL type` and vice versa
 
-* null
-* boolean
-* number
-* string
+If any limitations to the data types accepted in the specific SQL database, you will get out of the box the standard by overriding your owns:
 
-There is also an optimistic cast for temporal types (TIME, DATE, TIMESTAMP) and optionally disabled for UUID. UUIDs
-are supported by many databases but not all. For example MySQL does not support it so the recommended way is to use
-a VARCHAR(36) column. For other engines UUID optimistic casting can be enabled using the client config json as:
+* The `encoder` {@link io.vertx.ext.jdbc.spi.JDBCEncoder} to convert `Java input type` to `SQL type`. By default implementation, it is `io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl`
+* The `decoder` {@link io.vertx.ext.jdbc.spi.JDBCDecoder} to convert `SQL result type` to `Java type`. By default implementation, it is `io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl`
 
+You can include the overridden classes in the SPI file
+`META-INF/services/io.vertx.ext.jdbc.spi.JDBCEncoder` and `META-INF/services/io.vertx.ext.jdbc.spi.JDBCDecoder` to load in runtime. Or you can configure directly in the configuration with 2 properties:
+
+* encoderCls
+* decoderCls
+
+[source,java]
 ----
-{ "castUUID": true }
+{@link examples.JDBCTypeExamples#createJDBCClient}
 ----
 
-When this config is present UUIDs will be handled as a native type.
+[source,java]
+----
+{@link examples.JDBCTypeExamples#createJDBCPool}
+----
+
