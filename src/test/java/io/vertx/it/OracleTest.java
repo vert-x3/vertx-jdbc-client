@@ -39,35 +39,15 @@ import java.time.ZoneId;
 /**
  * @author <a href="mailto:Fyro-Ing@users.noreply.github.com">Fyro</a>
  */
-//not sure why it is timeout when run on GitHub action
-@Ignore
 @RunWith(VertxUnitRunner.class)
 public class OracleTest {
 
   @ClassRule
   public static final RunTestOnContext rule = new RunTestOnContext();
 
-  private static OracleContainer server;
-
-  @BeforeClass
-  public static void setup(TestContext should) {
-    final Async test = should.async();
-    rule.vertx().executeBlocking(p -> {
-      try {
-        server = new OracleContainer("wnameless/oracle-xe-11g-r2:latest");
-        server.withInitScript("init-oracle.sql");
-        server.start();
-        p.complete();
-      } catch (RuntimeException e) {
-        p.fail(e);
-      }
-    }, true).onSuccess(o -> test.complete()).onFailure(should::fail);
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    server.close();
-  }
+  @ClassRule
+  public static final OracleContainer server = new OracleContainer("wnameless/oracle-xe-11g-r2:latest")
+    .withInitScript("init-oracle.sql");
 
   @Test
   public void simpleDeleteTest(TestContext should) {
