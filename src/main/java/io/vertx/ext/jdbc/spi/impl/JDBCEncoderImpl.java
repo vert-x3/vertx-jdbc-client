@@ -1,11 +1,28 @@
+/*
+ * Copyright (c) 2011-2014 The original author or authors
+ * ------------------------------------------------------
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
+ *
+ *     The Eclipse Public License is available at
+ *     http://www.eclipse.org/legal/epl-v10.html
+ *
+ *     The Apache License v2.0 is available at
+ *     http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
+ */
+
 package io.vertx.ext.jdbc.spi.impl;
 
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 
 import java.sql.JDBCType;
 import java.sql.SQLException;
@@ -17,37 +34,39 @@ import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+import java.util.UUID;
 
 public class JDBCEncoderImpl implements JDBCEncoder {
 
-  private static final Logger log = LoggerFactory.getLogger(JDBCEncoder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JDBCEncoder.class);
 
   @Override
-  public Object encode(JsonArray input, int pos, JDBCTypeProvider provider) throws SQLException {
-    return encode(provider.apply(pos), input.getValue(pos - 1));
+  public Object encode(JsonArray input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException {
+    return doEncode(provider.apply(pos), input.getValue(pos - 1));
   }
 
-  protected Object encode(JDBCType jdbcType, Object javaValue) throws SQLException {
+  protected Object doEncode(JDBCColumnDescriptor descriptor, Object javaValue) {
     if (javaValue == null) {
       return null;
     }
-    if (isAbleToUUID(jdbcType) && javaValue instanceof String && JDBCStatementHelper.UUID.matcher((String) javaValue).matches()) {
-      return debug(jdbcType, java.util.UUID.fromString((String) javaValue));
+    if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
+      return debug(descriptor, encodeDateTime(descriptor, javaValue));
     }
-    try {
-      JDBCStatementHelper.LOOKUP_SQL_DATETIME.apply(jdbcType);
-      return debug(jdbcType, castDateTime(jdbcType, javaValue));
-    } catch (IllegalArgumentException e) {
-      //ignore
+    if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
+      return debug(descriptor, encodeSpecificVendorType(descriptor, javaValue));
     }
-    return debug(jdbcType, javaValue);
+    return debug(descriptor, encodeData(descriptor, javaValue));
   }
 
-  protected boolean isAbleToUUID(JDBCType jdbcType) {
-    return jdbcType == JDBCType.BINARY || jdbcType == JDBCType.VARBINARY || jdbcType == JDBCType.OTHER;
-  }
-
-  protected Object castDateTime(JDBCType jdbcType, Object value) {
+  /**
+   * Convert the parameter {@code Java datetime} value to the {@code SQL datetime} value
+   *
+   * @param descriptor the column descriptor
+   * @param value      the java value in parameter
+   * @return the compatible SQL value
+   */
+  protected Object encodeDateTime(JDBCColumnDescriptor descriptor, Object value) {
+    JDBCType jdbcType = descriptor.jdbcType();
     if (jdbcType == JDBCType.DATE) {
       if (value instanceof String) {
         return LocalDate.parse((String) value);
@@ -92,8 +111,34 @@ public class JDBCEncoderImpl implements JDBCEncoder {
     throw new IllegalArgumentException("Invalid Date Time JDBC Type");
   }
 
-  protected Object debug(JDBCType jdbcType, Object javaValue) {
-    log.debug("Convert JDBC type [" + jdbcType + "][" + javaValue.getClass().getName() + "]");
+  /**
+   * Convert the parameter {@code Java} value to the {@code specific SQL vendor data type}
+   *
+   * @param descriptor the column descriptor
+   * @param javaValue  the java value in parameter
+   * @return the compatible SQL value
+   */
+  protected Object encodeSpecificVendorType(JDBCColumnDescriptor descriptor, Object javaValue) {
+    return javaValue;
+  }
+
+  /**
+   * Convert any the parameter {@code Java} value expect {@link #encodeDateTime(JDBCColumnDescriptor, Object)} and
+   * {@link #encodeSpecificVendorType(JDBCColumnDescriptor, Object)} to the {@code SQL value}
+   *
+   * @param descriptor the column descriptor
+   * @param javaValue  the java value in parameter
+   * @return the compatible SQL value
+   */
+  protected Object encodeData(JDBCColumnDescriptor descriptor, Object javaValue) {
+    if (descriptor.jdbcTypeWrapper().isAbleAsUUID() && javaValue instanceof String && JDBCStatementHelper.UUID.matcher((String) javaValue).matches()) {
+      return UUID.fromString((String) javaValue);
+    }
+    return javaValue;
+  }
+
+  private Object debug(JDBCColumnDescriptor descriptor, Object javaValue) {
+    LOG.debug("Convert JDBC column [" + descriptor + "][" + javaValue.getClass().getName() + "]");
     return javaValue;
   }
 

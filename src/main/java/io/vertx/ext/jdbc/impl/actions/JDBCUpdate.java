@@ -19,6 +19,7 @@ package io.vertx.ext.jdbc.impl.actions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.sql.UpdateResult;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 
 import java.sql.*;
 
@@ -98,7 +99,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           // specially on oracle DBMS
           rs = statement.getGeneratedKeys();
           if (rs != null) {
-            final JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
+            final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columns = metaData != null ? metaData.getColumnCount() : 1;
             while (rs.next()) {

@@ -1,7 +1,22 @@
+/*
+ * Copyright (c) 2011-2014 The original author or authors
+ * ------------------------------------------------------
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
+ *
+ *     The Eclipse Public License is available at
+ *     http://www.eclipse.org/legal/epl-v10.html
+ *
+ *     The Apache License v2.0 is available at
+ *     http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
+ */
+
 package io.vertx.ext.jdbc.spi;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
 
 import java.sql.SQLException;
 
@@ -29,9 +44,8 @@ public interface JDBCEncoder {
    * @param provider JDBCType provider
    * @return SQL value
    * @throws SQLException if any error when convert
-   * @see JDBCTypeProvider
+   * @see JDBCColumnDescriptorProvider
    */
-  //TODO: maybe change JsonArray to List to allow many kinds of data type
-  Object encode(JsonArray input, int pos, JDBCTypeProvider provider) throws SQLException;
+  Object encode(JsonArray input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException;
 
 }

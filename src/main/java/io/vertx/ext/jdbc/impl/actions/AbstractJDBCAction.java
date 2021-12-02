@@ -18,11 +18,11 @@ package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.JDBCType;
-import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -74,7 +74,7 @@ public abstract class AbstractJDBCAction<T> {
   protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
-    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -104,7 +104,7 @@ public abstract class AbstractJDBCAction<T> {
       in = EMPTY;
     }
 
-    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
     for (int pos = 1; pos <= in.size(); pos++) {
       statement.setObject(pos, helper.getEncoder().encode(in, pos, provider));
     }
@@ -121,7 +121,7 @@ public abstract class AbstractJDBCAction<T> {
 
     int max = Math.max(in.size(), out.size());
 
-    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(statement);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
     for (int i = 0; i < max; i++) {
       Object value;
       boolean set = false;

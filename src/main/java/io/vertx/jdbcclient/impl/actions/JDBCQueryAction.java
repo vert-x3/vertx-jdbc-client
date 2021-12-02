@@ -13,7 +13,7 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeProvider;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
@@ -21,7 +21,13 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +46,8 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     this.collector = collector;
   }
 
-  protected JDBCResponse<R> decode(Statement statement, boolean returnedResultSet, boolean returnedKeys, List<Integer> out) throws SQLException {
+  protected JDBCResponse<R> decode(Statement statement, boolean returnedResultSet, boolean returnedKeys,
+                                   List<Integer> out) throws SQLException {
 
     final JDBCResponse<R> response = new JDBCResponse<>(statement.getUpdateCount());
 
@@ -86,8 +93,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       accumulator.accept(container, row);
     }
 
-    response
-      .push(collector.finisher().apply(container), desc, returnedBatchResult.length);
+    response.push(collector.finisher().apply(container), desc, returnedBatchResult.length);
 
     if (returnedBatchResult.length != 0) {
       // no queries were executed
@@ -103,12 +109,12 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     BiConsumer<C, Row> accumulator = collector.accumulator();
 
     ResultSetMetaData metaData = rs.getMetaData();
-    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
     int cols = metaData.getColumnCount();
     List<String> columnNames = new ArrayList<>(cols);
     List<ColumnDescriptor> columnDescriptors = new ArrayList<>(cols);
     for (int i = 1; i <= cols; i++) {
-      JDBCColumnDescriptor columnDescriptor = new JDBCColumnDescriptor(metaData, provider, i);
+      JDBCColumnDescriptor columnDescriptor = provider.apply(i);
       columnDescriptors.add(columnDescriptor);
       columnNames.add(columnDescriptor.name());
     }
@@ -125,8 +131,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       accumulator.accept(container, row);
     }
 
-    response
-      .push(collector.finisher().apply(container), desc, size);
+    response.push(collector.finisher().apply(container), desc, size);
   }
 
   private R decodeRawResultSet(ResultSet rs) throws SQLException {
@@ -136,7 +141,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(columnNames);
     C container = collector.supplier().get();
 
-    JDBCTypeProvider provider = JDBCTypeProvider.fromResult(rs);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -163,7 +168,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     RowDesc desc = new RowDesc(labels);
     Row row = new JDBCRow(desc);
     JDBCDecoder decoder = helper.getDecoder();
-    JDBCTypeProvider provider = JDBCTypeProvider.fromParameter(cs);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(cs);
     for (Integer idx : out) {
       // SQL client is 0 index based
       labels.add(Integer.toString(idx - 1));
@@ -190,7 +195,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     if (keysRS != null) {
       if (keysRS.next()) {
         // only try to access metadata if there are rows
-        JDBCTypeProvider provider = JDBCTypeProvider.fromResult(keysRS);
+        JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(keysRS);
         ResultSetMetaData metaData = keysRS.getMetaData();
         if (metaData != null) {
           int cols = metaData.getColumnCount();

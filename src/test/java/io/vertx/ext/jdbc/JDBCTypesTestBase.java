@@ -20,6 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,9 +51,9 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
   //TODO: https://issues.apache.org/jira/browse/DERBY-6920
   public static class DerbyEncoder extends JDBCEncoderImpl {
     @Override
-    protected Object castDateTime(JDBCType jdbcType, Object value) {
-      Object v = super.castDateTime(jdbcType, value);
-      if (jdbcType == JDBCType.DATE) {
+    protected Object encodeDateTime(JDBCColumnDescriptor descriptor, Object value) {
+      Object v = super.encodeDateTime(descriptor, value);
+      if (descriptor.jdbcType() == JDBCType.DATE) {
         return Date.valueOf((LocalDate) v);
       }
       return v;
@@ -105,7 +106,7 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
     JsonArray insertparams = new JsonArray().add(1).add("LastName1").addNull().add("2002-02-02");
     conn.updateWithParams(insertsql, insertparams, onSuccess(insertResultSet -> {
       assertUpdate(insertResultSet, 1);
-      int insertid = insertResultSet.getKeys().isEmpty() ? 1 : insertResultSet.getKeys().getInteger(0);
+      int insertid = insertResultSet.getKeys().isEmpty() ? 1 : insertResultSet.getKeys().size();
       conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(1), onSuccess(insertQueryResultSet -> {
         assertNotNull(insertQueryResultSet);
         assertEquals(1, insertQueryResultSet.getResults().size());
@@ -116,7 +117,7 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
         JsonArray updParams = new JsonArray().add("LastName2").add(insertid);
         conn.updateWithParams(updSql, updParams, onSuccess(updateResultSet -> {
           assertUpdate(updateResultSet, 1);
-          int updateid = updateResultSet.getKeys().isEmpty() ? 1 : updateResultSet.getKeys().getInteger(0);
+          int updateid = updateResultSet.getKeys().isEmpty() ? 1 : updateResultSet.getKeys().size();
           conn.queryWithParams("SElECT lname FROM insert_tableNoIdentity WHERE id=?", new JsonArray().add(updateid), onSuccess(updateQueryResultSet -> {
             assertNotNull(updateQueryResultSet);
             assertEquals(1, updateQueryResultSet.getResults().size());
