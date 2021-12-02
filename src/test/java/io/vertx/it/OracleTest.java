@@ -23,9 +23,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -40,6 +38,7 @@ import java.time.ZoneId;
  * @author <a href="mailto:Fyro-Ing@users.noreply.github.com">Fyro</a>
  */
 @RunWith(VertxUnitRunner.class)
+@Ignore("This container doesn't start on GitHub")
 public class OracleTest {
 
   @ClassRule
