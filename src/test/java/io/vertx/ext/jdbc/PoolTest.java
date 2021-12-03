@@ -76,6 +76,7 @@ public class PoolTest extends VertxTestBase {
     try {
       Thread.sleep(howLong);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       return -1;
     }
     return howLong;
