@@ -31,20 +31,20 @@ import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.impl.SqlClientBase;
-import io.vertx.sqlclient.impl.SqlConnectionImpl;
+import io.vertx.sqlclient.impl.SqlConnectionBase;
 import io.vertx.sqlclient.impl.command.CommandBase;
 import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import java.util.function.Function;
 
-public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPool {
+public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
 
   private final VertxInternal vertx;
   private final JDBCClientImpl client;
   private final SQLOptions sqlOptions;
 
   public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, SQLOptions sqlOptions, QueryTracer tracer) {
-    super(tracer, null);
+    super(FakeDriver.INSTANCE, tracer, null);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
     this.sqlOptions = sqlOptions;
@@ -69,7 +69,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .getConnection(ctx)
-      .map(c -> new SqlConnectionImpl<>(ctx, null, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), tracer, null));
+      .map(c -> new SqlConnectionBase<>(ctx, null, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), driver, tracer, null));
   }
 
   @Override
@@ -98,7 +98,7 @@ public class JDBCPoolImpl extends SqlClientBase<JDBCPoolImpl> implements JDBCPoo
   @Override
   public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionImpl<?>) conn).schedule(ctx, commandBase).eventually(r -> conn.close()));
+    return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionBase<?>) conn).schedule(ctx, commandBase).eventually(r -> conn.close()));
   }
 
   @Override
