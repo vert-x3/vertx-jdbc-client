@@ -18,6 +18,11 @@ public class FakeDriver implements Driver {
   public static final FakeDriver INSTANCE = new FakeDriver();
 
   @Override
+  public SqlConnectOptions parseConnectionUri(String s) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Pool newPool(Vertx vertx, List<? extends SqlConnectOptions> databases, PoolOptions options, CloseFuture closeFuture) {
     throw new UnsupportedOperationException();
   }
