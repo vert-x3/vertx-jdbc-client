@@ -10,10 +10,10 @@
   <modelVersion>4.0.0</modelVersion>
   <name>Vertx JDBC Client</name>
   <artifactId>vertx-jdbc-client</artifactId>
-  <version>4.2.2-SNAPSHOT</version>
+  <version>4.2.2</version>
 
   <properties>
-    <stack.version>4.2.2-SNAPSHOT</stack.version>
+    <stack.version>4.2.2</stack.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
