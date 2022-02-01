@@ -100,17 +100,26 @@ public abstract class AbstractJDBCAction<T> {
   }
 
   protected void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
+    fillStatement(statement, in, provider);
+  }
+
+  protected void fillStatement(PreparedStatement statement, JsonArray in, JDBCColumnDescriptorProvider provider) throws SQLException {
     if (in == null) {
       in = EMPTY;
     }
 
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
     for (int pos = 1; pos <= in.size(); pos++) {
       statement.setObject(pos, helper.getEncoder().encode(in, pos, provider));
     }
   }
 
   protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
+    fillStatement(statement, in, out, provider);
+  }
+
+  protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out, JDBCColumnDescriptorProvider provider) throws SQLException {
     if (in == null) {
       in = EMPTY;
     }
@@ -121,7 +130,6 @@ public abstract class AbstractJDBCAction<T> {
 
     int max = Math.max(in.size(), out.size());
 
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
     for (int i = 0; i < max; i++) {
       Object value;
       boolean set = false;
