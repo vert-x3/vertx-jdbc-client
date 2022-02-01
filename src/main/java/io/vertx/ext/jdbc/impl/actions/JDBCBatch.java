@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.*;
@@ -82,9 +83,12 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           // apply statement options
           applyStatementOptions(stmt);
 
-          for (JsonArray in : this.in) {
-            fillStatement(stmt, in);
-            stmt.addBatch();
+          if (!this.in.isEmpty()) {
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
+            for (JsonArray in : this.in) {
+              fillStatement(stmt, in, provider);
+              stmt.addBatch();
+            }
           }
 
           result = stmt.executeBatch();
@@ -97,12 +101,16 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
 
           final int max_in = in.size();
           final int max_out = out.size();
+          final int max_in_out = Math.max(max_in, max_out);
 
-          for (int i = 0; i < Math.max(max_in, max_out); i++) {
-            final JsonArray jin = i < max_in ? in.get(i) : null;
-            final JsonArray jout = i < max_out ? out.get(i) : null;
-            fillStatement(stmt, jin, jout);
-            stmt.addBatch();
+          if (max_in_out > 0) {
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
+            for (int i = 0; i < max_in_out; i++) {
+              final JsonArray jin = i < max_in ? in.get(i) : null;
+              final JsonArray jout = i < max_out ? out.get(i) : null;
+              fillStatement(stmt, jin, jout, provider);
+              stmt.addBatch();
+            }
           }
 
           result = stmt.executeBatch();
