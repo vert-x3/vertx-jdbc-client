@@ -84,8 +84,10 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           applyStatementOptions(stmt);
 
           if (!this.in.isEmpty()) {
-            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
+            ParameterMetaData md = new CachedParameterMetaData(stmt.getParameterMetaData());
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
             for (JsonArray in : this.in) {
+//                            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
               fillStatement(stmt, in, provider);
               stmt.addBatch();
             }
@@ -104,8 +106,10 @@ public class JDBCBatch extends AbstractJDBCAction<List<Integer>> {
           final int max_in_out = Math.max(max_in, max_out);
 
           if (max_in_out > 0) {
-            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
+            ParameterMetaData md = new CachedParameterMetaData(stmt.getParameterMetaData());
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
             for (int i = 0; i < max_in_out; i++) {
+//                            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(stmt.getParameterMetaData());
               final JsonArray jin = i < max_in ? in.get(i) : null;
               final JsonArray jout = i < max_out ? out.get(i) : null;
               fillStatement(stmt, jin, jout, provider);
