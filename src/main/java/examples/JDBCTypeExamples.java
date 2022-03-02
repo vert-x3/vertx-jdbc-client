@@ -2,6 +2,7 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.docgen.Source;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
@@ -17,6 +18,7 @@ import java.sql.Date;
 import java.sql.JDBCType;
 import java.time.LocalDate;
 
+@Source
 public class JDBCTypeExamples {
 
   public static class DerbyEncoder extends JDBCEncoderImpl {
