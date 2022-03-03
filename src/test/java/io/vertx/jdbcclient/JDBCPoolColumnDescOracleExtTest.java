@@ -11,8 +11,17 @@
 
 package io.vertx.jdbcclient;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
+import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
+import oracle.sql.TIMESTAMPTZ;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -21,10 +30,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.JDBCType;
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
 
@@ -61,7 +75,11 @@ public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
       .setJdbcUrl(jdbcUrl)
       .setUser(username)
       .setPassword(password);
-    super.setUp();
+    vertx = Vertx.vertx();
+    JsonObject extraOptions = new JsonObject()
+      .put("decoderCls", CustomDecoder.class.getName());
+    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions()).init(extraOptions);
+    client = JDBCPool.pool(vertx, provider);
   }
 
   @Override
@@ -75,19 +93,36 @@ public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
     client.query("SELECT id, name, created FROM my_table1").execute(should.asyncAssertSuccess(rows -> {
       should.verify(v -> {
         assertEquals(1, rows.size());
+        Row row = rows.iterator().next();
+        assertThat(row.getValue(0), is(instanceOf(Number.class)));
+        assertEquals("foo", row.getValue(1));
+        assertThat(row.getValue(2), is(instanceOf(OffsetDateTime.class)));
         List<ColumnDescriptor> columnDescriptors = rows.columnDescriptors();
         assertEquals(3, columnDescriptors.size());
-        verifyDesc(columnDescriptors.get(0), "ID", false, "NUMBER", JDBCType.NUMERIC);
-        verifyDesc(columnDescriptors.get(1), "NAME", false, "VARCHAR2", JDBCType.VARCHAR);
-        verifyDesc(columnDescriptors.get(2), "CREATED", false, "TIMESTAMP WITH TIME ZONE", JDBCType.OTHER);
+        verifyDesc(columnDescriptors.get(0), "ID", "NUMBER", JDBCType.NUMERIC);
+        verifyDesc(columnDescriptors.get(1), "NAME", "VARCHAR2", JDBCType.VARCHAR);
+        verifyDesc(columnDescriptors.get(2), "CREATED", "TIMESTAMP WITH TIME ZONE", null);
       });
     }));
   }
 
-  private static void verifyDesc(ColumnDescriptor desc, String name, boolean array, String typeName, JDBCType jdbcType) {
+  private static void verifyDesc(ColumnDescriptor desc, String name, String typeName, JDBCType jdbcType) {
     assertEquals(name, desc.name());
-    assertEquals(array, desc.isArray());
+    assertFalse(desc.isArray());
     assertEquals(typeName, desc.typeName());
     assertEquals(jdbcType, desc.jdbcType());
+  }
+
+  public static class CustomDecoder extends JDBCDecoderImpl {
+
+    @Override
+    protected Object decodeSpecificVendorType(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor) throws SQLException {
+      Object value = valueProvider.apply(null);
+      if (value instanceof TIMESTAMPTZ) {
+        TIMESTAMPTZ timestamptz = (TIMESTAMPTZ) value;
+        return timestamptz.toOffsetDateTime();
+      }
+      return super.decodeSpecificVendorType(valueProvider, descriptor);
+    }
   }
 }
