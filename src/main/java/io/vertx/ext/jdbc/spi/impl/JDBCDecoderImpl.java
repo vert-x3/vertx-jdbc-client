@@ -44,10 +44,12 @@ import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
@@ -173,20 +175,27 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       }
       try {
         // Some JDBC drivers (PG driver) treats Timestamp with TimeZone/Time with TimeZone
-        // to java.sql.timestamp/java.sql.time/String at UTC
+        // to java.sql.timestamp/java.sql.time/String at system timezone
         // and handles date time data type internally
-        // then this code will try parse to OffsetTime/OffsetDateTime
+        // then this code will try parse to OffsetTime/OffsetDateTime at UTC timezone with ISO8601 format
         if (value instanceof Time) {
-          return ((Time) value).toLocalTime().atOffset(ZoneOffset.UTC);
+          return Instant.ofEpochMilli(((Time) value).getTime()).atOffset(ZoneOffset.UTC).toOffsetTime();
         }
-        if (descriptor.jdbcType() == JDBCType.TIME || descriptor.jdbcType() == JDBCType.TIME_WITH_TIMEZONE) {
-          return LocalTime.parse(value.toString(), DateTimeFormatter.ISO_LOCAL_TIME).atOffset(ZoneOffset.UTC);
+        if (descriptor.jdbcType() == JDBCType.TIME) {
+          return LocalTime.parse(value.toString()).atOffset(ZoneOffset.UTC);
         }
+        if (descriptor.jdbcType() == JDBCType.TIME_WITH_TIMEZONE) {
+          return OffsetTime.parse(value.toString()).withOffsetSameInstant(ZoneOffset.UTC);
+        }
+
         if (value instanceof Timestamp) {
-          return ((Timestamp) value).toLocalDateTime().atOffset(ZoneOffset.UTC);
+          return ((Timestamp) value).toInstant().atOffset(ZoneOffset.UTC);
         }
-        if (descriptor.jdbcType() == JDBCType.TIMESTAMP || descriptor.jdbcType() == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
-          return LocalDateTime.parse(value.toString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME).atOffset(ZoneOffset.UTC);
+        if (descriptor.jdbcType() == JDBCType.TIMESTAMP) {
+          return LocalDateTime.parse(value.toString()).atOffset(ZoneOffset.UTC);
+        }
+        if (descriptor.jdbcType() == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
+          return OffsetDateTime.parse(value.toString()).withOffsetSameInstant(ZoneOffset.UTC);
         }
       } catch (DateTimeParseException ex) {
         LOG.debug("Error when coerce date time value", ex);
