@@ -1,17 +1,12 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
- * ------------------------------------------------------
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
+ * Copyright (c) 2011-2022 Contributors to the Eclipse Foundation
  *
- *     The Eclipse Public License is available at
- *     http://www.eclipse.org/legal/epl-v10.html
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- *     The Apache License v2.0 is available at
- *     http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 package io.vertx.jdbcclient.impl;
 
@@ -23,11 +18,7 @@ import io.vertx.sqlclient.data.Numeric;
 import io.vertx.sqlclient.impl.ArrayTuple;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
+import java.time.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -97,6 +88,8 @@ public class JDBCRow extends ArrayTuple implements Row {
       return type.cast(getJson(pos));
     } else if (type == JsonArray.class) {
       return type.cast(getJson(pos));
+    } else if (type.isEnum()) {
+      return type.cast(getEnum(type, pos));
     } else if (type == Object.class) {
       return type.cast(getValue(pos));
     }
@@ -221,5 +214,22 @@ public class JDBCRow extends ArrayTuple implements Row {
     } else {
       return null;
     }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private Object getEnum(Class enumType, int position) {
+    Object val = getValue(position);
+    if (val instanceof String) {
+      return Enum.valueOf(enumType, (String) val);
+    } else if (val instanceof Number) {
+      int ordinal = ((Number) val).intValue();
+      if (ordinal >= 0) {
+        Object[] constants = enumType.getEnumConstants();
+        if (ordinal < constants.length) {
+          return constants[ordinal];
+        }
+      }
+    }
+    return null;
   }
 }
