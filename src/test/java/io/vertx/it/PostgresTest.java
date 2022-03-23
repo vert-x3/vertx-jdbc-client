@@ -16,6 +16,9 @@
 
 package io.vertx.it;
 
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -85,7 +88,6 @@ public class PostgresTest {
   }
 
   @Test
-  @Ignore("Old API cannot cope with callable statements without metadata")
   public void simpleClientTest(TestContext should) {
     final Async test = should.async();
     final JDBCClient client = initJDBCClient(new JsonObject());
@@ -163,5 +165,67 @@ public class PostgresTest {
               });
           });
       });
+  }
+
+  @Test
+  public void threeParamsTest(TestContext should) {
+    final Async test = should.async();
+
+    final JDBCClient client = initJDBCClient(new JsonObject());
+    // 3x INOUT
+    callWithInOut(client, "{ call f_inout_inout_inout(?, ?, ?) }",
+      new JsonArray().add(false).add(false).add(false),             // OK
+      new JsonArray().add("BOOLEAN").add("BOOLEAN").add("BOOLEAN"))
+      .compose(v ->
+        // 1x IN, 2x INOUT
+        callWithInOut(client, "{ call f_in_inout_inout(?, ?, ?) }",
+          new JsonArray().add(false).add(false).add(false),             // OK
+          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
+      .compose(v ->
+        // 1x implicit IN, 2x INOUT
+        callWithInOut(client, "{ call f_blank_inout_inout(?, ?, ?) }",
+          new JsonArray().add(false).add(false).add(false),             // OK
+          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
+      .compose(v ->
+        // 1x IN, 2x OUT
+        callWithInOut(client, "{ call f_in_out_out(?, ?, ?) }",
+          new JsonArray().add(false),                                   // OK
+          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
+      .compose(v ->
+        // 1x implicit IN, 2x OUT
+        callWithInOut(client, "{ call f_blank_out_out(?, ?, ?) }",
+          new JsonArray(),                                   // failing
+          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
+      .onFailure(should::fail)
+      .onSuccess(v -> test.complete());
+  }
+
+  private Future<Void> callWithInOut(JDBCClient client, String sql, JsonArray in, JsonArray out) {
+    final Promise<Void> promise = ((VertxInternal) rule.vertx()).promise();
+
+    client.callWithParams(
+      sql,
+      in,
+      out,
+      asyncResult -> {
+        if (asyncResult.failed()) {
+          printResults("FAIL ", sql, in, out, asyncResult.cause().getMessage());
+          promise.fail(asyncResult.cause());
+        } else {
+          ResultSet statsResult = asyncResult.result();
+          JsonArray output = statsResult.getOutput();
+          printResults("OK   ", sql, in, out, output.encodePrettily());
+          promise.complete();
+        }
+      });
+
+    return promise.future();
+  }
+
+  public void printResults(String succMsg, String sql, JsonArray in, JsonArray out, String result) {
+    System.out.println(succMsg + " sql: " + sql + " \n"
+      + " IN: " + in.toString() + "\n"
+      + " OUT: " + out.toString() + "\n"
+      + " result: " + result);
   }
 }

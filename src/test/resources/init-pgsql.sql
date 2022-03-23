@@ -15,3 +15,36 @@ BEGIN
           FROM ANIMAL
           WHERE ANIMAL.IS_PET = animal_stats.is_pet);
 END;' LANGUAGE plpgsql;
+
+CREATE FUNCTION f_inout_inout_inout(INOUT b1 BOOLEAN, INOUT b2 BOOLEAN, INOUT b3 BOOLEAN) AS '
+BEGIN
+  b1:= true;
+  b2:= true;
+  b3:= true;
+END;' LANGUAGE plpgsql;
+
+CREATE FUNCTION f_in_inout_inout(IN b1 BOOLEAN, INOUT b2 BOOLEAN, INOUT b3 BOOLEAN) AS '
+BEGIN
+  b1:= true;
+  b2:= true;
+  b3:= true;
+END;' LANGUAGE plpgsql;
+
+CREATE FUNCTION f_blank_inout_inout(b1 BOOLEAN, INOUT b2 BOOLEAN, INOUT b3 BOOLEAN) AS '
+BEGIN
+  b1:= true;
+  b2:= true;
+  b3:= true;
+END;' LANGUAGE plpgsql;
+
+CREATE FUNCTION f_in_out_out(IN b1 BOOLEAN, OUT b2 BOOLEAN, OUT b3 BOOLEAN) AS '
+BEGIN
+  b2:= b1;
+  b3:= true;
+END;' LANGUAGE plpgsql;
+
+CREATE FUNCTION f_blank_out_out(b1 BOOLEAN, OUT b2 BOOLEAN, OUT b3 BOOLEAN) AS '
+BEGIN
+  b2:= b1;
+  b3:= true;
+END;' LANGUAGE plpgsql;

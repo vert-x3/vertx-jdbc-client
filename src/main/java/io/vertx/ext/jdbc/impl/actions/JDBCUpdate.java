@@ -99,7 +99,7 @@ public class JDBCUpdate extends AbstractJDBCAction<UpdateResult> {
           // specially on oracle DBMS
           rs = statement.getGeneratedKeys();
           if (rs != null) {
-            final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
+            final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(rs.getMetaData());
             final ResultSetMetaData metaData = rs.getMetaData();
             final int columns = metaData != null ? metaData.getColumnCount() : 1;
             while (rs.next()) {

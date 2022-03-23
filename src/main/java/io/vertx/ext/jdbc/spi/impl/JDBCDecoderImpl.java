@@ -67,31 +67,35 @@ public class JDBCDecoderImpl implements JDBCDecoder {
 
   @Override
   public Object decode(JDBCColumnDescriptor descriptor, SQLValueProvider valueProvider) throws SQLException {
-    if (descriptor.isArray()) {
-      return decodeArray(valueProvider, descriptor);
+    if (descriptor != null) {
+      if (descriptor.isArray()) {
+        return decodeArray(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcType() == JDBCType.DATALINK) {
+        return decodeLink(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcType() == JDBCType.SQLXML) {
+        return decodeXML(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcType() == JDBCType.STRUCT) {
+        return decodeStruct(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcTypeWrapper().isBinaryType()) {
+        return decodeBinary(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcTypeWrapper().isNumberType()) {
+        return decodeNumber(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
+        return decodeDateTime(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
+        return decodeSpecificVendorType(valueProvider, descriptor);
+      }
+      return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
+    } else {
+      return cast(valueProvider.apply(null));
     }
-    if (descriptor.jdbcType() == JDBCType.DATALINK) {
-      return decodeLink(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcType() == JDBCType.SQLXML) {
-      return decodeXML(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcType() == JDBCType.STRUCT) {
-      return decodeStruct(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcTypeWrapper().isBinaryType()) {
-      return decodeBinary(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcTypeWrapper().isNumberType()) {
-      return decodeNumber(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
-      return decodeDateTime(valueProvider, descriptor);
-    }
-    if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
-      return decodeSpecificVendorType(valueProvider, descriptor);
-    }
-    return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
   }
 
   @Override
