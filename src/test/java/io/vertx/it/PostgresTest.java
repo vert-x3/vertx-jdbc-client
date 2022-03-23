@@ -31,12 +31,15 @@ import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowStream;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.JDBCType;
+import java.util.Arrays;
+import java.util.List;
 
 @RunWith(VertxUnitRunner.class)
 public class PostgresTest {
@@ -118,14 +121,47 @@ public class PostgresTest {
         if (rows.property(JDBCPool.OUTPUT)) {
           // and then iterate the results
           for (Row row : rows) {
-            should.assertTrue( row.getValue(0) instanceof Number);
+            should.assertTrue(row.getValue(0) instanceof Number);
             should.assertEquals(3, row.getInteger(0));
-            should.assertTrue( row.getValue(1) instanceof Number);
+            should.assertTrue(row.getValue(1) instanceof Number);
             should.assertEquals(33.33333206176758, row.getDouble(1));
           }
         }
 
         test.complete();
+      });
+  }
+
+  @Test
+  public void simpleRowStreamTest(TestContext should) {
+    final Async test = should.async();
+    final JDBCPool pool = initJDBCPool(new JsonObject());
+
+    List<String> animals = Arrays.asList("dog", "cat", "cow");
+
+    pool
+      .getConnection()
+      .onFailure(should::fail)
+      .onSuccess(connection -> {
+        connection
+          .prepare("SELECT * FROM ANIMAL")
+          .onFailure(should::fail)
+          .onSuccess(pq -> {
+            // Streams require run within a transaction
+            connection.begin()
+              .onFailure(should::fail)
+              .onSuccess(tx -> {
+                // Fetch 1 row at a time
+                RowStream<Row> stream = pq.createStream(1);
+                // Use the stream
+                stream.exceptionHandler(should::fail);
+                stream.endHandler(v -> {
+                  // Close the stream to release the resources in the database
+                  stream.close(closed -> tx.commit(committed -> test.complete()));
+                });
+                stream.handler(row -> should.assertTrue(animals.contains(row.getString("name"))));
+              });
+          });
       });
   }
 }
