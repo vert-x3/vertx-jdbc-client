@@ -34,16 +34,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.JDBCType;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 @RunWith(VertxUnitRunner.class)
 public class PostgresTest {
@@ -59,7 +52,6 @@ public class PostgresTest {
     rule.vertx().executeBlocking(p -> {
       try {
         server = new PostgreSQLContainer("postgres:12");
-        server.withInitScript("init-postgres.sql");
         server.withInitScript("init-pgsql.sql");
         server.start();
         p.complete();
@@ -72,10 +64,6 @@ public class PostgresTest {
   @AfterClass
   public static void tearDown() {
     server.close();
-  }
-
-  protected JDBCPool initJDBCPool() {
-    return initJDBCPool(new JsonObject());
   }
 
   protected JDBCPool initJDBCPool(JsonObject extraOption) {
@@ -94,7 +82,8 @@ public class PostgresTest {
   }
 
   @Test
-  public void simpleTest(TestContext should) {
+  @Ignore("Old API cannot cope with callable statements without metadata")
+  public void simpleClientTest(TestContext should) {
     final Async test = should.async();
     final JDBCClient client = initJDBCClient(new JsonObject());
 
@@ -113,5 +102,30 @@ public class PostgresTest {
         }
       }
     );
+  }
+
+  @Test
+  public void simplePoolTest(TestContext should) {
+    final Async test = should.async();
+    final JDBCPool pool = initJDBCPool(new JsonObject());
+
+    pool
+      .preparedQuery("{ call animal_stats(?, ?, ?) }")
+      .execute(Tuple.of(false, SqlOutParam.OUT(JDBCType.BIGINT), SqlOutParam.OUT(JDBCType.REAL)))
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        // we can verify if there was an output received from the callable statement
+        if (rows.property(JDBCPool.OUTPUT)) {
+          // and then iterate the results
+          for (Row row : rows) {
+            should.assertTrue( row.getValue(0) instanceof Number);
+            should.assertEquals(3, row.getInteger(0));
+            should.assertTrue( row.getValue(1) instanceof Number);
+            should.assertEquals(33.33333206176758, row.getDouble(1));
+          }
+        }
+
+        test.complete();
+      });
   }
 }

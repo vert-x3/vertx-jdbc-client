@@ -88,9 +88,6 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
       return decodeDateTime(valueProvider, descriptor);
     }
-    if (descriptor.jdbcTypeWrapper().isUnhandledType()) {
-      return decodeUnhandledType(valueProvider, descriptor);
-    }
     if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
       return decodeSpecificVendorType(valueProvider, descriptor);
     }
@@ -223,7 +220,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   /**
    * Convert a value from {@link JDBCType#STRUCT} datatype to {@link Tuple}
    * <p>
-   * Fallback to {@link #decodeUnhandledType(SQLValueProvider, JDBCColumnDescriptor)} if the actual value's type is not
+   * Fallback to raw type if the actual value's type is not
    * {@link Struct}
    */
   protected Object decodeStruct(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor) throws SQLException {
@@ -231,7 +228,8 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     if (v instanceof Struct) {
       return cast(v);
     }
-    return decodeUnhandledType(valueProvider, descriptor);
+    // fallback
+    return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
   }
 
   /**
@@ -257,7 +255,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   /**
    * Convert a value from {@link JDBCType#SQLXML} datatype to {@link Buffer}
    * <p>
-   * Fallback to {@link #decodeUnhandledType(SQLValueProvider, JDBCColumnDescriptor)}} if the actual value's type is not
+   * Fallback to raw value if the actual value's type is not
    * {@link SQLXML}
    */
   protected Object decodeXML(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor) throws SQLException {
@@ -265,21 +263,8 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     if (v instanceof SQLXML) {
       return streamToBuffer(((SQLXML) v).getBinaryStream(), descriptor.jdbcTypeWrapper().vendorTypeClass());
     }
-    return decodeUnhandledType(valueProvider, descriptor);
-  }
-
-  /**
-   * Convert a value from the unhandled data type
-   * <p>
-   * The default implementation converts any data type to a string value
-   *
-   * @return value
-   * @see JDBCTypeWrapper#isUnhandledType()
-   */
-  protected Object decodeUnhandledType(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor)
-    throws SQLException {
-    LOG.debug("Fallback to string when handling the unhandled JDBCType in Vertx " + descriptor);
-    return Optional.ofNullable(cast(valueProvider.apply(null))).map(Object::toString).orElse(null);
+    // fallback
+    return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
   }
 
   /**
