@@ -35,7 +35,7 @@ public class JDBCCustomTXIsolationTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.h2());
+    client = JDBCClient.create(vertx, DBConfigs.h2(JDBCCustomTXIsolationTest.class));
   }
 
   @Test

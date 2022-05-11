@@ -47,13 +47,13 @@ public class JDBCClientTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    resetDb();
+    resetDb(JDBCClientTest.class);
   }
 
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.hsqldb());
+    client = JDBCClient.create(vertx, DBConfigs.hsqldb(JDBCClientTest.class));
   }
 
   @Test

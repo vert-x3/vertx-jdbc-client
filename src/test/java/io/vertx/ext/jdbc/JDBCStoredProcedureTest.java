@@ -58,7 +58,7 @@ public class JDBCStoredProcedureTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    Connection conn = DriverManager.getConnection(DBConfigs.hsqldb().getString("url"));
+    Connection conn = DriverManager.getConnection(DBConfigs.hsqldb(JDBCStoredProcedureTest.class).getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }
@@ -67,7 +67,7 @@ public class JDBCStoredProcedureTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.hsqldb());
+    client = JDBCClient.create(vertx, DBConfigs.hsqldb(JDBCStoredProcedureTest.class));
   }
 
   @Test

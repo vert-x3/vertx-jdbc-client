@@ -12,11 +12,13 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.data.MyObject;
 import io.vertx.jdbcclient.data.MyObjectRowMapper;
 import io.vertx.sqlclient.templates.SqlTemplate;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@RunWith(VertxUnitRunner.class)
 public class SqlClientTemplatesTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()

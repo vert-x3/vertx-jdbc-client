@@ -12,7 +12,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
-@RunWith(VertxUnitRunner.class)
 public class ClientTestBase {
 
 //  @Rule
@@ -23,14 +22,14 @@ public class ClientTestBase {
 
   @Before
   public void setUp() throws Exception {
-    JDBCClientTestBase.resetDb();
+    JDBCClientTestBase.resetDb(ClientTestBase.class);
     vertx = Vertx.vertx();
     client = JDBCPool.pool(vertx, connectOptions(), poolOptions());
   }
 
   protected JDBCConnectOptions connectOptions() {
     return new JDBCConnectOptions()
-      .setJdbcUrl(DBConfigs.hsqldb().getString("url"));
+      .setJdbcUrl(DBConfigs.hsqldb(ClientTestBase.class).getString("url"));
   }
 
   protected PoolOptions poolOptions() {

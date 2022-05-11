@@ -18,9 +18,11 @@ package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -29,6 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@RunWith(VertxUnitRunner.class)
 public class JDBCPoolStoredProceduresTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()

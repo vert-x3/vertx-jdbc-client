@@ -33,7 +33,7 @@ public class JDBCStoredProcedure2Test extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.mysql());
+    client = JDBCClient.create(vertx, DBConfigs.mysql(JDBCStoredProcedure2Test.class));
   }
 
   /**

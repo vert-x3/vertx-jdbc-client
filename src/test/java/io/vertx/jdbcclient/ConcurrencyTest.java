@@ -3,11 +3,14 @@ package io.vertx.jdbcclient;
 import io.vertx.core.Context;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.PoolOptions;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @Ignore
+@RunWith(VertxUnitRunner.class)
 public class ConcurrencyTest extends ClientTestBase {
 
   //TODO: H2 v1.4.200 remove MULTI_THREADED

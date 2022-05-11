@@ -19,9 +19,11 @@ package io.vertx.jdbcclient;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.*;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@RunWith(VertxUnitRunner.class)
 public class JDBCPoolTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()
@@ -380,14 +383,14 @@ public class JDBCPoolTest extends ClientTestBase {
         )
       );
   }
-  
+
   /**
    * This test checks if a connections is returned to the connection pool when the according queries is failing.
-   * 
+   *
    * <p>The superclass {@link io.vertx.jdbcclient.ClientTestBase} configures a pool with max size 1 (see {@link io.vertx.jdbcclient.ClientTestBase#poolOptions()}).
-   * In this test two failing queries created by {@link io.vertx.sqlclient.Pool#query(String)} are executed. 
-   * The first one will fail with a {@link java.sql.SQLSyntaxErrorException}. 
-   * If the according connection is returned to the pool, the second query will fail immediately with the same {@link java.sql.SQLSyntaxErrorException}. 
+   * In this test two failing queries created by {@link io.vertx.sqlclient.Pool#query(String)} are executed.
+   * The first one will fail with a {@link java.sql.SQLSyntaxErrorException}.
+   * If the according connection is returned to the pool, the second query will fail immediately with the same {@link java.sql.SQLSyntaxErrorException}.
    * If the according connection is not closed, the pool will be exhausted and an according {@link java.sql.SQLException} is thrown after acquisition timeout.</p>
    */
   @Test
@@ -414,7 +417,7 @@ public class JDBCPoolTest extends ClientTestBase {
   }
 
   /**
-   * Same as {@link io.vertx.jdbcclient.JDBCPoolTest#testConnectionReturnedToPoolOnFailingQueryExecution(TestContext)} but uses queries created by 
+   * Same as {@link io.vertx.jdbcclient.JDBCPoolTest#testConnectionReturnedToPoolOnFailingQueryExecution(TestContext)} but uses queries created by
    * {@link io.vertx.sqlclient.Pool#withConnection(Function)} together with {@link io.vertx.sqlclient.SqlClient#query(String)}.
    */
   @Test

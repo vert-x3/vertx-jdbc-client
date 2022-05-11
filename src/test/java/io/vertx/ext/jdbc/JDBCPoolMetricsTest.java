@@ -26,7 +26,7 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
 
   private SQLClient getClient() {
     if (client == null) {
-      client = JDBCClient.createShared(vertx, DBConfigs.hsqldb().put("max_pool_size", 10), dataSourceName);
+      client = JDBCClient.createShared(vertx, DBConfigs.hsqldb(JDBCPoolMetricsTest.class).put("max_pool_size", 10), dataSourceName);
     }
     return client;
   }

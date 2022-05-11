@@ -32,7 +32,7 @@ public class JDBCQueryTimeoutTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.derby());
+    client = JDBCClient.create(vertx, DBConfigs.derby(JDBCQueryTimeoutTest.class));
   }
 
   @Test

@@ -28,10 +28,10 @@ public class CloseTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    resetDb();
+    resetDb(CloseTest.class);
   }
 
-  private static final JsonObject theConfig = DBConfigs.hsqldb();
+  private static final JsonObject theConfig = DBConfigs.hsqldb(CloseTest.class);
 
   public static class NonSharedClientVerticle extends AbstractVerticle {
     @Override
