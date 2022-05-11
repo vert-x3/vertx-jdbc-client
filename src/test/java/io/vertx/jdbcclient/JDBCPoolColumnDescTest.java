@@ -12,9 +12,11 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -24,6 +26,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(VertxUnitRunner.class)
 public class JDBCPoolColumnDescTest extends ClientTestBase {
 
   private static final JDBCConnectOptions options = new JDBCConnectOptions()

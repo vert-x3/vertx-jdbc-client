@@ -16,12 +16,12 @@ public class SharedClientTest extends JDBCClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    resetDb();
+    resetDb(SharedClientTest.class);
   }
 
   @Test(timeout = 60000)
   public void testDeadlock() throws Exception {
-    JsonObject config = DBConfigs.hsqldb();
+    JsonObject config = DBConfigs.hsqldb(SharedClientTest.class);
     int num = 6;
     int iter = 5000;
     AtomicInteger count = new AtomicInteger();

@@ -41,7 +41,7 @@ public class JDBCBatchTest extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.h2());
+    client = JDBCClient.create(vertx, DBConfigs.h2(JDBCBatchTest.class));
   }
 
   @Test

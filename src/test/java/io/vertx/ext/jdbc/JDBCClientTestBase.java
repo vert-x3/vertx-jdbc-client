@@ -67,8 +67,8 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     }
   }
 
-  public static void resetDb() throws Exception {
-    Connection conn = DriverManager.getConnection(DBConfigs.hsqldb().getString("url"));
+  public static void resetDb(Class<?> clazz) throws Exception {
+    Connection conn = DriverManager.getConnection(DBConfigs.hsqldb(clazz).getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }

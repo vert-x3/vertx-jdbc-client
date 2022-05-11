@@ -17,6 +17,7 @@ import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.sqlclient.Row;
@@ -25,6 +26,7 @@ import oracle.sql.TIMESTAMPTZ;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -40,6 +42,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+@RunWith(VertxUnitRunner.class)
 public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
 
   private static final List<String> SQL = new ArrayList<>();

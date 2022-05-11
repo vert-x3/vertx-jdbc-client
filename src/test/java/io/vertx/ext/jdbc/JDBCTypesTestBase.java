@@ -63,12 +63,12 @@ public class JDBCTypesTestBase extends JDBCClientTestBase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    client = JDBCClient.create(vertx, DBConfigs.derby().put("encoderCls", DerbyEncoder.class.getName()));
+    client = JDBCClient.create(vertx, DBConfigs.derby(JDBCTypesTestBase.class).put("encoderCls", DerbyEncoder.class.getName()));
   }
 
   @BeforeClass
   public static void createDb() throws Exception {
-    Connection conn = DriverManager.getConnection(DBConfigs.derby().getString("url"));
+    Connection conn = DriverManager.getConnection(DBConfigs.derby(JDBCTypesTestBase.class).getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }

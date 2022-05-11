@@ -1,6 +1,7 @@
 package io.vertx.jdbcclient;
 
 import com.zaxxer.hikari.HikariDataSource;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.h2.Driver;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,9 +13,11 @@ import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
 import io.vertx.ext.unit.TestContext;
+import org.junit.runner.RunWith;
 
 import javax.sql.DataSource;
 
+@RunWith(VertxUnitRunner.class)
 public class JDBCPoolInitTest extends ClientTestBase {
 
   @Before

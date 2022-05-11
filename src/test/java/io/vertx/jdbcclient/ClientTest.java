@@ -2,14 +2,17 @@ package io.vertx.jdbcclient;
 
 import io.vertx.core.Future;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.*;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@RunWith(VertxUnitRunner.class)
 public class ClientTest extends ClientTestBase {
 
   protected SqlConnection connection() throws Exception {

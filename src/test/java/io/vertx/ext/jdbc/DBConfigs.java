@@ -4,29 +4,29 @@ import io.vertx.core.json.JsonObject;
 
 public class DBConfigs {
 
-  public static JsonObject derby() {
+  public static JsonObject derby(Class<?> clazz) {
     return new JsonObject()
-            .put("url", "jdbc:derby:memory:myDB2;create=true")
+            .put("url", "jdbc:derby:memory:" + clazz.getSimpleName() + ";create=true")
             .put("driver_class", "org.apache.derby.jdbc.EmbeddedDriver");
   }
 
-  public static JsonObject h2() {
+  public static JsonObject h2(Class<?> clazz) {
     return new JsonObject()
-        .put("url", "jdbc:h2:mem:test?shutdown=true")
+        .put("url", "jdbc:h2:mem:" + clazz.getSimpleName() + "?shutdown=true;DB_CLOSE_DELAY=-1")
         .put("driver_class", "org.h2.Driver");
   }
 
-  public static JsonObject mysql() {
+  public static JsonObject mysql(Class<?> clazz) {
     return new JsonObject()
-        .put("url", "jdbc:mysql://localhost/test")
+        .put("url", "jdbc:mysql://localhost/" + clazz.getSimpleName())
         .put("driver_class", "com.mysql.jdbc.Driver")
         .put("user", "root")
         .put("password", "mypassword");
   }
 
-  public static JsonObject hsqldb() {
+  public static JsonObject hsqldb(Class<?> clazz) {
     return new JsonObject()
-      .put("url", "jdbc:hsqldb:mem:test?shutdown=true")
+      .put("url", "jdbc:hsqldb:mem:" + clazz.getSimpleName() + "?shutdown=true")
       .put("driver_class", "org.hsqldb.jdbcDriver");
   }
 }

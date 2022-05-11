@@ -49,7 +49,7 @@ public class JDBCCustomTypesTest extends JDBCClientTestBase {
 
   @Before
   public void setUp() throws Exception {
-    config = ConfigFactory.createConfigForH2();
+    config = DBConfigs.h2(JDBCCustomTypesTest.class);
     try (Connection conn = DriverManager.getConnection(config.getString("url"))) {
       for (String sql : SQL) {
         try (Statement statement = conn.createStatement()) {

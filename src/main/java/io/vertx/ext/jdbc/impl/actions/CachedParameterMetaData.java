@@ -1,154 +1,208 @@
 package io.vertx.ext.jdbc.impl.actions;
 
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
+
 import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CachedParameterMetaData implements ParameterMetaData {
 
-    class QueryMeta {
-        private final int param;
-        private Integer isNullable;
-        private Boolean isSigned;
-        private Integer getPrecision;
-        private Integer getScale;
-        private Integer getParameterType;
-        private String getParameterTypeName;
-        private String getParameterClassName;
-        private Integer getParameterMode;
+  private static final Logger LOG = LoggerFactory.getLogger(CachedParameterMetaData.class);
 
-        QueryMeta(int param) {
-            this.param = param;
+
+  class QueryMeta {
+    private final int param;
+    private Integer isNullable;
+    private Boolean isSigned;
+    private Integer getPrecision;
+    private Integer getScale;
+    private Integer getParameterType;
+    private String getParameterTypeName;
+    private String getParameterClassName;
+    private Integer getParameterMode;
+
+    QueryMeta(int param) {
+      this.param = param;
+    }
+
+    int isNullable() throws SQLException {
+      if (isNullable == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        isNullable = delegate.isNullable(param);
+      }
+      return isNullable;
+    }
 
-        int isNullable() throws SQLException {
-            if (isNullable == null) {
-                isNullable = delegate.isNullable(param);
-            }
-            return isNullable;
+    boolean isSigned() throws SQLException {
+      if (delegate == null) {
+        throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
+      }
+      if (isSigned == null) {
+        isSigned = delegate.isSigned(param);
+      }
+      return isSigned;
+    }
+
+    int getPrecision() throws SQLException {
+      if (getPrecision == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getPrecision = delegate.getPrecision(param);
+      }
+      return getPrecision;
+    }
 
-        boolean isSigned() throws SQLException {
-            if (isSigned == null) {
-                isSigned = delegate.isSigned(param);
-            }
-            return isSigned;
+    int getScale() throws SQLException {
+      if (getScale == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getScale = delegate.getScale(param);
+      }
+      return getScale;
+    }
 
-        int getPrecision() throws SQLException {
-            if (getPrecision == null) {
-                getPrecision = delegate.getPrecision(param);
-            }
-            return getPrecision;
+    int getParameterType() throws SQLException {
+      if (getParameterType == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getParameterType = delegate.getParameterType(param);
+      }
+      return getParameterType;
+    }
 
-        int getScale() throws SQLException {
-            if (getScale == null) {
-                getScale = delegate.getScale(param);
-            }
-            return getScale;
+    String getParameterTypeName() throws SQLException {
+      if (getParameterTypeName == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getParameterTypeName = delegate.getParameterTypeName(param);
+      }
+      return getParameterTypeName;
+    }
 
-        int getParameterType() throws SQLException {
-            if (getParameterType == null) {
-                getParameterType = delegate.getParameterType(param);
-            }
-            return getParameterType;
+    String getParameterClassName() throws SQLException {
+      if (getParameterClassName == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getParameterClassName = delegate.getParameterClassName(param);
+      }
+      return getParameterClassName;
+    }
 
-        String getParameterTypeName() throws SQLException {
-            if (getParameterTypeName == null) {
-                getParameterTypeName = delegate.getParameterTypeName(param);
-            }
-            return getParameterTypeName;
+    int getParameterMode() throws SQLException {
+      if (getParameterMode == null) {
+        if (delegate == null) {
+          throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
         }
+        getParameterMode = delegate.getParameterMode(param);
+      }
+      return getParameterMode;
+    }
+  }
 
-        String getParameterClassName() throws SQLException {
-            if (getParameterClassName == null) {
-                getParameterClassName = delegate.getParameterClassName(param);
-            }
-            return getParameterClassName;
-        }
+  private final ParameterMetaData delegate;
+  private final Map<Integer, QueryMeta> queryMetaMap = new HashMap<>();
 
-        int getParameterMode() throws SQLException {
-            if (getParameterMode == null) {
-                getParameterMode = delegate.getParameterMode(param);
-            }
-            return getParameterMode;
-        }
+  public CachedParameterMetaData(PreparedStatement statement) {
+    ParameterMetaData metaData;
+    try {
+      metaData = statement.getParameterMetaData();
+    } catch (SQLFeatureNotSupportedException e) {
+      // OK, not really but we can deal with it...
+      metaData = null;
+    } catch (SQLException e) {
+      // the correct way probably would be the catch the operation not supported, but not all drivers
+      // report the specific exception
+      LOG.debug("Driver doesn't support getParameterMetaData()", e);
+      metaData = null;
     }
 
-    private final ParameterMetaData delegate;
-    private final Map<Integer, QueryMeta> queryMetaMap = new HashMap<>();
+    this.delegate = metaData;
+  }
 
-    public CachedParameterMetaData(ParameterMetaData delegate) {
-        this.delegate = delegate;
+  private QueryMeta getQueryMeta(int param) {
+    QueryMeta meta = queryMetaMap.get(param);
+    if (meta == null) {
+      meta = new QueryMeta(param);
+      queryMetaMap.put(param, meta);
     }
+    return meta;
+  }
 
-    private QueryMeta getQueryMeta(int param) {
-        QueryMeta meta = queryMetaMap.get(param);
-        if (meta == null) {
-            meta = new QueryMeta(param);
-            queryMetaMap.put(param, meta);
-        }
-        return meta;
+  @Override
+  public int getParameterCount() throws SQLException {
+    if (delegate == null) {
+      throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
     }
+    return delegate.getParameterCount();
+  }
 
-    @Override
-    public int getParameterCount() throws SQLException {
-        return delegate.getParameterCount();
-    }
+  @Override
+  public int isNullable(int param) throws SQLException {
+    //noinspection MagicConstant
+    return getQueryMeta(param).isNullable();
+  }
 
-    @Override
-    public int isNullable(int param) throws SQLException {
-        //noinspection MagicConstant
-        return getQueryMeta(param).isNullable();
-    }
+  @Override
+  public boolean isSigned(int param) throws SQLException {
+    return getQueryMeta(param).isSigned();
+  }
 
-    @Override
-    public boolean isSigned(int param) throws SQLException {
-        return getQueryMeta(param).isSigned();
-    }
+  @Override
+  public int getPrecision(int param) throws SQLException {
+    return getQueryMeta(param).getPrecision();
+  }
 
-    @Override
-    public int getPrecision(int param) throws SQLException {
-        return getQueryMeta(param).getPrecision();
-    }
+  @Override
+  public int getScale(int param) throws SQLException {
+    return getQueryMeta(param).getScale();
+  }
 
-    @Override
-    public int getScale(int param) throws SQLException {
-        return getQueryMeta(param).getScale();
-    }
+  @Override
+  public int getParameterType(int param) throws SQLException {
+    return getQueryMeta(param).getParameterType();
+  }
 
-    @Override
-    public int getParameterType(int param) throws SQLException {
-        return getQueryMeta(param).getParameterType();
-    }
+  @Override
+  public String getParameterTypeName(int param) throws SQLException {
+    return getQueryMeta(param).getParameterTypeName();
+  }
 
-    @Override
-    public String getParameterTypeName(int param) throws SQLException {
-        return getQueryMeta(param).getParameterTypeName();
-    }
+  @Override
+  public String getParameterClassName(int param) throws SQLException {
+    return getQueryMeta(param).getParameterClassName();
+  }
 
-    @Override
-    public String getParameterClassName(int param) throws SQLException {
-        return getQueryMeta(param).getParameterClassName();
-    }
+  @Override
+  public int getParameterMode(int param) throws SQLException {
+    //noinspection MagicConstant
+    return getQueryMeta(param).getParameterMode();
+  }
 
-    @Override
-    public int getParameterMode(int param) throws SQLException {
-        //noinspection MagicConstant
-        return getQueryMeta(param).getParameterMode();
+  @Override
+  public <T> T unwrap(Class<T> iface) throws SQLException {
+    if (delegate == null) {
+      throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
     }
+    return delegate.unwrap(iface);
+  }
 
-    @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
-        return delegate.unwrap(iface);
+  @Override
+  public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    if (delegate == null) {
+      throw new SQLFeatureNotSupportedException("getParameterMetaData() unsupported by JDBC driver");
     }
-
-    @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return delegate.isWrapperFor(iface);
-    }
+    return delegate.isWrapperFor(iface);
+  }
 }

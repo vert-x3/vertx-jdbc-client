@@ -20,15 +20,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.JDBCType;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,7 +66,7 @@ public abstract class AbstractJDBCAction<T> {
   protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
 
     List<String> columnNames = new ArrayList<>();
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResult(rs);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(rs.getMetaData());
     ResultSetMetaData metaData = rs.getMetaData();
     int cols = metaData.getColumnCount();
     for (int i = 1; i <= cols; i++) {
@@ -100,7 +92,8 @@ public abstract class AbstractJDBCAction<T> {
   }
 
   protected void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
+    ParameterMetaData md = new CachedParameterMetaData(statement);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
     fillStatement(statement, in, provider);
   }
 
@@ -115,7 +108,8 @@ public abstract class AbstractJDBCAction<T> {
   }
 
   protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameter(statement);
+    ParameterMetaData md = new CachedParameterMetaData(statement);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
     fillStatement(statement, in, out, provider);
   }
 

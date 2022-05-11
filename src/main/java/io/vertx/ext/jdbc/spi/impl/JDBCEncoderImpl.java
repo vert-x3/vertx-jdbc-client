@@ -49,13 +49,17 @@ public class JDBCEncoderImpl implements JDBCEncoder {
     if (javaValue == null) {
       return null;
     }
-    if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
-      return debug(descriptor, encodeDateTime(descriptor, javaValue));
+    if (descriptor != null) {
+      if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
+        return debug(descriptor, encodeDateTime(descriptor, javaValue));
+      }
+      if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
+        return debug(descriptor, encodeSpecificVendorType(descriptor, javaValue));
+      }
+      return debug(descriptor, encodeData(descriptor, javaValue));
+    } else {
+      return javaValue;
     }
-    if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
-      return debug(descriptor, encodeSpecificVendorType(descriptor, javaValue));
-    }
-    return debug(descriptor, encodeData(descriptor, javaValue));
   }
 
   /**
