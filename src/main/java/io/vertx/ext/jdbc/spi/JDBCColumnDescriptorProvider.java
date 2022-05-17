@@ -16,12 +16,12 @@
 
 package io.vertx.ext.jdbc.spi;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.jdbcclient.impl.actions.JDBCPropertyAccessor;
 
-import java.sql.JDBCType;
 import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
@@ -32,6 +32,22 @@ import java.sql.SQLException;
  */
 @FunctionalInterface
 public interface JDBCColumnDescriptorProvider {
+
+  /**
+   * @deprecated Implementations should prefer {@link #fromParameterMetaData(ParameterMetaData)}
+   * Create provider by parameter statement
+   *
+   * @param statement the prepared statement
+   * @return a new {@code JDBCTypeProvider} instance
+   * @see java.sql.PreparedStatement
+   */
+  @Deprecated
+  static JDBCColumnDescriptorProvider fromParameter(PreparedStatement statement) {
+    return col -> JDBCColumnDescriptor.create(() -> null,
+      JDBCPropertyAccessor.jdbcType(() -> statement.getParameterMetaData().getParameterType(col)),
+      JDBCPropertyAccessor.create(() -> statement.getParameterMetaData().getParameterTypeName(col)),
+      JDBCPropertyAccessor.create(() -> statement.getParameterMetaData().getParameterClassName(col)));
+  }
 
   /**
    * Create provider by the parameter metadata
@@ -48,6 +64,22 @@ public interface JDBCColumnDescriptorProvider {
   }
 
   /**
+   * @deprecated Implementations should prefer {@link #fromResultMetaData(ResultSetMetaData)}
+   * Create provider by result set metadata
+   *
+   * @param rs the result set
+   * @return a new {@code JDBCTypeProvider} instance
+   * @see java.sql.ResultSetMetaData
+   */
+  @Deprecated
+  static JDBCColumnDescriptorProvider fromResult(ResultSet rs) {
+    return col -> JDBCColumnDescriptor.create(JDBCPropertyAccessor.create(() -> rs.getMetaData().getColumnLabel(col)),
+      JDBCPropertyAccessor.jdbcType(() -> rs.getMetaData().getColumnType(col)),
+      JDBCPropertyAccessor.create(() -> rs.getMetaData().getColumnTypeName(col)),
+      JDBCPropertyAccessor.create(() -> rs.getMetaData().getColumnClassName(col)));
+  }
+
+  /**
    * Create provider by result set metadata
    *
    * @param metaData the result set
@@ -59,15 +91,6 @@ public interface JDBCColumnDescriptorProvider {
       JDBCPropertyAccessor.jdbcType(() -> metaData.getColumnType(col)),
       JDBCPropertyAccessor.create(() -> metaData.getColumnTypeName(col)),
       JDBCPropertyAccessor.create(() -> metaData.getColumnClassName(col)));
-  }
-
-  /**
-   * Create provider that does not perform any action
-   *
-   * @return a new {@code JDBCTypeProvider} instance
-   */
-  static JDBCColumnDescriptorProvider nullProvider() {
-    return col -> null;
   }
 
   /**
