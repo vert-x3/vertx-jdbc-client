@@ -11,46 +11,39 @@
 
 package io.vertx.jdbcclient;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.RunTestOnContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
-import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.desc.ColumnDescriptor;
-import oracle.sql.TIMESTAMPTZ;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.JDBCType;
 import java.sql.SQLException;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 @Ignore("We can't run Oracle on CI")
-public class OracleRowIdTest extends ClientTestBase {
+@RunWith(VertxUnitRunner.class)
+public class OracleRowIdTest {
+
+  // docker run --rm -p 1521:1521 -e ORACLE_PASSWORD=vertx gvenzl/oracle-xe
+
+  @ClassRule
+  public static final RunTestOnContext rule = new RunTestOnContext();
 
   private static final List<String> SQL = new ArrayList<>();
 
-  private JDBCConnectOptions options;
+  private JDBCPool client;
 
   static {
     SQL.add("DROP TABLE vegetables");
@@ -64,7 +57,7 @@ public class OracleRowIdTest extends ClientTestBase {
   @Before
   public void setUp() throws Exception {
     String jdbcUrl = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
-    String username = "sys as sysdba";
+    String username = "system";
     String password = "vertx";
     Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
     for (String sql : SQL) {
@@ -73,18 +66,16 @@ public class OracleRowIdTest extends ClientTestBase {
       } catch (SQLException ignore) {
       }
     }
-    options = new JDBCConnectOptions()
-      .setJdbcUrl(jdbcUrl)
-      .setUser(username)
-      .setPassword(password);
-    vertx = Vertx.vertx();
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions());
-    client = JDBCPool.pool(vertx, provider);
-  }
 
-  @Override
-  protected JDBCConnectOptions connectOptions() {
-    return options;
+    DataSourceProvider provider = new AgroalCPDataSourceProvider(
+      new JDBCConnectOptions()
+        .setJdbcUrl(jdbcUrl)
+        .setUser(username)
+        .setPassword(password),
+      new PoolOptions()
+        .setMaxSize(1));
+
+    client = JDBCPool.pool(rule.vertx(), provider);
   }
 
   @Test
@@ -106,7 +97,7 @@ public class OracleRowIdTest extends ClientTestBase {
           .onFailure(should::fail)
           .onSuccess(rows1 -> {
             for (Row row : rows1) {
-                // work...
+              // work...
             }
             test.complete();
           });

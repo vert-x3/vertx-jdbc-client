@@ -15,6 +15,7 @@ import io.vertx.sqlclient.impl.ArrayTuple;
 import io.vertx.sqlclient.impl.RowDesc;
 
 import java.util.List;
+import java.util.Objects;
 
 public class JDBCRow extends ArrayTuple implements Row {
 
@@ -33,9 +34,7 @@ public class JDBCRow extends ArrayTuple implements Row {
 
   @Override
   public int getColumnIndex(String name) {
-    if (name == null) {
-      throw new NullPointerException();
-    }
+    Objects.requireNonNull(name, "'name' cannot be null");
     return desc.columnNames().indexOf(name);
   }
 
@@ -51,14 +50,23 @@ public class JDBCRow extends ArrayTuple implements Row {
   @SuppressWarnings({"rawtypes", "unchecked"})
   private Object getEnum(Class enumType, int position) {
     Object val = getValue(position);
-    if (val instanceof String) {
-      return Enum.valueOf(enumType, (String) val);
-    } else if (val instanceof Number) {
-      int ordinal = ((Number) val).intValue();
-      if (ordinal >= 0) {
-        Object[] constants = enumType.getEnumConstants();
-        if (ordinal < constants.length) {
-          return constants[ordinal];
+    if (val != null) {
+      // val instanceof enumType
+      if (val.getClass().isAssignableFrom(enumType)) {
+        return enumType.cast(val);
+      }
+
+      if (val instanceof String) {
+        return Enum.valueOf(enumType, (String) val);
+      }
+
+      if (val instanceof Number) {
+        int ordinal = ((Number) val).intValue();
+        if (ordinal >= 0) {
+          Object[] constants = enumType.getEnumConstants();
+          if (ordinal < constants.length) {
+            return constants[ordinal];
+          }
         }
       }
     }
