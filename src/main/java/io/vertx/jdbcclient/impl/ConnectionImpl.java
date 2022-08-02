@@ -19,18 +19,14 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.actions.*;
 import io.vertx.sqlclient.impl.Connection;
 import io.vertx.sqlclient.impl.PreparedStatement;
 import io.vertx.sqlclient.impl.QueryResultHandler;
-import io.vertx.sqlclient.impl.command.CommandBase;
-import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
-import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
-import io.vertx.sqlclient.impl.command.PrepareStatementCommand;
-import io.vertx.sqlclient.impl.command.SimpleQueryCommand;
-import io.vertx.sqlclient.impl.command.TxCommand;
+import io.vertx.sqlclient.impl.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 
 public class ConnectionImpl implements Connection {
@@ -126,10 +122,10 @@ public class ConnectionImpl implements Connection {
   }
 
   private <R> Future<Boolean> handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler) {
-    Future<JDBCResponse<R>> fut = conn.schedule(action);
-    fut.onSuccess(ar -> {
-      ar.handle(handler);
-    });
-    return fut.map(false);
+    return conn.schedule(action)
+      .map(response -> {
+        response.handle(handler);
+        return false;
+      });
   }
 }
