@@ -43,6 +43,10 @@ public class ConnectionImpl implements Connection {
     this.sqlOptions = sqlOptions;
   }
 
+  public java.sql.Connection getJDBCConnection() {
+    return conn.unwrap();
+  }
+
   @Override
   public SocketAddress server() {
     throw new UnsupportedOperationException("Not yet implemented");
