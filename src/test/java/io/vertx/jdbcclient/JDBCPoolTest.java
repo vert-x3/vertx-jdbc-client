@@ -16,6 +16,7 @@
 
 package io.vertx.jdbcclient;
 
+import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -31,6 +32,8 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(VertxUnitRunner.class)
 public class JDBCPoolTest extends ClientTestBase {
@@ -443,5 +446,15 @@ public class JDBCPoolTest extends ClientTestBase {
               .onSuccess(rows -> should.fail("Broken SQL should fail")));
       })
       .onSuccess(rows -> should.fail("Broken SQL should fail")));
+  }
+
+  @Test
+  public void testUnwrapToJDBCConnection(TestContext should) {
+    client
+      .getConnection()
+      .onComplete(should.asyncAssertSuccess(conn -> {
+      Connection c = JDBCUtils.unwrap(conn);
+      assertNotNull(c);
+    }));
   }
 }
