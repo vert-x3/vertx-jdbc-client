@@ -7,6 +7,7 @@ import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.test.fakemetrics.FakePoolMetrics;
@@ -161,6 +162,41 @@ public class JDBCPoolInitTest extends ClientTestBase {
     simpleAssertSuccess(should)
       .onComplete(should.asyncAssertSuccess(nil -> {
         should.assertTrue(poolMetricsPoolName.matches("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$"));
+      }));
+  }
+
+  @Test
+  public void test_init_pool_with_jdbc_connect_options_and_pool_options_uses_pool_name_as_datasource_name(TestContext should) {
+    final String poolName = "customPoolName";
+
+    client = JDBCPool.pool(
+      vertx,
+      new JDBCConnectOptions().setJdbcUrl("jdbc:h2:mem:testDB?shutdown=true"),
+      new PoolOptions().setName(poolName)
+    );
+
+    simpleAssertSuccess(should)
+      .onComplete(should.asyncAssertSuccess(nil -> {
+        should.assertEquals(poolName, poolMetricsPoolName);
+      }));
+  }
+
+  @Test
+  public void test_init_pool_with_datasource_provider_uses_datasource_name_from_provider_config(TestContext should) {
+    final String datasourceName = "customDatasourceName";
+
+    final JsonObject config = new JsonObject()
+      .put("provider_class", AgroalCPDataSourceProvider.class.getName())
+      .put("principal", "")
+      .put("credential", "")
+      .put("jdbcUrl", "jdbc:h2:mem:testDB?shutdown=true")
+      .put("datasourceName", datasourceName);
+
+    client = JDBCPool.pool(vertx, DataSourceProvider.create(config));
+
+    simpleAssertSuccess(should)
+      .onComplete(should.asyncAssertSuccess(nil -> {
+        should.assertEquals(datasourceName, poolMetricsPoolName);
       }));
   }
 }

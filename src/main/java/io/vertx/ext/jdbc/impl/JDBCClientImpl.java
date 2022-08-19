@@ -100,11 +100,22 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
    * Create client with shared datasource.
    */
   public JDBCClientImpl(Vertx vertx, DataSourceProvider dataSourceProvider) {
+    this(
+      vertx,
+      dataSourceProvider,
+      dataSourceProvider.getInitialConfig().getString("datasourceName", DEFAULT_DS_NAME)
+    );
+  }
+
+  /**
+   * Create client with shared datasource.
+   */
+  public JDBCClientImpl(Vertx vertx, DataSourceProvider dataSourceProvider, final String datasourceName) {
     Objects.requireNonNull(vertx);
     Objects.requireNonNull(dataSourceProvider);
 
     this.vertx = (VertxInternal) vertx;
-    this.datasourceName = UUID.randomUUID().toString();
+    this.datasourceName = datasourceName;
     this.config = dataSourceProvider.getInitialConfig();
     holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
     holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(dataSourceProvider) : h.increment());
