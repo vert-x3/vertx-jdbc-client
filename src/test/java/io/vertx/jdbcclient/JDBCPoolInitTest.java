@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(VertxUnitRunner.class)
 public class JDBCPoolInitTest extends ClientTestBase {
 
-  private volatile String poolMetricsPoolName;
+  private String poolMetricsPoolName;
 
   @Before
   public void setUp() throws Exception {
