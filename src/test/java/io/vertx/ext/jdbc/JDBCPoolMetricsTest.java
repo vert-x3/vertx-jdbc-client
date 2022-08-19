@@ -2,7 +2,6 @@ package io.vertx.ext.jdbc;
 
 import io.vertx.core.VertxOptions;
 import io.vertx.core.metrics.MetricsOptions;
-import io.vertx.core.metrics.impl.DummyVertxMetrics;
 import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
@@ -38,20 +37,15 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
   @Override
   protected VertxOptions getOptions() {
     MetricsOptions options = new MetricsOptions().setEnabled(true);
-    options.setFactory(new VertxMetricsFactory() {
+    options.setFactory(options1 -> new VertxMetrics() {
       @Override
-      public VertxMetrics metrics(VertxOptions options) {
-        return new DummyVertxMetrics() {
-          @Override
-          public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
-            if (poolType.equals("datasource")) {
-              assertEquals("datasource", poolType);
-              return new FakePoolMetrics(poolName, maxPoolSize);
-            } else {
-              return super.createPoolMetrics(poolType, poolName, maxPoolSize);
-            }
-          }
-        };
+      public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
+        if (poolType.equals("datasource")) {
+          assertEquals("datasource", poolType);
+          return new FakePoolMetrics(poolName, maxPoolSize);
+        } else {
+          return VertxMetrics.super.createPoolMetrics(poolType, poolName, maxPoolSize);
+        }
       }
     });
     return new VertxOptions().setMetricsOptions(options);
