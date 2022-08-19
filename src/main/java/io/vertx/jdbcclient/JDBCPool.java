@@ -105,7 +105,6 @@ public interface JDBCPool extends Pool {
     String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
     String user = config.getString("username", config.getString("user"));
     String database = config.getString("database");
-    String datasourceName = config.getString("datasourceName", UUID.randomUUID().toString());
     if (context.tracer() != null) {
       Objects.requireNonNull(jdbcUrl, "data source url config cannot be null");
       Objects.requireNonNull(user, "data source user config cannot be null");
@@ -113,7 +112,7 @@ public interface JDBCPool extends Pool {
     }
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, dataSourceProvider, datasourceName),
+      new JDBCClientImpl(vertx, dataSourceProvider),
       new SQLOptions(config),
       context.tracer() == null ?
         null :

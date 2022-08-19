@@ -103,7 +103,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     this(
       vertx,
       dataSourceProvider,
-      dataSourceProvider.getInitialConfig().getString("datasourceName", DEFAULT_DS_NAME)
+      dataSourceProvider.getInitialConfig().getString("datasourceName", UUID.randomUUID().toString())
     );
   }
 
