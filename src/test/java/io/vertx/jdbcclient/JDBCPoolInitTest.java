@@ -1,7 +1,15 @@
 package io.vertx.jdbcclient;
 
 import com.zaxxer.hikari.HikariDataSource;
+import io.vertx.core.Future;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.metrics.PoolMetrics;
+import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.test.fakemetrics.FakePoolMetrics;
 import org.h2.Driver;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,14 +23,34 @@ import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
 import io.vertx.ext.unit.TestContext;
 import org.junit.runner.RunWith;
 
-import javax.sql.DataSource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(VertxUnitRunner.class)
 public class JDBCPoolInitTest extends ClientTestBase {
 
+  private volatile String poolMetricsPoolName;
+
   @Before
   public void setUp() throws Exception {
-    vertx = Vertx.vertx();
+    poolMetricsPoolName = null;
+
+    final MetricsOptions metricsOptions = new MetricsOptions().setEnabled(true);
+    metricsOptions.setFactory(vertxOptions -> new VertxMetrics() {
+      @Override
+      public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
+        if (poolType.equals("datasource")) {
+          assertEquals("datasource", poolType);
+          poolMetricsPoolName = poolName;
+          return new FakePoolMetrics(poolName, maxPoolSize);
+        } else {
+          return VertxMetrics.super.createPoolMetrics(poolType, poolName, maxPoolSize);
+        }
+      }
+    });
+
+    final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
+    vertx = Vertx.vertx(vertxOptions);
   }
 
   @Test
@@ -80,10 +108,11 @@ public class JDBCPoolInitTest extends ClientTestBase {
     simpleAssertSuccess(should);
   }
 
-  private void simpleAssertSuccess(TestContext should) {
-    client.query("SELECT * FROM INFORMATION_SCHEMA.TABLES")
+  private Future<Void> simpleAssertSuccess(TestContext should) {
+    return client.query("SELECT * FROM INFORMATION_SCHEMA.TABLES")
           .execute()
-          .onComplete(should.asyncAssertSuccess(rows -> should.assertTrue(rows.size() > 0)));
+          .onComplete(should.asyncAssertSuccess(rows -> should.assertTrue(rows.size() > 0)))
+          .map((ignored) -> null);
   }
 
   @Test
@@ -106,5 +135,32 @@ public class JDBCPoolInitTest extends ClientTestBase {
     ds.setJdbcUrl("jdbc:h2:mem:testDB?shutdown=true");
     client = JDBCPool.pool(vertx, ds, config);
     simpleAssertSuccess(should);
+  }
+
+  @Test
+  public void test_init_pool_with_datasource_name(TestContext should) {
+    final String datasourceName = "customDatasourceName";
+
+    final JsonObject config = new JsonObject()
+      .put("url", "jdbc:h2:mem:testDB?shutdown=true")
+      .put("datasourceName", datasourceName);
+
+    client = JDBCPool.pool(vertx, config);
+    simpleAssertSuccess(should)
+      .onComplete(should.asyncAssertSuccess(nil -> {
+        should.assertEquals(datasourceName, poolMetricsPoolName);
+      }));
+  }
+
+  @Test
+  public void test_init_pool_without_datasource_name_uses_uuid_as_datasource_name(TestContext should) {
+    final JsonObject config = new JsonObject()
+      .put("url", "jdbc:h2:mem:testDB?shutdown=true");
+
+    client = JDBCPool.pool(vertx, config);
+    simpleAssertSuccess(should)
+      .onComplete(should.asyncAssertSuccess(nil -> {
+        should.assertTrue(poolMetricsPoolName.matches("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$"));
+      }));
   }
 }
