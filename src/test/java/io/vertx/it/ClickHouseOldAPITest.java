@@ -36,6 +36,7 @@ public class ClickHouseOldAPITest {
 
   @After
   public void after(TestContext ctx) {
+    System.out.println(container.getLogs());
     container.stop();
     vertx.close(ctx.asyncAssertSuccess());
     client.close(ctx.asyncAssertSuccess());
