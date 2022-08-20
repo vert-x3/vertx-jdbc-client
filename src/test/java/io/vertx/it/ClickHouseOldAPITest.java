@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.ClickHouseContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @RunWith(VertxUnitRunner.class)
 public class ClickHouseOldAPITest {
@@ -25,7 +26,7 @@ public class ClickHouseOldAPITest {
   @Before
   public void setUp() {
     vertx = Vertx.vertx();
-    container = new ClickHouseContainer("yandex/clickhouse-server:20.8");
+    container = new ClickHouseContainer("clickhouse/clickhouse-server:22.8-alpine");
     container.withInitScript("init-clickhouse.sql");
     container.start();
     JsonObject config = new JsonObject()
