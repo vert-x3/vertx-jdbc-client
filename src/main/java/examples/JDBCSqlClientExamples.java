@@ -24,7 +24,14 @@ import java.time.Instant;
 @Source
 public class JDBCSqlClientExamples {
 
-  public void exampleCreateDefault(Vertx vertx, JsonObject config) {
+  public void exampleCreateDefault(Vertx vertx) {
+    final JsonObject config = new JsonObject()
+      .put("jdbcUrl", "jdbc:h2:~/test")
+      .put("datasourceName", "pool-name")
+      .put("username", "sa")
+      .put("password", "")
+      .put("max_pool_size", 16);
+
     JDBCPool pool = JDBCPool.pool(vertx, config);
   }
 
@@ -43,6 +50,7 @@ public class JDBCSqlClientExamples {
       // configure the pool
       new PoolOptions()
         .setMaxSize(16)
+        .setName("pool-name")
     );
 
   }

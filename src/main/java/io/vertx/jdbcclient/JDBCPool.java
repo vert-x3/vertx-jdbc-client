@@ -62,7 +62,7 @@ public interface JDBCPool extends Pool {
 
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions)),
+      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions), poolOptions.getName()),
       connectOptions,
       context.tracer() == null ?
         null :
@@ -80,9 +80,10 @@ public interface JDBCPool extends Pool {
     final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
     String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
     String user = config.getString("username", config.getString("user"));
+    String datasourceName = config.getString("datasourceName", UUID.randomUUID().toString());
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, config, UUID.randomUUID().toString()),
+      new JDBCClientImpl(vertx, config, datasourceName),
       new SQLOptions(config),
       context.tracer() == null ?
         null :

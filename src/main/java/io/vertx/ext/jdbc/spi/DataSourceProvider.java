@@ -18,6 +18,7 @@ package io.vertx.ext.jdbc.spi;
 
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.UUID;
 import javax.sql.DataSource;
 
 import io.vertx.core.json.JsonObject;
