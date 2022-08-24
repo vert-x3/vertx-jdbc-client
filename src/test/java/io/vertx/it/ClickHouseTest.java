@@ -34,10 +34,14 @@ public class ClickHouseTest {
   }
 
   @After
-  public void after(TestContext ctx) {
-    container.stop();
-    vertx.close(ctx.asyncAssertSuccess());
-    client.close(ctx.asyncAssertSuccess());
+  public void after(TestContext should) {
+    Async cleanup = should.async();
+    client.close(should.asyncAssertSuccess(res1 -> {
+      vertx.close(should.asyncAssertSuccess(res2 -> {
+        container.close();
+        cleanup.complete();
+      }));
+    }));
   }
 
   @Test
