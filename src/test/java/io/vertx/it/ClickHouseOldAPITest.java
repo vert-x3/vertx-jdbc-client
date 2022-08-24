@@ -7,8 +7,6 @@ import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.sqlclient.Row;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,11 +33,14 @@ public class ClickHouseOldAPITest {
   }
 
   @After
-  public void after(TestContext ctx) {
-    System.out.println(container.getLogs());
-    container.stop();
-    vertx.close(ctx.asyncAssertSuccess());
-    client.close(ctx.asyncAssertSuccess());
+  public void after(TestContext should) {
+    Async cleanup = should.async();
+    client.close(should.asyncAssertSuccess(res1 -> {
+      vertx.close(should.asyncAssertSuccess(res2 -> {
+          container.close();
+          cleanup.complete();
+      }));
+    }));
   }
 
   @Test
