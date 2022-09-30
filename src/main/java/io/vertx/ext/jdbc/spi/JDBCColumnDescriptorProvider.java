@@ -57,7 +57,7 @@ public interface JDBCColumnDescriptorProvider {
    * @see java.sql.ResultSetMetaData
    */
   static JDBCColumnDescriptorProvider fromParameterMetaData(ParameterMetaData metaData) {
-    return col -> JDBCColumnDescriptor.create(() -> null,
+    return col -> JDBCColumnDescriptor.create(() -> Integer.toString(col - 1),
       JDBCPropertyAccessor.jdbcType(() -> metaData.getParameterType(col)),
       JDBCPropertyAccessor.create(() -> metaData.getParameterTypeName(col)),
       JDBCPropertyAccessor.create(() -> metaData.getParameterClassName(col)));

@@ -15,6 +15,7 @@
  */
 package io.vertx.jdbcclient.impl.actions;
 
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.sqlclient.impl.ParamDesc;
 import io.vertx.sqlclient.impl.PreparedStatement;
 import io.vertx.sqlclient.impl.RowDesc;
@@ -34,18 +35,19 @@ public class JDBCPreparedStatement implements PreparedStatement {
 
   public JDBCPreparedStatement(String sql, java.sql.PreparedStatement preparedStatement) throws SQLException {
 
-    List<String> columnNames = new ArrayList<>();
     ResultSetMetaData metaData = preparedStatement.getMetaData();
+    JDBCRowDesc rowDesc;
     if (metaData != null) {
       // Not a SELECT
       int cols = metaData.getColumnCount();
-      for (int i = 1; i <= cols; i++) {
-        columnNames.add(metaData.getColumnLabel(i));
-      }
+      JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
+      rowDesc = new JDBCRowDesc(provider, cols);
+    } else {
+      rowDesc = new JDBCRowDesc();
     }
 
     this.sql = sql;
-    this.rowDesc = new RowDesc(columnNames);
+    this.rowDesc = rowDesc;
     this.paramDesc = new ParamDesc();
     this.preparedStatement = preparedStatement;
   }
