@@ -23,6 +23,7 @@ import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+import io.vertx.sqlclient.Tuple;
 
 import java.sql.JDBCType;
 import java.sql.SQLException;
@@ -31,10 +32,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
+import java.util.function.Function;
 
 public class JDBCEncoderImpl implements JDBCEncoder {
 
@@ -45,21 +46,22 @@ public class JDBCEncoderImpl implements JDBCEncoder {
     return doEncode(provider.apply(pos), input.getValue(pos - 1));
   }
 
+  @Override
+  public Object encode(Tuple input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException {
+    return doEncode(provider.apply(pos), input.getValue(pos - 1));
+  }
+
   protected Object doEncode(JDBCColumnDescriptor descriptor, Object javaValue) {
     if (javaValue == null) {
       return null;
     }
-    if (descriptor != null) {
-      if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
-        return debug(descriptor, encodeDateTime(descriptor, javaValue));
-      }
-      if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
-        return debug(descriptor, encodeSpecificVendorType(descriptor, javaValue));
-      }
-      return debug(descriptor, encodeData(descriptor, javaValue));
-    } else {
-      return javaValue;
+    if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
+      return debug(descriptor, encodeDateTime(descriptor, javaValue));
     }
+    if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
+      return debug(descriptor, encodeSpecificVendorType(descriptor, javaValue));
+    }
+    return debug(descriptor, encodeData(descriptor, javaValue));
   }
 
   /**
@@ -72,35 +74,43 @@ public class JDBCEncoderImpl implements JDBCEncoder {
   protected Object encodeDateTime(JDBCColumnDescriptor descriptor, Object value) {
     JDBCType jdbcType = descriptor.jdbcType();
     if (jdbcType == JDBCType.DATE) {
+      if (value instanceof java.util.Date) {
+        return ((java.util.Date) value).toInstant().atOffset(OffsetTime.now().getOffset()).toLocalDate();
+      }
       if (value instanceof String) {
         return LocalDate.parse((String) value);
-      }
-      if (value instanceof java.util.Date) {
-        return ((java.util.Date) value).toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
       }
       return value;
     }
     if (jdbcType == JDBCType.TIME_WITH_TIMEZONE) {
+      if (value instanceof LocalTime) {
+        return ((LocalTime) value).atOffset(OffsetTime.now().getOffset());
+      }
       if (value instanceof String) {
         return OffsetTime.parse((String) value);
       }
       return value;
     }
     if (jdbcType == JDBCType.TIME) {
+      final Function<OffsetTime, java.sql.Time> converter = offsetTime -> {
+        long nod = offsetTime.toLocalTime().toNanoOfDay();
+        long offsetNanos = offsetTime.getOffset().getTotalSeconds() * 1000_000_000L;
+        return new java.sql.Time((nod - offsetNanos) / 1000_000L);
+      };
+      if (value instanceof OffsetTime) {
+        return converter.apply((OffsetTime) value);
+      }
       if (value instanceof String) {
         try {
           return LocalTime.parse((String) value);
         } catch (DateTimeParseException e) {
-          return OffsetTime.parse((String) value).withOffsetSameInstant(ZoneOffset.UTC).toLocalTime();
+          return converter.apply(OffsetTime.parse((String) value));
         }
       }
       return value;
     }
     if (jdbcType == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
-      if (value instanceof String) {
-        return OffsetDateTime.parse((String) value);
-      }
-      return value;
+      return value instanceof String ? OffsetDateTime.parse((String) value) : value;
     }
     if (jdbcType == JDBCType.TIMESTAMP) {
       if (value instanceof String) {
@@ -127,7 +137,7 @@ public class JDBCEncoderImpl implements JDBCEncoder {
   }
 
   /**
-   * Convert any the parameter {@code Java} value expect {@link #encodeDateTime(JDBCColumnDescriptor, Object)} and
+   * Convert any the parameter {@code Java} value except {@link #encodeDateTime(JDBCColumnDescriptor, Object)} and
    * {@link #encodeSpecificVendorType(JDBCColumnDescriptor, Object)} to the {@code SQL value}
    *
    * @param descriptor the column descriptor

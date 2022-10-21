@@ -139,26 +139,12 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
       if (value instanceof SqlOutParam) {
         continue;
       }
-      ps.setObject(idx, adaptType(conn, value));
+      ps.setObject(idx, adaptType(conn, helper.getEncoder().encode(params, idx, provider)));
     }
   }
 
   private Object adaptType(Connection conn, Object value) throws SQLException {
-    // we must convert types (to comply to JDBC)
-
-    if (value instanceof LocalTime) {
-      // -> java.sql.Time
-      LocalTime time = (LocalTime) value;
-      return Time.valueOf(time);
-    } else if (value instanceof LocalDate) {
-      // -> java.sql.Date
-      LocalDate date = (LocalDate) value;
-      return Date.valueOf(date);
-    } else if (value instanceof Instant) {
-      // -> java.sql.Timestamp
-      Instant timestamp = (Instant) value;
-      return Timestamp.from(timestamp);
-    } else if (value instanceof Buffer) {
+    if (value instanceof Buffer) {
       // -> java.sql.Blob
       Buffer buffer = (Buffer) value;
       Blob blob = conn.createBlob();
