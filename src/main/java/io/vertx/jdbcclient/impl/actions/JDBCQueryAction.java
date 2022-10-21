@@ -13,6 +13,7 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
+import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
@@ -22,9 +23,14 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ParameterMetaData;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
@@ -41,7 +47,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   }
 
   protected JDBCResponse<R> decode(Statement statement, boolean returnedResultSet, boolean returnedKeys,
-                                   List<Integer> out) throws SQLException {
+                                   CallableOutParams outParams) throws SQLException {
 
     final JDBCResponse<R> response = new JDBCResponse<>(statement.getUpdateCount());
 
@@ -67,8 +73,8 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       }
     }
 
-    if (out.size() > 0) {
-      decodeOutput((CallableStatement) statement, out, response);
+    if (!outParams.isEmpty()) {
+      decodeOutput((CallableStatement) statement, outParams, response);
     }
 
     return response;
@@ -141,18 +147,18 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     return collector.finisher().apply(container);
   }
 
-  private void decodeOutput(CallableStatement cs, List<Integer> out, JDBCResponse<R> output) throws SQLException {
+  private void decodeOutput(CallableStatement cs, CallableOutParams outParams, JDBCResponse<R> output) throws SQLException {
     BiConsumer<C, Row> accumulator = collector.accumulator();
 
     // first rowset includes the output results
     C container = collector.supplier().get();
     // the result is unlabeled
-    ParameterMetaData md = new CachedParameterMetaData(cs);
+    ParameterMetaData md = new CachedParameterMetaData(cs).putOutParams(outParams);
     JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
-    RowDesc desc = new JDBCRowDesc(provider, out.size());
+    RowDesc desc = new JDBCRowDesc(provider, outParams.size());
     Row row = new JDBCRow(desc);
     JDBCDecoder decoder = helper.getDecoder();
-    for (Integer idx : out) {
+    for (Integer idx : outParams.keySet()) {
       // SQL client is 0 index based
       final Object o = cs.getObject(idx);
       if (o instanceof ResultSet) {

@@ -16,6 +16,7 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
+import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.sqlclient.Row;
@@ -23,7 +24,6 @@ import io.vertx.sqlclient.Row;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.stream.Collector;
 
 /**
@@ -43,7 +43,7 @@ public class JDBCSimpleQueryAction<C, R> extends JDBCQueryAction<C, R> {
     try (Statement statement = conn.createStatement()) {
       // apply statement options
       applyStatementOptions(statement);
-      return decode(statement, statement.execute(sql), false, Collections.emptyList());
+      return decode(statement, statement.execute(sql), false, CallableOutParams.create());
     }
   }
 }

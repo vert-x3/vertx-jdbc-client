@@ -18,19 +18,24 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
+import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
 
-import java.sql.*;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
 import java.util.stream.Collector;
 
 /**
@@ -39,27 +44,13 @@ import java.util.stream.Collector;
 public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
 
   private final ExtendedQueryCommand<R> query;
-  private final Tuple params;
-  private final List<Integer> outParams;
-
-  private static List<Integer> countOut(Tuple tuple) {
-    List<Integer> total = new ArrayList<>();
-    if (tuple != null) {
-      for (int i = 0; i < tuple.size(); i++) {
-        if (tuple.getValue(i) instanceof SqlOutParam) {
-          total.add(i + 1);
-        }
-      }
-    }
-
-    return total;
-  }
+  private final Tuple params = Tuple.tuple();
+  private final CallableOutParams outParams = CallableOutParams.create();
 
   public JDBCPreparedQuery(JDBCStatementHelper helper, SQLOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, Tuple params) {
     super(helper, options, collector);
     this.query = query;
-    this.params = params;
-    this.outParams = countOut(params);
+    this.normalizeParams(params);
   }
 
   @Override
@@ -78,7 +69,7 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
 
     final String sql = query.sql();
 
-    if (outParams.size() > 0) {
+    if (!outParams.isEmpty()) {
       return conn.prepareCall(sql);
     } else {
 
@@ -115,24 +106,40 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
     }
   }
 
-  private void fillStatement(PreparedStatement ps, Connection conn) throws SQLException {
-
-    for (int i = 0; i < params.size(); i++) {
-      // we must convert types (to comply to JDBC)
-      Object value = adaptType(conn, params.getValue(i));
-
-      if (value instanceof SqlOutParam) {
-        SqlOutParam outValue = (SqlOutParam) value;
-
-        if (outValue.in()) {
-          ps.setObject(i + 1, adaptType(conn, outValue.value()));
-        }
-
-        ((CallableStatement) ps)
-          .registerOutParameter(i + 1, outValue.type());
+  private void normalizeParams(Tuple tuple) {
+    if (tuple == null) {
+      return;
+    }
+    for (int i = 0; i < tuple.size(); i++) {
+      final Object param = tuple.getValue(i);
+      if (param instanceof SqlOutParam) {
+        final SqlOutParam out = (SqlOutParam) param;
+        outParams.put(i + 1, out.type());
+        params.addValue(out.in() ? out.value() : out);
       } else {
-        ps.setObject(i + 1, value);
+        params.addValue(param);
       }
+    }
+  }
+
+  private void fillStatement(PreparedStatement ps, Connection conn) throws SQLException {
+    // Need to register out then able to get parameter metadata in postgresql
+    // https://www.postgresql.org/message-id/flat/556A1477.2050506%40ttc-cmc.net#f16a74c2e386993934626dc0c9aa22c3
+    // Other driver seems fine with this way
+    if (!outParams.isEmpty()) {
+      final CallableStatement cs = (CallableStatement) ps;
+      for (Map.Entry<Integer, JDBCTypeWrapper> entry : outParams.entrySet()) {
+        cs.registerOutParameter(entry.getKey(), entry.getValue().vendorTypeNumber());
+      }
+    }
+    final ParameterMetaData metaData = ps.getParameterMetaData();
+    final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(metaData);
+    for (int idx = 1; idx <= params.size(); idx++) {
+      Object value = params.getValue(idx - 1);
+      if (value instanceof SqlOutParam) {
+        continue;
+      }
+      ps.setObject(idx, adaptType(conn, value));
     }
   }
 
@@ -161,4 +168,5 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
 
     return value;
   }
+
 }

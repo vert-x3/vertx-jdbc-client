@@ -57,6 +57,14 @@ public final class JDBCTypeWrapper {
     return new JDBCTypeWrapper(jdbcType.getVendorTypeNumber(), null, null, jdbcType);
   }
 
+  public static JDBCTypeWrapper of(int sqlType) {
+    return of(JDBCType.valueOf(sqlType));
+  }
+
+  public static JDBCTypeWrapper of(String jdbcTypeName) {
+    return of(JDBCType.valueOf(jdbcTypeName));
+  }
+
   public int vendorTypeNumber() {
     return vendorTypeNumber;
   }
