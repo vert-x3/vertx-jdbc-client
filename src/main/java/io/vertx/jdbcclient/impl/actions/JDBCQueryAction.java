@@ -56,9 +56,9 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       while (returnedResultSet) {
         try (ResultSet rs = statement.getResultSet()) {
           decodeResultSet(rs, response);
-        }
-        if (returnedKeys) {
-          decodeReturnedKeys(statement, response);
+          if (returnedKeys) {
+            decodeReturnedKeys(statement, response);
+          }
         }
         returnedResultSet = statement.getMoreResults();
       }
