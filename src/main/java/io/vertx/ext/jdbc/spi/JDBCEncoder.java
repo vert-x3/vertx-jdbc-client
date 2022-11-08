@@ -17,6 +17,7 @@
 package io.vertx.ext.jdbc.spi;
 
 import io.vertx.core.json.JsonArray;
+import io.vertx.sqlclient.Tuple;
 
 import java.sql.SQLException;
 
@@ -47,5 +48,7 @@ public interface JDBCEncoder {
    * @see JDBCColumnDescriptorProvider
    */
   Object encode(JsonArray input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException;
+
+  Object encode(Tuple input, int pos, JDBCColumnDescriptorProvider provider) throws SQLException;
 
 }

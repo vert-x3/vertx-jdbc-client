@@ -107,12 +107,6 @@ public abstract class AbstractJDBCAction<T> {
     }
   }
 
-  protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out) throws SQLException {
-    ParameterMetaData md = new CachedParameterMetaData(statement);
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
-    fillStatement(statement, in, out, provider);
-  }
-
   protected void fillStatement(CallableStatement statement, JsonArray in, JsonArray out, JDBCColumnDescriptorProvider provider) throws SQLException {
     if (in == null) {
       in = EMPTY;

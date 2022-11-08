@@ -113,6 +113,7 @@ public class CachedParameterMetaData implements ParameterMetaData {
 
   private final ParameterMetaData delegate;
   private final Map<Integer, QueryMeta> queryMetaMap = new HashMap<>();
+  private final CallableOutParams outParams = CallableOutParams.create();
 
   public CachedParameterMetaData(PreparedStatement statement) {
     ParameterMetaData metaData;
@@ -129,6 +130,13 @@ public class CachedParameterMetaData implements ParameterMetaData {
     }
 
     this.delegate = metaData;
+  }
+
+  public ParameterMetaData putOutParams(CallableOutParams outParams) {
+    if (outParams != null) {
+      this.outParams.putAll(outParams);
+    }
+    return this;
   }
 
   private QueryMeta getQueryMeta(int param) {
@@ -171,6 +179,9 @@ public class CachedParameterMetaData implements ParameterMetaData {
 
   @Override
   public int getParameterType(int param) throws SQLException {
+    if (outParams.containsKey(param)) {
+      return outParams.get(param).vendorTypeNumber();
+    }
     return getQueryMeta(param).getParameterType();
   }
 

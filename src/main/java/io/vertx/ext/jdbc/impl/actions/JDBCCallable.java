@@ -17,10 +17,15 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.sql.SQLOptions;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
+import io.vertx.ext.sql.SQLOptions;
 
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.JDBCType;
+import java.sql.ParameterMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 
 /**
@@ -45,10 +50,12 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
       // apply statement options
       applyStatementOptions(statement);
 
-      fillStatement(statement, in, out);
+      CallableOutParams outParams = createOutParams(out);
+      ParameterMetaData md = new CachedParameterMetaData(statement).putOutParams(outParams);
+      JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
+      fillStatement(statement, in, out, provider);
 
       boolean retResult = statement.execute();
-      boolean outResult = out != null && out.size() > 0;
 
       io.vertx.ext.sql.ResultSet resultSet = null;
 
@@ -65,17 +72,17 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
               ref.setNext(asList(rs));
               ref = ref.getNext();
             }
-            if (outResult) {
+            if (!outParams.isEmpty()) {
               // add the registered outputs
-              ref.setOutput(convertOutputs(statement));
+              ref.setOutput(convertOutputs(statement, provider));
             }
           }
           retResult = statement.getMoreResults();
         }
       } else {
-        if (outResult) {
+        if (!outParams.isEmpty()) {
           // only outputs are available
-          resultSet = new io.vertx.ext.sql.ResultSet(Collections.emptyList(), Collections.emptyList(), null).setOutput(convertOutputs(statement));
+          resultSet = new io.vertx.ext.sql.ResultSet(Collections.emptyList(), Collections.emptyList(), null).setOutput(convertOutputs(statement, provider));
         }
       }
 
@@ -84,11 +91,9 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
     }
   }
 
-  private JsonArray convertOutputs(CallableStatement statement) throws SQLException {
+  private JsonArray convertOutputs(CallableStatement statement, JDBCColumnDescriptorProvider provider) throws SQLException {
     JsonArray result = new JsonArray();
 
-    ParameterMetaData md = new CachedParameterMetaData(statement);
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
     for (int i = 0; i < out.size(); i++) {
       Object var = out.getValue(i);
 
@@ -109,4 +114,21 @@ public class JDBCCallable extends AbstractJDBCAction<io.vertx.ext.sql.ResultSet>
     return result;
   }
 
+  private static CallableOutParams createOutParams(JsonArray out) {
+    CallableOutParams params = CallableOutParams.create();
+    if (out != null) {
+      for (int i = 0; i < out.size(); i++) {
+        final Object param = out.getValue(i);
+        if (param instanceof Integer) {
+          params.put(i + 1, (Integer) param);
+        } else if (param instanceof JDBCType) {
+          params.put(i + 1, (JDBCType) param);
+        } else if (param != null) {
+          params.put(i + 1, param.toString());
+        }
+      }
+    }
+
+    return params;
+  }
 }

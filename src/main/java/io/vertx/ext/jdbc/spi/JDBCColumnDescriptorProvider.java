@@ -43,7 +43,7 @@ public interface JDBCColumnDescriptorProvider {
    */
   @Deprecated
   static JDBCColumnDescriptorProvider fromParameter(PreparedStatement statement) {
-    return col -> JDBCColumnDescriptor.create(() -> null,
+    return col -> JDBCColumnDescriptor.create(() -> Integer.toString(col - 1),
       JDBCPropertyAccessor.jdbcType(() -> statement.getParameterMetaData().getParameterType(col)),
       JDBCPropertyAccessor.create(() -> statement.getParameterMetaData().getParameterTypeName(col)),
       JDBCPropertyAccessor.create(() -> statement.getParameterMetaData().getParameterClassName(col)));

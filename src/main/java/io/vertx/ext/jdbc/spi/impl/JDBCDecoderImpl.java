@@ -44,10 +44,12 @@ import java.sql.SQLXML;
 import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
@@ -88,6 +90,9 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       }
       if (descriptor.jdbcTypeWrapper().isDateTimeType()) {
         return decodeDateTime(valueProvider, descriptor);
+      }
+      if (descriptor.jdbcTypeWrapper().isUnhandledType()) {
+        return decodeUnhandledType(valueProvider, descriptor);
       }
       if (descriptor.jdbcTypeWrapper().isSpecificVendorType()) {
         return decodeSpecificVendorType(valueProvider, descriptor);
@@ -173,20 +178,27 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       }
       try {
         // Some JDBC drivers (PG driver) treats Timestamp with TimeZone/Time with TimeZone
-        // to java.sql.timestamp/java.sql.time/String at UTC
+        // to java.sql.timestamp/java.sql.time/String at system timezone
         // and handles date time data type internally
-        // then this code will try parse to OffsetTime/OffsetDateTime
+        // then this code will try parse to OffsetTime/OffsetDateTime at UTC timezone with ISO8601 format
         if (value instanceof Time) {
-          return ((Time) value).toLocalTime().atOffset(ZoneOffset.UTC);
+          return Instant.ofEpochMilli(((Time) value).getTime()).atOffset(ZoneOffset.UTC).toOffsetTime();
         }
-        if (descriptor.jdbcType() == JDBCType.TIME || descriptor.jdbcType() == JDBCType.TIME_WITH_TIMEZONE) {
-          return LocalTime.parse(value.toString(), DateTimeFormatter.ISO_LOCAL_TIME).atOffset(ZoneOffset.UTC);
+        if (descriptor.jdbcType() == JDBCType.TIME) {
+          return LocalTime.parse(value.toString()).atOffset(ZoneOffset.UTC);
         }
+        if (descriptor.jdbcType() == JDBCType.TIME_WITH_TIMEZONE) {
+          return OffsetTime.parse(value.toString()).withOffsetSameInstant(ZoneOffset.UTC);
+        }
+
         if (value instanceof Timestamp) {
-          return ((Timestamp) value).toLocalDateTime().atOffset(ZoneOffset.UTC);
+          return ((Timestamp) value).toInstant().atOffset(ZoneOffset.UTC);
         }
-        if (descriptor.jdbcType() == JDBCType.TIMESTAMP || descriptor.jdbcType() == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
-          return LocalDateTime.parse(value.toString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME).atOffset(ZoneOffset.UTC);
+        if (descriptor.jdbcType() == JDBCType.TIMESTAMP) {
+          return LocalDateTime.parse(value.toString()).atOffset(ZoneOffset.UTC);
+        }
+        if (descriptor.jdbcType() == JDBCType.TIMESTAMP_WITH_TIMEZONE) {
+          return OffsetDateTime.parse(value.toString()).withOffsetSameInstant(ZoneOffset.UTC);
         }
       } catch (DateTimeParseException ex) {
         LOG.debug("Error when coerce date time value", ex);
@@ -224,7 +236,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   /**
    * Convert a value from {@link JDBCType#STRUCT} datatype to {@link Tuple}
    * <p>
-   * Fallback to raw type if the actual value's type is not
+   * Fallback to {@link #decodeUnhandledType(SQLValueProvider, JDBCColumnDescriptor)} if the actual value's type is not
    * {@link Struct}
    */
   protected Object decodeStruct(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor) throws SQLException {
@@ -232,8 +244,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     if (v instanceof Struct) {
       return cast(v);
     }
-    // fallback
-    return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
+    return decodeUnhandledType(valueProvider, descriptor);
   }
 
   /**
@@ -259,7 +270,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
   /**
    * Convert a value from {@link JDBCType#SQLXML} datatype to {@link Buffer}
    * <p>
-   * Fallback to raw value if the actual value's type is not
+   * Fallback to {@link #decodeUnhandledType(SQLValueProvider, JDBCColumnDescriptor)}} if the actual value's type is not
    * {@link SQLXML}
    */
   protected Object decodeXML(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor) throws SQLException {
@@ -267,8 +278,21 @@ public class JDBCDecoderImpl implements JDBCDecoder {
     if (v instanceof SQLXML) {
       return streamToBuffer(((SQLXML) v).getBinaryStream(), descriptor.jdbcTypeWrapper().vendorTypeClass());
     }
-    // fallback
-    return cast(getCoerceObject(valueProvider, descriptor.jdbcTypeWrapper().vendorTypeClass()));
+    return decodeUnhandledType(valueProvider, descriptor);
+  }
+
+  /**
+   * Convert a value from the unhandled data type
+   * <p>
+   * The default implementation converts any data type to a string value
+   *
+   * @return value
+   * @see JDBCTypeWrapper#isUnhandledType()
+   */
+  protected Object decodeUnhandledType(SQLValueProvider valueProvider, JDBCColumnDescriptor descriptor)
+    throws SQLException {
+    LOG.debug("Fallback to string when handling the unhandled JDBCType in Vertx " + descriptor);
+    return Optional.ofNullable(cast(valueProvider.apply(null))).map(Object::toString).orElse(null);
   }
 
   /**
