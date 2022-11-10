@@ -18,7 +18,6 @@ package io.vertx.jdbcclient.impl.actions;
 
 import java.sql.JDBCType;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -37,7 +36,7 @@ public interface JDBCPropertyAccessor<T> {
     return () -> {
       try {
         return accessor.get();
-      } catch (SQLFeatureNotSupportedException e) {
+      } catch (SQLException e) {
         LOG.debug("Unsupported access properties in SQL metadata", e);
         return fallbackIfUnsupported;
       }
