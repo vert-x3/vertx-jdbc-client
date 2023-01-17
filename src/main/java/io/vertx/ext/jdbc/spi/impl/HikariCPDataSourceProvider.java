@@ -71,6 +71,9 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
         case "idleTimeout":
           config.setIdleTimeout(getLong(entry.getValue()));
           break;
+        case "keepaliveTime":
+          config.setKeepaliveTime(getLong(entry.getValue()));
+          break;
         case "maxLifetime":
           config.setMaxLifetime(getLong(entry.getValue()));
           break;
@@ -89,6 +92,9 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           throw new UnsupportedOperationException(entry.getKey());
         case "poolName":
           config.setPoolName((String) entry.getValue());
+          break;
+        case "initializationFailTimeout":
+          config.setInitializationFailTimeout(getLong(entry.getValue()));
           break;
         case "isolationInternalQueries":
           config.setIsolateInternalQueries((Boolean) entry.getValue());
@@ -122,6 +128,9 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
           break;
         case "dataSource":
           throw new UnsupportedOperationException(entry.getKey());
+        case "schema":
+          config.setSchema((String) entry.getValue());
+          break;
         case "threadFactory":
           throw new UnsupportedOperationException(entry.getKey());
         case "datasource":
