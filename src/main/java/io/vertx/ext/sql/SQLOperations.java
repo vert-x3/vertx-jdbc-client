@@ -25,6 +25,7 @@ public interface SQLOperations {
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
   @Fluent
+  @Deprecated
   SQLOperations query(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
   /**
@@ -75,6 +76,7 @@ public interface SQLOperations {
    * @return self
    */
   @Fluent
+  @Deprecated
   default SQLOperations querySingle(String sql, Handler<AsyncResult<@Nullable JsonArray>> handler) {
     return query(sql, HandlerUtil.handleResultSetSingleRow(handler));
   }
@@ -90,6 +92,7 @@ public interface SQLOperations {
    * @return self
    */
   @Fluent
+  @Deprecated
   default SQLOperations querySingleWithParams(String sql, JsonArray arguments, Handler<AsyncResult<@Nullable JsonArray>> handler) {
     return queryWithParams(sql, arguments, HandlerUtil.handleResultSetSingleRow(handler));
   }
@@ -105,6 +108,7 @@ public interface SQLOperations {
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
   @Fluent
+  @Deprecated
   SQLOperations update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler);
 
   /**
@@ -119,6 +123,7 @@ public interface SQLOperations {
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
   @Fluent
+  @Deprecated
   SQLOperations updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler);
 
   /**
@@ -130,6 +135,7 @@ public interface SQLOperations {
    * @see java.sql.CallableStatement#execute(String)
    */
   @Fluent
+  @Deprecated
   SQLOperations call(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
   /**
@@ -151,6 +157,7 @@ public interface SQLOperations {
    * @see java.sql.CallableStatement#execute(String)
    */
   @Fluent
+  @Deprecated
   SQLOperations callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler);
 
 }
