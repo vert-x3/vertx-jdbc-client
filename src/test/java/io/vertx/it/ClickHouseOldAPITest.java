@@ -36,7 +36,7 @@ public class ClickHouseOldAPITest {
   public void after(TestContext should) {
     Async cleanup = should.async();
     client.close(should.asyncAssertSuccess(res1 -> {
-      vertx.close(should.asyncAssertSuccess(res2 -> {
+      vertx.close().onComplete(should.asyncAssertSuccess(res2 -> {
           container.close();
           cleanup.complete();
       }));

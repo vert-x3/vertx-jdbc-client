@@ -36,8 +36,8 @@ public class ClickHouseTest {
   @After
   public void after(TestContext should) {
     Async cleanup = should.async();
-    client.close(should.asyncAssertSuccess(res1 -> {
-      vertx.close(should.asyncAssertSuccess(res2 -> {
+    client.close().onComplete(should.asyncAssertSuccess(res1 -> {
+      vertx.close().onComplete(should.asyncAssertSuccess(res2 -> {
         container.close();
         cleanup.complete();
       }));
@@ -48,7 +48,7 @@ public class ClickHouseTest {
   public void simpleTest(TestContext should) {
     Async test = should.async();
     client.query("select * from arr_test")
-      .execute(should.asyncAssertSuccess(res -> {
+      .execute().onComplete(should.asyncAssertSuccess(res -> {
         should.assertEquals(1, res.size());
         Row row = res.iterator().next();
         should.assertEquals(new JsonObject()

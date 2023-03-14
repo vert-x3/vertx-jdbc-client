@@ -93,7 +93,10 @@ public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
   @Test
   @Ignore("Cannot run this in CI as we can't install Oracle")
   public void testColumnDesc(TestContext should) {
-    client.query("SELECT id, name, created FROM my_table1").execute(should.asyncAssertSuccess(rows -> {
+    client
+      .query("SELECT id, name, created FROM my_table1")
+      .execute()
+      .onComplete(should.asyncAssertSuccess(rows -> {
       should.verify(v -> {
         assertEquals(1, rows.size());
         Row row = rows.iterator().next();

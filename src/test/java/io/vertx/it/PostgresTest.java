@@ -174,7 +174,7 @@ public class PostgresTest {
                 stream.exceptionHandler(should::fail);
                 stream.endHandler(v -> {
                   // Close the stream to release the resources in the database
-                  stream.close(closed -> tx.commit(committed -> test.complete()));
+                  stream.close().onComplete(closed -> tx.commit().onComplete(committed -> test.complete()));
                 });
                 stream.handler(row -> should.assertTrue(animals.contains(row.getString("name"))));
               });

@@ -38,8 +38,8 @@ public class ClientTestBase {
 
   @After
   public void after(TestContext ctx) throws Exception {
-    client.close(ctx.asyncAssertSuccess(v -> {
-      vertx.close(ctx.asyncAssertSuccess());
+    client.close().onComplete(ctx.asyncAssertSuccess(v -> {
+      vertx.close().onComplete(ctx.asyncAssertSuccess());
     }));
   }
 }

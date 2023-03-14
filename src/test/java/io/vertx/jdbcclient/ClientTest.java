@@ -33,7 +33,8 @@ public class ClientTest extends ClientTestBase {
     String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
     client
       .query(sql)
-      .execute(ctx.asyncAssertSuccess(resultSet -> {
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(resultSet -> {
         ctx.assertEquals(2, resultSet.size());
         ctx.assertEquals("ID", resultSet.columnsNames().get(0));
         ctx.assertEquals("FNAME", resultSet.columnsNames().get(1));
@@ -57,9 +58,14 @@ public class ClientTest extends ClientTestBase {
     SqlClient conn = connection();
     String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
     LocalDate expected = LocalDate.of(2002, 2, 2);
-    conn.preparedQuery(sql).execute(Tuple.of(0, "doe", "jane", expected), ctx.asyncAssertSuccess(rowSet -> {
+    conn
+      .preparedQuery(sql).execute(Tuple.of(0, "doe", "jane", expected))
+      .onComplete(ctx.asyncAssertSuccess(rowSet -> {
       // assertUpdate(result, 1);
-      conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?").execute(Tuple.of(0), ctx.asyncAssertSuccess(rs -> {
+      conn
+        .preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+        .execute(Tuple.of(0))
+        .onComplete(ctx.asyncAssertSuccess(rs -> {
         ctx.assertEquals(1, rs.size());
         ctx.assertEquals(expected, rs.iterator().next().getLocalDate(0));
       }));
@@ -78,24 +84,33 @@ public class ClientTest extends ClientTestBase {
 
   private void testTransaction(TestContext testCtx, boolean commit) throws Exception {
     SqlConnection conn = connection();
-    conn.begin(testCtx.asyncAssertSuccess(tx -> {
+    conn
+      .begin()
+      .onComplete(testCtx.asyncAssertSuccess(tx -> {
       String sql = "INSERT INTO insert_table VALUES (?, ?, ?, ?);";
       LocalDate expected = LocalDate.of(2002, 2, 2);
       conn
         .preparedQuery(sql)
-        .execute(Tuple.of(0, "doe", "jane", expected), testCtx.asyncAssertSuccess(rowSet -> {
+        .execute(Tuple.of(0, "doe", "jane", expected))
+        .onComplete(testCtx.asyncAssertSuccess(rowSet -> {
           if (commit) {
-            tx.commit(testCtx.asyncAssertSuccess(v2 -> {
-              conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
-                .execute(Tuple.of(0), testCtx.asyncAssertSuccess(rs -> {
+            tx.commit()
+              .onComplete(testCtx.asyncAssertSuccess(v2 -> {
+              conn
+                .preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                .execute(Tuple.of(0))
+                .onComplete(testCtx.asyncAssertSuccess(rs -> {
                   testCtx.assertEquals(1, rs.size());
                   testCtx.assertEquals(expected, rs.iterator().next().getLocalDate(0));
                 }));
             }));
           } else {
-            tx.rollback(testCtx.asyncAssertSuccess(v2 -> {
-              conn.preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
-                .execute(Tuple.of(0), testCtx.asyncAssertSuccess(rs -> {
+            tx.rollback()
+              .onComplete(testCtx.asyncAssertSuccess(v2 -> {
+              conn
+                .preparedQuery("SElECT DOB FROM insert_table WHERE id=?")
+                .execute(Tuple.of(0))
+                .onComplete(testCtx.asyncAssertSuccess(rs -> {
                   testCtx.assertEquals(0, rs.size());
                 }));
             }));

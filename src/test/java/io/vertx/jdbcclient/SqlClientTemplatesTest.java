@@ -63,7 +63,8 @@ public class SqlClientTemplatesTest extends ClientTestBase {
     SqlTemplate
       .forQuery(client, "SELECT id, status FROM my_objects WHERE id = #{id}")
       .mapTo(MyObjectRowMapper.INSTANCE)
-      .execute(Collections.singletonMap("id", 1), should.asyncAssertSuccess(rows -> {
+      .execute(Collections.singletonMap("id", 1))
+      .onComplete(should.asyncAssertSuccess(rows -> {
         should.assertEquals(1, rows.size());
         should.assertEquals(MyObject.Status.ABC, rows.iterator().next().getType());
       }));

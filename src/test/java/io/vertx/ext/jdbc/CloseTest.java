@@ -58,14 +58,14 @@ public class CloseTest extends JDBCClientTestBase {
   @Test
   public void testUsingNonSharedInVerticle() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
-    vertx.deployVerticle(NonSharedClientVerticle.class.getName(), onSuccess(id::complete));
+    vertx.deployVerticle(NonSharedClientVerticle.class.getName()).onComplete(onSuccess(id::complete));
     close(id.get(10, TimeUnit.SECONDS), false);
   }
 
   @Test
   public void testUsingNonSharedInVerticle2() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
-    vertx.deployVerticle(NonSharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2), onSuccess(id::complete));
+    vertx.deployVerticle(NonSharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2)).onComplete(onSuccess(id::complete));
     close(id.get(10, TimeUnit.SECONDS), false);
   }
 
@@ -94,14 +94,14 @@ public class CloseTest extends JDBCClientTestBase {
   @Test
   public void testUsingSharedInVerticle() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
-    vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(1), onSuccess(id::complete));
+    vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(1)).onComplete(onSuccess(id::complete));
     close(id.get(10, TimeUnit.SECONDS), false);
   }
 
   @Test
   public void testUsingSharedInVerticle2() throws Exception {
     CompletableFuture<String> id = new CompletableFuture<>();
-    vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2), onSuccess(id::complete));
+    vertx.deployVerticle(SharedClientVerticle.class.getName(), new DeploymentOptions().setInstances(2)).onComplete(onSuccess(id::complete));
     close(id.get(10, TimeUnit.SECONDS), false);
   }
 
@@ -134,7 +134,7 @@ public class CloseTest extends JDBCClientTestBase {
     DataSourceProvider provider = new C3P0DataSourceProvider();
     ds = provider.getDataSource(theConfig);
     CompletableFuture<String> id = new CompletableFuture<>();
-    vertx.deployVerticle(ProvidedDataSourceVerticle.class.getName(), new DeploymentOptions().setInstances(1), onSuccess(id::complete));
+    vertx.deployVerticle(ProvidedDataSourceVerticle.class.getName(), new DeploymentOptions().setInstances(1)).onComplete(onSuccess(id::complete));
     try {
       close(id.get(10, TimeUnit.SECONDS), true);
     } finally {
@@ -148,7 +148,7 @@ public class CloseTest extends JDBCClientTestBase {
     List<Thread> poolThreads = findThreads(t -> t.getName().startsWith("C3P0PooledConnectionPoolManager"));
     assertTrue(poolThreads.size() > 0);
     CountDownLatch closeLatch = new CountDownLatch(1);
-    vertx.undeploy(deploymentId, onSuccess(v -> {
+    vertx.undeploy(deploymentId).onComplete(onSuccess(v -> {
       closeLatch.countDown();
     }));
     awaitLatch(closeLatch);
