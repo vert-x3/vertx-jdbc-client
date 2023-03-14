@@ -331,7 +331,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
       } catch (SQLException e) {
         promise.fail(e);
       }
-    }, false, ar -> {
+    }, false).onComplete(ar -> {
       holder.exec.shutdown();
       if (completionHandler != null) {
         completionHandler.handle(Future.succeededFuture());
