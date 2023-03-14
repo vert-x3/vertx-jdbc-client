@@ -60,7 +60,10 @@ public class JDBCPoolColumnDescTest extends ClientTestBase {
 
   @Test
   public void testColumnDesc(TestContext should) {
-    client.query("SELECT id AS key, name, scores FROM t").execute(should.asyncAssertSuccess(rows -> {
+    client
+      .query("SELECT id AS key, name, scores FROM t")
+      .execute()
+      .onComplete(should.asyncAssertSuccess(rows -> {
       should.verify(v -> {
         assertEquals(1, rows.size());
         List<ColumnDescriptor> columnDescriptors = rows.columnDescriptors();

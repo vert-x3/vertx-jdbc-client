@@ -344,14 +344,23 @@ public class JDBCPoolTest extends ClientTestBase {
 
   @Test
   public void testBatchPreparedStatement(TestContext ctx) {
-    client.query("drop table if exists t").execute(ctx.asyncAssertSuccess(res1 -> {
-      client.query("create table t (u BIGINT)").execute(ctx.asyncAssertSuccess(res2 -> {
+    client
+      .query("drop table if exists t")
+      .execute()
+      .onComplete(ctx.asyncAssertSuccess(res1 -> {
+      client
+        .query("create table t (u BIGINT)")
+        .execute()
+        .onComplete(ctx.asyncAssertSuccess(res2 -> {
         List<Tuple> batch = Arrays.asList(
           Tuple.of(System.currentTimeMillis()),
           Tuple.of(System.currentTimeMillis()),
           Tuple.of(System.currentTimeMillis())
         );
-        client.preparedQuery("insert into t (u) values (?)").executeBatch(batch, ctx.asyncAssertSuccess(res -> {
+        client
+          .preparedQuery("insert into t (u) values (?)")
+          .executeBatch(batch)
+          .onComplete(ctx.asyncAssertSuccess(res -> {
           ctx.assertEquals(3, res.rowCount());
         }));
       }));

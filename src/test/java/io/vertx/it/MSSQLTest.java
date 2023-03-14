@@ -111,7 +111,7 @@ public class MSSQLTest {
     final JDBCPool client = initJDBCPool();
     // this test would fail if we would attempt to read the generated ids after the end of the cursor
     // the fix implies that we must read them before we close the cursor.
-    client.preparedQuery("select * from Fortune").execute(should.asyncAssertSuccess(resultSet -> {
+    client.preparedQuery("select * from Fortune").execute().onComplete(should.asyncAssertSuccess(resultSet -> {
       should.assertEquals(12, resultSet.size());
       test.complete();
     }));
