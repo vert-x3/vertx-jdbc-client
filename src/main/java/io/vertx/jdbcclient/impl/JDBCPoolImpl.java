@@ -56,11 +56,6 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   }
 
   @Override
-  public void getConnection(Handler<AsyncResult<SqlConnection>> handler) {
-    getConnection().onComplete(handler);
-  }
-
-  @Override
   public Future<SqlConnection> getConnection() {
     ContextInternal ctx = vertx.getOrCreateContext();
     return getConnectionInternal(ctx);
@@ -80,11 +75,6 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   @Override
   protected <T> PromiseInternal<T> promise(Handler<AsyncResult<T>> handler) {
     return vertx.promise(handler);
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> handler) {
-    client.close(handler);
   }
 
   @Override
