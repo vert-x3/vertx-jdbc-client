@@ -166,7 +166,7 @@ public class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, statementsQueue, handler);
+    }, statementsQueue).onComplete(handler);
 
     return this;
   }
@@ -198,7 +198,7 @@ public class JDBCConnectionImpl implements SQLConnection {
       } catch (SQLException e) {
         f.fail(e);
       }
-    }, statementsQueue, handler);
+    }, statementsQueue).onComplete(handler);
 
     return this;
   }

@@ -178,7 +178,7 @@ class JDBCSQLRowStream implements SQLRowStream {
         } catch (SQLException e) {
           fut.fail(e);
         }
-      }, statementsQueue, ar -> {
+      }, statementsQueue).onComplete(ar -> {
         if (ar.succeeded()) {
           List<JsonArray> rows = ar.result();
           if (rows.isEmpty()) {
@@ -272,7 +272,7 @@ class JDBCSQLRowStream implements SQLRowStream {
       // pause streaming if rs is not complete
       pause();
 
-      ctx.executeBlocking(this::getNextResultSet, statementsQueue, res -> {
+      ctx.executeBlocking(this::getNextResultSet, statementsQueue).onComplete(res -> {
         if (res.failed()) {
           if (exceptionHandler != null) {
             exceptionHandler.handle(res.cause());
@@ -319,14 +319,14 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {
     if (lock.compareAndSet(false, true)) {
-      ctx.executeBlocking(f -> {
+      ctx.<Void>executeBlocking(f -> {
         try {
           closeable.close();
           f.complete();
         } catch (Exception e) {
           f.fail(e);
         }
-      }, statementsQueue, handler);
+      }, statementsQueue).onComplete(handler);
     } else {
       if (handler != null) {
         handler.handle(Future.succeededFuture());
