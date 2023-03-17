@@ -16,8 +16,6 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.codegen.annotations.GenIgnore;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
@@ -33,7 +31,6 @@ import java.util.UUID;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-@VertxGen
 public interface JDBCClient extends SQLClient {
 
   /**
@@ -87,7 +84,6 @@ public interface JDBCClient extends SQLClient {
    * @param dataSource  the datasource
    * @return the client
    */
-  @GenIgnore
   static JDBCClient create(Vertx vertx, DataSource dataSource) {
     return new JDBCClientImpl(vertx, dataSource);
   }
@@ -100,9 +96,7 @@ public interface JDBCClient extends SQLClient {
    * @return the client
    * @since 4.2.0
    */
-  @GenIgnore
   static JDBCClient create(Vertx vertx, DataSourceProvider dataSourceProvider) {
     return new JDBCClientImpl(vertx, dataSourceProvider);
   }
-
 }

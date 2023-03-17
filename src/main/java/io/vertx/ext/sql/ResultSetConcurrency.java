@@ -24,7 +24,6 @@ import java.sql.ResultSet;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@VertxGen
 public enum ResultSetConcurrency {
 
   READ_ONLY(ResultSet.CONCUR_READ_ONLY),

@@ -1,8 +1,5 @@
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.Fluent;
-import io.vertx.codegen.annotations.Nullable;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -12,7 +9,6 @@ import io.vertx.core.json.JsonArray;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@VertxGen(concrete = false)
 public interface SQLOperations {
 
   /**
@@ -24,7 +20,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Deprecated
   SQLOperations query(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -38,7 +33,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   SQLOperations queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler);
 
   /**
@@ -50,7 +44,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   SQLOperations queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler);
 
   /**
@@ -63,7 +56,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   SQLOperations queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler);
 
   /**
@@ -75,9 +67,8 @@ public interface SQLOperations {
    * @param handler the result handler
    * @return self
    */
-  @Fluent
   @Deprecated
-  default SQLOperations querySingle(String sql, Handler<AsyncResult<@Nullable JsonArray>> handler) {
+  default SQLOperations querySingle(String sql, Handler<AsyncResult<JsonArray>> handler) {
     return query(sql, HandlerUtil.handleResultSetSingleRow(handler));
   }
 
@@ -91,9 +82,8 @@ public interface SQLOperations {
    * @param handler   the result handler
    * @return self
    */
-  @Fluent
   @Deprecated
-  default SQLOperations querySingleWithParams(String sql, JsonArray arguments, Handler<AsyncResult<@Nullable JsonArray>> handler) {
+  default SQLOperations querySingleWithParams(String sql, JsonArray arguments, Handler<AsyncResult<JsonArray>> handler) {
     return queryWithParams(sql, arguments, HandlerUtil.handleResultSetSingleRow(handler));
   }
 
@@ -107,7 +97,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Deprecated
   SQLOperations update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler);
 
@@ -122,7 +111,6 @@ public interface SQLOperations {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Deprecated
   SQLOperations updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler);
 
@@ -134,7 +122,6 @@ public interface SQLOperations {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Deprecated
   SQLOperations call(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -156,7 +143,6 @@ public interface SQLOperations {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Deprecated
   SQLOperations callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler);
 

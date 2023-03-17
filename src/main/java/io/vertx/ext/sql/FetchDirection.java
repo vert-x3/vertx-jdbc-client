@@ -24,7 +24,6 @@ import java.sql.ResultSet;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@VertxGen
 public enum FetchDirection {
 
   FORWARD(ResultSet.FETCH_FORWARD),

@@ -16,8 +16,6 @@
 
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.Fluent;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -29,7 +27,6 @@ import io.vertx.ext.sql.impl.RowStreamWrapper;
  *
  * @author <a href="mailto:emad.albloushi@gmail.com">Emad Alblueshi</a>
  */
-@VertxGen
 public interface SQLClient extends SQLOperations {
 
   /**
@@ -38,7 +35,6 @@ public interface SQLClient extends SQLOperations {
    *
    * @param handler the handler which is called when the <code>JdbcConnection</code> object is ready for use.
    */
-  @Fluent
   SQLClient getConnection(Handler<AsyncResult<SQLConnection>> handler);
 
   /**
@@ -62,7 +58,6 @@ public interface SQLClient extends SQLOperations {
    * @param handler the result handler
    * @return self
    */
-  @Fluent
   @Override
   default SQLClient query(String sql, Handler<AsyncResult<ResultSet>> handler) {
     getConnection(getConnection -> {
@@ -103,7 +98,6 @@ public interface SQLClient extends SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   default SQLClient queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler) {
     getConnection(getConnection -> {
@@ -140,7 +134,6 @@ public interface SQLClient extends SQLOperations {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   default SQLClient queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler) {
     getConnection(getConnection -> {
@@ -177,7 +170,6 @@ public interface SQLClient extends SQLOperations {
    * @param handler   the result handler
    * @return self
    */
-  @Fluent
   @Override
   default SQLClient queryWithParams(String sql, JsonArray arguments, Handler<AsyncResult<ResultSet>> handler) {
     getConnection(getConnection -> {
@@ -201,7 +193,6 @@ public interface SQLClient extends SQLOperations {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Override
   default SQLClient update(String sql, Handler<AsyncResult<UpdateResult>> handler) {
     getConnection(getConnection -> {
@@ -226,7 +217,6 @@ public interface SQLClient extends SQLOperations {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Override
   default SQLClient updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> handler) {
     getConnection(getConnection -> {
@@ -248,7 +238,6 @@ public interface SQLClient extends SQLOperations {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Override
   default SQLClient call(String sql, Handler<AsyncResult<ResultSet>> handler) {
     getConnection(getConnection -> {
@@ -280,7 +269,6 @@ public interface SQLClient extends SQLOperations {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Override
   default SQLClient callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> handler) {
     getConnection(getConnection -> {

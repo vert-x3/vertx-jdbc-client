@@ -15,8 +15,6 @@
  */
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.VertxGen;
-
 import java.sql.ResultSet;
 
 /**
@@ -24,7 +22,6 @@ import java.sql.ResultSet;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@VertxGen
 public enum ResultSetType {
   FORWARD_ONLY(ResultSet.TYPE_FORWARD_ONLY),
   SCROLL_INSENSITIVE(ResultSet.TYPE_SCROLL_INSENSITIVE),

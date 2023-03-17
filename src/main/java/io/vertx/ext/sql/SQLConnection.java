@@ -16,9 +16,6 @@
 
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.Fluent;
-import io.vertx.codegen.annotations.GenIgnore;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -31,7 +28,6 @@ import java.util.List;
  *
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@VertxGen
 public interface SQLConnection extends SQLOperations, Closeable {
 
   /**
@@ -45,7 +41,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @param options  the options to modify the unwrapped connection.
    */
-  @Fluent
   SQLConnection setOptions(SQLOptions options);
 
   /**
@@ -55,7 +50,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param resultHandler  the handler which is called once this operation completes.
    * @see java.sql.Connection#setAutoCommit(boolean)
    */
-  @Fluent
   SQLConnection setAutoCommit(boolean autoCommit, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -65,7 +59,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param resultHandler  the handler which is called once this operation completes.
    * @see java.sql.Statement#execute(String)
    */
-  @Fluent
   SQLConnection execute(String sql, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -77,7 +70,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   SQLConnection query(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -90,7 +82,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   SQLConnection queryStream(String sql, Handler<AsyncResult<SQLRowStream>> handler);
 
@@ -104,7 +95,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   SQLConnection queryWithParams(String sql, JsonArray params, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -118,7 +108,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeQuery(String)
    * @see java.sql.PreparedStatement#executeQuery(String)
    */
-  @Fluent
   @Override
   SQLConnection queryStreamWithParams(String sql, JsonArray params, Handler<AsyncResult<SQLRowStream>> handler);
 
@@ -132,7 +121,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Override
   SQLConnection update(String sql, Handler<AsyncResult<UpdateResult>> resultHandler);
 
@@ -147,7 +135,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @see java.sql.Statement#executeUpdate(String)
    * @see java.sql.PreparedStatement#executeUpdate(String)
    */
-  @Fluent
   @Override
   SQLConnection updateWithParams(String sql, JsonArray params, Handler<AsyncResult<UpdateResult>> resultHandler);
 
@@ -159,7 +146,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Override
   SQLConnection call(String sql, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -181,7 +167,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @see java.sql.CallableStatement#execute(String)
    */
-  @Fluent
   @Override
   SQLConnection callWithParams(String sql, JsonArray params, JsonArray outputs, Handler<AsyncResult<ResultSet>> resultHandler);
 
@@ -203,7 +188,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @param handler the handler called when this operation completes.
    */
-  @Fluent
   SQLConnection commit(Handler<AsyncResult<Void>> handler);
 
   /**
@@ -211,7 +195,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @param handler the handler called when this operation completes.
    */
-  @Fluent
   SQLConnection rollback(Handler<AsyncResult<Void>> handler);
 
 
@@ -223,7 +206,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param timeoutInSeconds the max amount of seconds the query can take to execute.
    * @deprecated instead use {@link #setOptions(SQLOptions)} with {@link SQLOptions#setQueryTimeout(int)}
    */
-  @Fluent
   @Deprecated
   default SQLConnection setQueryTimeout(int timeoutInSeconds) {
     setOptions(new SQLOptions().setQueryTimeout(timeoutInSeconds));
@@ -236,7 +218,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param sqlStatements sql statement
    * @param handler the result handler
    */
-  @Fluent
   SQLConnection batch(List<String> sqlStatements, Handler<AsyncResult<List<Integer>>> handler);
 
   /**
@@ -247,7 +228,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param args the prepared statement arguments
    * @param handler the result handler
    */
-  @Fluent
   SQLConnection batchWithParams(String sqlStatement, List<JsonArray> args, Handler<AsyncResult<List<Integer>>> handler);
 
   /**
@@ -260,7 +240,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param outArgs the callable statement output arguments
    * @param handler the result handler
    */
-  @Fluent
   SQLConnection batchCallableWithParams(String sqlStatement, List<JsonArray> inArgs, List<JsonArray> outArgs, Handler<AsyncResult<List<Integer>>> handler);
 
   /**
@@ -271,7 +250,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param isolation the level of isolation
    * @param handler the handler called when this operation completes.
    */
-  @Fluent
   SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler);
 
   /**
@@ -279,7 +257,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    *
    * @param handler the handler called when this operation completes.
    */
-  @Fluent
   SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler);
 
   /**
@@ -288,7 +265,6 @@ public interface SQLConnection extends SQLOperations, Closeable {
    * @param <N> the underlying connection object type
    * @return the unwrapped connection or null
    */
-  @GenIgnore
   default <N> N unwrap() {
     return null;
   }

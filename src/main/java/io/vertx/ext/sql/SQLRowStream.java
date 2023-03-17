@@ -1,7 +1,5 @@
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.Fluent;
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -17,7 +15,6 @@ import java.util.List;
  *
  * The interface is minimal in order to support all SQL clients not just JDBC.
  */
-@VertxGen
 public interface SQLRowStream extends ReadStream<JsonArray> {
 
   @Override
@@ -57,7 +54,6 @@ public interface SQLRowStream extends ReadStream<JsonArray> {
    *
    * @param handler called when the current result set is closed
    */
-  @Fluent
   SQLRowStream resultSetClosedHandler(Handler<Void> handler);
 
   /**

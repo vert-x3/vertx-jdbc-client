@@ -24,7 +24,6 @@ import java.sql.Connection;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@VertxGen
 public enum TransactionIsolation {
 
   /**

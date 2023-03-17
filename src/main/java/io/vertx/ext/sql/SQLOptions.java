@@ -15,7 +15,6 @@
  */
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -24,7 +23,6 @@ import io.vertx.core.json.JsonObject;
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-@DataObject(generateConverter = true)
 public class SQLOptions {
 
   // connection

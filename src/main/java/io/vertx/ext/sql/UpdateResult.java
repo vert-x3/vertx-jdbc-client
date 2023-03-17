@@ -1,6 +1,5 @@
 package io.vertx.ext.sql;
 
-import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -12,7 +11,6 @@ import io.vertx.core.json.JsonObject;
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-@DataObject(generateConverter = true)
 public class UpdateResult {
 
   private int updated;
