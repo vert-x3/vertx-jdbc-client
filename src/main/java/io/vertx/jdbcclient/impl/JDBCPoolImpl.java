@@ -73,11 +73,6 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   }
 
   @Override
-  protected <T> PromiseInternal<T> promise(Handler<AsyncResult<T>> handler) {
-    return vertx.promise(handler);
-  }
-
-  @Override
   public Future<Void> close() {
     final Promise<Void> promise = vertx.promise();
     client.close(promise);
