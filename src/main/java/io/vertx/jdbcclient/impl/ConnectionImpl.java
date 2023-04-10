@@ -19,6 +19,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.core.spi.metrics.ClientMetrics;
+import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
@@ -35,16 +37,45 @@ public class ConnectionImpl implements Connection {
   final ContextInternal context;
   final JDBCConnectionImpl conn;
   final SQLOptions sqlOptions;
+  final String user;
+  final String database;
 
-  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, JDBCConnectionImpl conn) {
+  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, JDBCConnectionImpl conn, String user, String database) {
     this.conn = conn;
     this.helper = helper;
     this.context = context;
     this.sqlOptions = sqlOptions;
+    this.user = user;
+    this.database = database;
   }
 
   public java.sql.Connection getJDBCConnection() {
     return conn.unwrap();
+  }
+
+  @Override
+  public TracingPolicy tracingPolicy() {
+    return TracingPolicy.PROPAGATE;
+  }
+
+  @Override
+  public String database() {
+    return database;
+  }
+
+  @Override
+  public String user() {
+    return user;
+  }
+
+  @Override
+  public ClientMetrics metrics() {
+    return null;
+  }
+
+  @Override
+  public int pipeliningLimit() {
+    return 1;
   }
 
   @Override

@@ -27,7 +27,6 @@ import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
-import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import javax.sql.DataSource;
 import java.util.Objects;
@@ -64,9 +63,8 @@ public interface JDBCPool extends Pool {
       vertx,
       new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions), poolOptions.getName()),
       connectOptions,
-      context.tracer() == null ?
-        null :
-        new QueryTracer(context.tracer(), connectOptions.getTracingPolicy(), connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getDatabase()));
+      connectOptions.getUser(),
+      connectOptions.getDatabase());
   }
 
   /**
@@ -84,10 +82,7 @@ public interface JDBCPool extends Pool {
     return new JDBCPoolImpl(
       vertx,
       new JDBCClientImpl(vertx, config, datasourceName),
-      new SQLOptions(config),
-      context.tracer() == null ?
-        null :
-        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, config.getString("database")));
+      new SQLOptions(config), user, datasourceName);
   }
 
   /**
@@ -114,9 +109,8 @@ public interface JDBCPool extends Pool {
       vertx,
       new JDBCClientImpl(vertx, dataSourceProvider),
       new SQLOptions(config),
-      context.tracer() == null ?
-        null :
-        new QueryTracer(context.tracer(), TracingPolicy.PROPAGATE, jdbcUrl, user, database));
+      user,
+      database);
   }
 
   /**
