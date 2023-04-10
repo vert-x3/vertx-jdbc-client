@@ -1,7 +1,9 @@
 package io.vertx.jdbcclient.impl;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
+import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnectOptions;
@@ -9,11 +11,12 @@ import io.vertx.sqlclient.spi.ConnectionFactory;
 import io.vertx.sqlclient.spi.Driver;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * For now fake as we don't use the driver system, perhaps implemented later.
  */
-public class FakeDriver implements Driver {
+public class FakeDriver implements Driver<SqlConnectOptions> {
 
   public static final FakeDriver INSTANCE = new FakeDriver();
 
@@ -23,12 +26,17 @@ public class FakeDriver implements Driver {
   }
 
   @Override
-  public Pool newPool(Vertx vertx, List<? extends SqlConnectOptions> databases, PoolOptions options, CloseFuture closeFuture) {
+  public Pool newPool(Vertx vertx, Supplier<Future<SqlConnectOptions>> databases, PoolOptions options, CloseFuture closeFuture) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public ConnectionFactory createConnectionFactory(Vertx vertx, SqlConnectOptions database) {
+  public ConnectionFactory<SqlConnectOptions> createConnectionFactory(Vertx vertx) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public SqlConnectOptions downcast(SqlConnectOptions connectOptions) {
     throw new UnsupportedOperationException();
   }
 

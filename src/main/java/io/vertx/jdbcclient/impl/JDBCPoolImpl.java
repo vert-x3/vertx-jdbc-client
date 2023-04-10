@@ -33,7 +33,6 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.impl.SqlClientBase;
 import io.vertx.sqlclient.impl.SqlConnectionBase;
 import io.vertx.sqlclient.impl.command.CommandBase;
-import io.vertx.sqlclient.impl.tracing.QueryTracer;
 
 import java.util.function.Function;
 
@@ -42,12 +41,16 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   private final VertxInternal vertx;
   private final JDBCClientImpl client;
   private final SQLOptions sqlOptions;
+  private final String user;
+  private final String database;
 
-  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, SQLOptions sqlOptions, QueryTracer tracer) {
-    super(FakeDriver.INSTANCE, tracer, null);
+  public JDBCPoolImpl(Vertx vertx, JDBCClientImpl client, SQLOptions sqlOptions, String user, String database) {
+    super(FakeDriver.INSTANCE);
     this.vertx = (VertxInternal) vertx;
     this.client = client;
     this.sqlOptions = sqlOptions;
+    this.user = user;
+    this.database = database;
   }
 
   @Override
@@ -64,7 +67,7 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   private Future<SqlConnection> getConnectionInternal(ContextInternal ctx) {
     return client
       .getConnection(ctx)
-      .map(c -> new SqlConnectionBase<>(ctx, null, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c), driver, tracer, null));
+      .map(c -> new SqlConnectionBase<>(ctx, null, new ConnectionImpl(client.getHelper(), ctx, sqlOptions, (JDBCConnectionImpl) c, user, database), driver));
   }
 
   @Override
