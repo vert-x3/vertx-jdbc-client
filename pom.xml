@@ -15,11 +15,11 @@
       
     <artifactId>vertx-jdbc-client</artifactId>
       
-    <version>3.9.16-SNAPSHOT</version>
+    <version>3.9.16</version>
       
     <properties>
             
-        <stack.version>3.9.16-SNAPSHOT</stack.version>
+        <stack.version>3.9.16</stack.version>
             
         <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
           
