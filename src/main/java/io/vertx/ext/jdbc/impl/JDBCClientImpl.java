@@ -21,6 +21,7 @@ import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -44,12 +45,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class JDBCClientImpl implements JDBCClient, Closeable {
 
+  private static final Pattern HOST_AND_PORT_PATTERN = Pattern.compile("://(\\p{Alnum}+)(?::([0-9]+))?");
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
   private final VertxInternal vertx;
@@ -237,7 +241,23 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
           Connection conn = holder.dataSource.getConnection();
           Object execMetric = enabled ? holder.metrics.begin(queueMetric) : null;
           // wrap it
-          res.complete(new JDBCConnectionImpl(ctx, helper, conn, holder.metrics, execMetric));
+          String url = conn.getMetaData().getURL();
+          SocketAddress server;
+          Matcher match = HOST_AND_PORT_PATTERN.matcher(url);
+          if (match.find()) {
+            String host = match.group(1);
+            int port;
+            if (match.groupCount() > 1) {
+              port = Integer.parseInt(match.group(2));
+            } else {
+              port = -1;
+            }
+            server = SocketAddress.inetSocketAddress(port, host);
+          } else  {
+            // Use a dummy address when cannot guess one
+            server = SocketAddress.inetSocketAddress(1234, "unknown");
+          }
+          res.complete(new JDBCConnectionImpl(ctx, helper, conn, holder.metrics, execMetric, server));
         } catch (SQLException e) {
           if (enabled) {
             holder.metrics.rejected(queueMetric);
