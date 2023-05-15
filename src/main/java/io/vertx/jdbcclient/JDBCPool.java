@@ -57,8 +57,6 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
-    final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
-
     return new JDBCPoolImpl(
       vertx,
       new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions), poolOptions.getName()),

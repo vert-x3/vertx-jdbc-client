@@ -22,6 +22,7 @@ import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.PoolMetrics;
 import io.vertx.ext.jdbc.impl.actions.*;
 import io.vertx.ext.sql.*;
@@ -43,23 +44,29 @@ public class JDBCConnectionImpl implements SQLConnection {
   private final PoolMetrics metrics;
   private final Object metric;
   private final TaskQueue statementsQueue = new TaskQueue();
+  private final SocketAddress server;
 
   private final JDBCStatementHelper helper;
 
   private SQLOptions options;
 
-  public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric) {
+  public JDBCConnectionImpl(Context context, JDBCStatementHelper helper, Connection conn, PoolMetrics metrics, Object metric, SocketAddress server) {
     this.helper = helper;
     this.conn = conn;
     this.metrics = metrics;
     this.metric = metric;
     this.ctx = (ContextInternal) context;
+    this.server = server;
   }
 
   @Override
   public synchronized SQLConnection setOptions(SQLOptions options) {
     this.options = options;
     return this;
+  }
+
+  public SocketAddress server() {
+    return server;
   }
 
   private synchronized SQLOptions getOptions() {
