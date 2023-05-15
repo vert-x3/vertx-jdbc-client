@@ -68,13 +68,17 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
   }
 
   public static void resetDb(Class<?> clazz) throws Exception {
+    resetDb(clazz, SQL);
+  }
+
+  public static void resetDb(Class<?> clazz, List<String> statements) throws Exception {
     Connection conn = DriverManager.getConnection(DBConfigs.hsqldb(clazz).getString("url"));
-    for (String sql : SQL) {
-      conn.createStatement().execute(sql);
+    for (String statement : statements) {
+      conn.createStatement().execute(statement);
     }
   }
 
-//  @Rule
+  //  @Rule
 //  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
 
   protected SQLClient client;
