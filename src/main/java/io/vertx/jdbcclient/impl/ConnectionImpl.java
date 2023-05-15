@@ -80,7 +80,7 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public SocketAddress server() {
-    throw new UnsupportedOperationException("Not yet implemented");
+    return conn.server();
   }
 
   @Override
