@@ -53,7 +53,21 @@ import java.util.regex.Pattern;
  */
 public class JDBCClientImpl implements JDBCClient, Closeable {
 
-  private static final Pattern HOST_AND_PORT_PATTERN = Pattern.compile("://(\\p{Alnum}+)(?::([0-9]+))?");
+  private static String parseNetLocation(String host) {
+    if (isRegardedAsIpv6Address(host)) {
+      return host.substring(1, host.length() - 1);
+    } else {
+      return host;
+    }
+  }
+
+  private static boolean isRegardedAsIpv6Address(String address) {
+    return address.startsWith("[") && address.endsWith("]");
+  }
+
+  private static final String NET_LOCATION_REGEX = "(?<netloc>[0-9.]+|\\[[a-zA-Z0-9:]+]|[a-zA-Z0-9\\-._~%]+)"; // ip v4/v6 address, host, domain socket address
+  private static final String PORT_REGEX = "(:(?<port>\\d+))?"; // port
+  private static final Pattern HOST_AND_PORT_PATTERN = Pattern.compile("://" + NET_LOCATION_REGEX + PORT_REGEX);
   private static final String DS_LOCAL_MAP_NAME = "__vertx.JDBCClient.datasources";
 
   private final VertxInternal vertx;
@@ -245,12 +259,13 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
           SocketAddress server;
           Matcher match = HOST_AND_PORT_PATTERN.matcher(url);
           if (match.find()) {
-            String host = match.group(1);
+            String host = parseNetLocation(match.group("netloc"));
             int port;
-            if (match.groupCount() > 1) {
-              port = Integer.parseInt(match.group(2));
+            String portString;
+            if (match.groupCount() > 1 && (portString = match.group("port")) != null && portString.length() > 0) {
+              port = Integer.parseInt(portString);
             } else {
-              port = -1;
+              port = 0;
             }
             server = SocketAddress.inetSocketAddress(port, host);
           } else  {

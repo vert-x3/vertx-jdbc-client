@@ -1,27 +1,39 @@
 package io.vertx.jdbcclient;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.ext.jdbc.DBConfigs;
 import io.vertx.ext.jdbc.JDBCClientTestBase;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.unit.junit.VertxUnitRunnerWithParametersFactory;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.tck.TracingTestBase;
+import org.hsqldb.Server;
 import org.junit.Assume;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
-@RunWith(VertxUnitRunner.class)
+@RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(VertxUnitRunnerWithParametersFactory.class)
 public class JDBCTracingTest extends TracingTestBase {
+
+  @Parameterized.Parameters
+  public static Iterable<Object[]> data() {
+    return Arrays.asList(new Object[][] {
+      { 0, "jdbc:hsqldb:hsql://localhost/xdb"},
+      { 0, "jdbc:hsqldb:hsql://localhost:9001/xdb"},
+      { 0, "jdbc:hsqldb:hsql://127.0.0.1/xdb"},
+      { 0, "jdbc:hsqldb:hsql://127.0.0.1:9001/xdb"},
+      { 1, "jdbc:hsqldb:mem:" + ClientTestBase.class.getSimpleName() + "?shutdown=true"},
+    });
+  }
 
   private static final List<String> SQL;
 
@@ -40,14 +52,39 @@ public class JDBCTracingTest extends TracingTestBase {
       "INSERT INTO immutable (id, message) VALUES (10, 'Computers make very fast, very accurate mistakes.');\n" +
       "INSERT INTO immutable (id, message) VALUES (11, '<script>alert(\"This should not be displayed in a browser alert box.\");</script>');\n" +
       "INSERT INTO immutable (id, message) VALUES (12, 'フレームワークのベンチマーク');").split("\n"));
-
   }
 
   private JDBCPool pool;
+  private Server server;
+  private final String connectionURL;
+  private final int serverMode;
+
+  public JDBCTracingTest(int serverMode, String connectionURL) {
+    this.serverMode = serverMode;
+    this.connectionURL = connectionURL;
+  }
 
   @Override
   public void setup() throws Exception {
-    JDBCClientTestBase.resetDb(ClientTestBase.class, SQL);
+    switch (serverMode) {
+      case 0:
+        Path dbPath = Files.createTempDirectory("hsqldb-");
+        server = new Server();
+        server.setDatabaseName(0, "xdb");
+        server.setDatabasePath(0, "file:" + dbPath.toString());
+        server.setPort(9001);
+        server.start();
+        Connection conn = DriverManager.getConnection(connectionURL, "SA", "");
+        for (String statement : SQL) {
+          conn.createStatement().execute(statement);
+        }
+        break;
+      case 1:
+        JDBCClientTestBase.resetDb(ClientTestBase.class, SQL);
+        break;
+      default:
+        throw new UnsupportedOperationException();
+    }
     super.setup();
   }
 
@@ -62,13 +99,17 @@ public class JDBCTracingTest extends TracingTestBase {
       }
     }
     super.teardown(ctx);
+    if (server != null) {
+      server.stop();
+      server = null;
+    }
   }
 
   @Override
   protected Pool createPool(Vertx vertx) {
     if (pool == null) {
       pool = JDBCPool.pool(vertx, new JDBCConnectOptions()
-        .setJdbcUrl(DBConfigs.hsqldb(ClientTestBase.class).getString("url")), new PoolOptions());
+        .setJdbcUrl(connectionURL).setUser("SA").setPassword(""), new PoolOptions());
     }
     return pool;
   }
