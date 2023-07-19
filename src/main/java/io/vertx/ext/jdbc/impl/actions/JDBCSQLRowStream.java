@@ -158,26 +158,22 @@ class JDBCSQLRowStream implements SQLRowStream {
 
   private void readBatch() {
     if (!rsClosed.get()) {
-      ctx.<List<JsonArray>>executeBlocking(fut -> {
-        try {
-          JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
-          List<JsonArray> rows = new ArrayList<>(fetchSize);
-          for (int i = 0; i < fetchSize && rs.next(); i++) {
-            JsonArray result = new JsonArray();
-            for (int j = 1; j <= cols; j++) {
-              Object res = decoder.parse(rs, j, provider);
-              if (res != null) {
-                result.add(res);
-              } else {
-                result.addNull();
-              }
+      ctx.<List<JsonArray>>executeBlocking(() -> {
+        JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
+        List<JsonArray> rows = new ArrayList<>(fetchSize);
+        for (int i = 0; i < fetchSize && rs.next(); i++) {
+          JsonArray result = new JsonArray();
+          for (int j = 1; j <= cols; j++) {
+            Object res = decoder.parse(rs, j, provider);
+            if (res != null) {
+              result.add(res);
+            } else {
+              result.addNull();
             }
-            rows.add(result);
           }
-          fut.complete(rows);
-        } catch (SQLException e) {
-          fut.fail(e);
+          rows.add(result);
         }
+        return rows;
       }, statementsQueue).onComplete(ar -> {
         if (ar.succeeded()) {
           List<JsonArray> rows = ar.result();
@@ -292,40 +288,32 @@ class JDBCSQLRowStream implements SQLRowStream {
     }
   }
 
-  private void getNextResultSet(Promise<Void> f) {
-    try {
-      // close if not already closed
-      if (rsClosed.compareAndSet(false, true)) {
-        rs.close();
-      }
-      // is there more rs data?
-      if (st.getMoreResults()) {
-        rs = st.getResultSet();
-        metaData = rs.getMetaData();
-        cols = metaData.getColumnCount();
-        columns = null;
-        // reset
-        // paused.set(true);
-        stClosed.set(false);
-        rsClosed.set(false);
-        more.set(true);
-      }
-
-      f.complete();
-    } catch (SQLException e) {
-      f.fail(e);
+  private Void getNextResultSet() throws Exception {
+    // close if not already closed
+    if (rsClosed.compareAndSet(false, true)) {
+      rs.close();
     }
+    // is there more rs data?
+    if (st.getMoreResults()) {
+      rs = st.getResultSet();
+      metaData = rs.getMetaData();
+      cols = metaData.getColumnCount();
+      columns = null;
+      // reset
+      // paused.set(true);
+      stClosed.set(false);
+      rsClosed.set(false);
+      more.set(true);
+    }
+
+    return null;
   }
 
   private void close(AutoCloseable closeable, AtomicBoolean lock, Handler<AsyncResult<Void>> handler) {
     if (lock.compareAndSet(false, true)) {
-      ctx.<Void>executeBlocking(f -> {
-        try {
-          closeable.close();
-          f.complete();
-        } catch (Exception e) {
-          f.fail(e);
-        }
+      ctx.<Void>executeBlocking(() -> {
+        closeable.close();
+        return null;
       }, statementsQueue).onComplete(handler);
     } else {
       if (handler != null) {

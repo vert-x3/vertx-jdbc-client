@@ -292,20 +292,16 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     if (holder.dataSource != null) {
       return ctx.succeededFuture(holder);
     }
-    return ctx.executeBlocking(promise -> {
-      createDataSource(promise);
-    }, holder.creationQueue);
+    return ctx.executeBlocking(this::createDataSource, holder.creationQueue);
   }
 
-  private void createDataSource(Promise<DataSourceHolder> promise) {
+  private DataSourceHolder createDataSource() {
     DataSourceHolder current = holders.get(datasourceName);
     if (current == null) {
-      promise.fail("Client closed while connecting");
-      return;
+      throw new VertxException("Client closed while connecting", true);
     }
     if (current.dataSource != null) {
-      promise.complete(current);
-      return;
+      return current;
     }
     DataSourceProvider provider = current.provider;
     DataSource dataSource;
@@ -314,14 +310,13 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
       dataSource = provider.getDataSource(config);
       poolSize = provider.maximumPoolSize(dataSource, config);
     } catch (SQLException e) {
-      promise.fail(e);
-      return;
+      throw new VertxException(e, true);
     }
     ExecutorService exec = createExecutor();
     PoolMetrics metrics = createMetrics(datasourceName, poolSize);
     current = holders.compute(datasourceName, (k, h) -> h == null ? null : h.created(dataSource, exec, metrics));
     if (current != null) {
-      promise.complete(current);
+      return current;
     } else {
       if (metrics != null) {
         metrics.close();
@@ -331,7 +326,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
         provider.close(dataSource);
       } catch (SQLException ignored) {
       }
-      promise.fail("Client closed while connecting");
+      throw new VertxException("Client closed while connecting", true);
     }
   }
 
@@ -357,15 +352,11 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     if (holder.metrics != null) {
       holder.metrics.close();
     }
-    vertx.<Void>executeBlocking(promise -> {
-      try {
-        if (holder.provider != null) {
-          holder.provider.close(holder.dataSource);
-        }
-        promise.complete();
-      } catch (SQLException e) {
-        promise.fail(e);
+    vertx.<Void>executeBlocking(() -> {
+      if (holder.provider != null) {
+        holder.provider.close(holder.dataSource);
       }
+      return null;
     }, false).onComplete(ar -> {
       holder.exec.shutdown();
       if (completionHandler != null) {

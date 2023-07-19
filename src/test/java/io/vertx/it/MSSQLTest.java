@@ -58,15 +58,11 @@ public class MSSQLTest {
   @BeforeClass
   public static void setup(TestContext should) {
     final Async test = should.async();
-    rule.vertx().executeBlocking(p -> {
-      try {
-        server = new MSSQLTest.MSSQLServer();
-        server.withInitScript("init-mssql.sql");
-        server.start();
-        p.complete();
-      } catch (RuntimeException e) {
-        p.fail(e);
-      }
+    rule.vertx().executeBlocking(() -> {
+      server = new MSSQLTest.MSSQLServer();
+      server.withInitScript("init-mssql.sql");
+      server.start();
+      return null;
     }, true).onSuccess(o -> test.complete()).onFailure(should::fail);
   }
 

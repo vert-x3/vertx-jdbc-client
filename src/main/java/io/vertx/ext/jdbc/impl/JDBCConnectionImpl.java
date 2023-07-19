@@ -161,17 +161,12 @@ public class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection getTransactionIsolation(Handler<AsyncResult<TransactionIsolation>> handler) {
-    ctx.executeBlocking((Promise<TransactionIsolation> f) -> {
-      try {
-        TransactionIsolation txIsolation = TransactionIsolation.from(conn.getTransactionIsolation());
-
-        if (txIsolation != null) {
-          f.complete(txIsolation);
-        } else {
-          f.fail("Unknown isolation level");
-        }
-      } catch (SQLException e) {
-        f.fail(e);
+    ctx.executeBlocking(() -> {
+      TransactionIsolation txIsolation = TransactionIsolation.from(conn.getTransactionIsolation());
+      if (txIsolation != null) {
+        return txIsolation;
+      } else {
+        throw new VertxException("Unknown isolation level", true);
       }
     }, statementsQueue).onComplete(handler);
 
@@ -198,13 +193,9 @@ public class JDBCConnectionImpl implements SQLConnection {
 
   @Override
   public SQLConnection setTransactionIsolation(TransactionIsolation isolation, Handler<AsyncResult<Void>> handler) {
-    ctx.executeBlocking((Promise<Void> f) -> {
-      try {
-        conn.setTransactionIsolation(isolation.getType());
-        f.complete(null);
-      } catch (SQLException e) {
-        f.fail(e);
-      }
+    ctx.<Void>executeBlocking(() -> {
+      conn.setTransactionIsolation(isolation.getType());
+      return null;
     }, statementsQueue).onComplete(handler);
 
     return this;
@@ -218,16 +209,11 @@ public class JDBCConnectionImpl implements SQLConnection {
 
   public <T> Future<T> schedule(AbstractJDBCAction<T> action) {
     final SQLOptions sqlOptions = getOptions();
-    return ctx.executeBlocking(promise -> {
-      try {
-        // apply connection options
-        applyConnectionOptions(conn, sqlOptions);
-        // execute
-        T result = action.execute(conn);
-        promise.complete(result);
-      } catch (SQLException e) {
-        promise.fail(e);
-      }
+    return ctx.executeBlocking(() -> {
+      // apply connection options
+      applyConnectionOptions(conn, sqlOptions);
+      // execute
+      return action.execute(conn);
     }, statementsQueue);
   }
 
