@@ -17,7 +17,6 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import io.vertx.core.ServiceHelper;
-import io.vertx.core.cli.impl.ReflectionUtils;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
@@ -78,7 +77,14 @@ public final class JDBCStatementHelper {
 
   private static <T> T initObject(String clsName) {
     Class<T> cls = findClass(clsName);
-    return cls == null ? null : ReflectionUtils.newInstance(cls);
+    if (cls == null) {
+      return null;
+    }
+    try {
+      return cls.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Cannot instantiate " + cls.getName(), e);
+    }
   }
 
   private static <T> Class<T> findClass(String cls) {
