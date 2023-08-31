@@ -86,7 +86,7 @@ public class JDBCPoolImpl extends SqlClientBase implements JDBCPool {
   @Override
   public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
     ContextInternal ctx = vertx.getOrCreateContext();
-    return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionBase<?>) conn).schedule(ctx, commandBase).eventually(r -> conn.close()));
+    return getConnectionInternal(ctx).flatMap(conn -> ((SqlConnectionBase<?>) conn).schedule(ctx, commandBase).eventually(() -> conn.close()));
   }
 
   @Override
