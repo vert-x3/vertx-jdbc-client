@@ -1,16 +1,17 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
-import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.core.net.NetClientOptions;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnectOptions;
+import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.spi.ConnectionFactory;
 import io.vertx.sqlclient.spi.Driver;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -25,13 +26,14 @@ public class FakeDriver implements Driver<SqlConnectOptions> {
     throw new UnsupportedOperationException();
   }
 
+
   @Override
-  public Pool newPool(Vertx vertx, Supplier<Future<SqlConnectOptions>> databases, PoolOptions options, CloseFuture closeFuture) {
+  public Pool newPool(Vertx vertx, Supplier<Future<SqlConnectOptions>> databases, PoolOptions options, NetClientOptions transportOptions, Handler<SqlConnection> connectHandler, CloseFuture closeFuture) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public ConnectionFactory<SqlConnectOptions> createConnectionFactory(Vertx vertx) {
+  public ConnectionFactory<SqlConnectOptions> createConnectionFactory(Vertx vertx, NetClientOptions transportOptions) {
     throw new UnsupportedOperationException();
   }
 
