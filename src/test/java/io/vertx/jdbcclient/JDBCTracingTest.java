@@ -115,6 +115,11 @@ public class JDBCTracingTest extends TracingTestBase {
   }
 
   @Override
+  protected boolean isValidDbSystem(String dbSystem) {
+    return "other_sql".equals(dbSystem);
+  }
+
+  @Override
   protected String statement(String... parts) {
     return String.join("?", parts);
   }
