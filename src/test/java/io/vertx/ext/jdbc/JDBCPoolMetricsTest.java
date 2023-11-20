@@ -30,14 +30,23 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
     return client;
   }
 
-  private FakePoolMetrics getMetrics() {
+//  protected FakePoolMetrics getMetrics() {
+//    return (FakePoolMetrics) FakePoolMetrics.getPoolMetrics().get(dataSourceName);
+//  }
+
+  protected FakePoolMetrics fakeMetrics() {
     return (FakePoolMetrics) FakePoolMetrics.getPoolMetrics().get(dataSourceName);
   }
 
   @Override
   protected VertxOptions getOptions() {
     MetricsOptions options = new MetricsOptions().setEnabled(true);
-    options.setFactory(options1 -> new VertxMetrics() {
+    return new VertxOptions().setMetricsOptions(options);
+  }
+
+  @Override
+  protected VertxMetricsFactory getMetrics() {
+    return o -> new VertxMetrics() {
       @Override
       public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
         if (poolType.equals("datasource")) {
@@ -47,8 +56,7 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
           return VertxMetrics.super.createPoolMetrics(poolType, poolName, maxPoolSize);
         }
       }
-    });
-    return new VertxOptions().setMetricsOptions(options);
+    };
   }
 
   @Test
@@ -59,7 +67,7 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
     assertEquals(0, metricsMap.size());
     client.getConnection(onSuccess(conn -> {
       assertEquals(1, metricsMap.size());
-      assertEquals(10, getMetrics().getPoolSize());
+      assertEquals(10, fakeMetrics().getPoolSize());
       conn.close(onSuccess(connClosed -> {
         client.close(onSuccess(clientClose -> {
           assertEquals(0, metricsMap.size());
@@ -74,14 +82,14 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
   public void testUseConnection() {
     client = getClient();
     client.getConnection(onSuccess(conn -> {
-      assertEquals(0, getMetrics().numberOfWaitingTasks());
-      assertEquals(1, getMetrics().numberOfRunningTasks());
+      assertEquals(0, fakeMetrics().numberOfWaitingTasks());
+      assertEquals(1, fakeMetrics().numberOfRunningTasks());
       conn.close(onSuccess(v -> {
-        assertEquals(0, getMetrics().numberOfWaitingTasks());
-        assertEquals(0, getMetrics().numberOfRunningTasks());
+        assertEquals(0, fakeMetrics().numberOfWaitingTasks());
+        assertEquals(0, fakeMetrics().numberOfRunningTasks());
         conn.close(ar -> {
-          assertEquals(0, getMetrics().numberOfWaitingTasks());
-          assertEquals(0, getMetrics().numberOfRunningTasks());
+          assertEquals(0, fakeMetrics().numberOfWaitingTasks());
+          assertEquals(0, fakeMetrics().numberOfRunningTasks());
           testComplete();
         });
       }));
@@ -108,12 +116,12 @@ public class JDBCPoolMetricsTest extends JDBCClientTestBase {
       }));
     }
     awaitLatch(connectedLatch);
-    assertEquals(10, getMetrics().numberOfRunningTasks());
-    assertEquals(1, getMetrics().numberOfWaitingTasks());
+    assertEquals(10, fakeMetrics().numberOfRunningTasks());
+    assertEquals(1, fakeMetrics().numberOfWaitingTasks());
     close.complete(null);
     awaitLatch(closedLatch);
-    assertEquals(0, getMetrics().numberOfWaitingTasks());
-    assertEquals(0, getMetrics().numberOfRunningTasks());
+    assertEquals(0, fakeMetrics().numberOfWaitingTasks());
+    assertEquals(0, fakeMetrics().numberOfRunningTasks());
   }
 
 }

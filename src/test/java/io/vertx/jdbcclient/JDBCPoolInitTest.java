@@ -37,21 +37,23 @@ public class JDBCPoolInitTest extends ClientTestBase {
     poolMetricsPoolName = null;
 
     final MetricsOptions metricsOptions = new MetricsOptions().setEnabled(true);
-    metricsOptions.setFactory(vertxOptions -> new VertxMetrics() {
-      @Override
-      public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
-        if (poolType.equals("datasource")) {
-          assertEquals("datasource", poolType);
-          poolMetricsPoolName = poolName;
-          return new FakePoolMetrics(poolName, maxPoolSize);
-        } else {
-          return VertxMetrics.super.createPoolMetrics(poolType, poolName, maxPoolSize);
-        }
-      }
-    });
 
     final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
-    vertx = Vertx.vertx(vertxOptions);
+    vertx = Vertx.builder()
+      .with(vertxOptions)
+      .withMetrics(vo -> new VertxMetrics() {
+        @Override
+        public PoolMetrics<?> createPoolMetrics(String poolType, String poolName, int maxPoolSize) {
+          if (poolType.equals("datasource")) {
+            assertEquals("datasource", poolType);
+            poolMetricsPoolName = poolName;
+            return new FakePoolMetrics(poolName, maxPoolSize);
+          } else {
+            return VertxMetrics.super.createPoolMetrics(poolType, poolName, maxPoolSize);
+          }
+        }
+      })
+      .build();
   }
 
   @Test

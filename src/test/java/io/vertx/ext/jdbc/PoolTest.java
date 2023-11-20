@@ -14,6 +14,7 @@ package io.vertx.ext.jdbc;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.ext.sql.SQLClient;
 import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakemetrics.FakeMetricsFactory;
@@ -38,8 +39,12 @@ public class PoolTest extends VertxTestBase {
   @Override
   protected VertxOptions getOptions() {
     MetricsOptions options = new MetricsOptions().setEnabled(true);
-    options.setFactory(new FakeMetricsFactory());
     return new VertxOptions().setMetricsOptions(options);
+  }
+
+  @Override
+  protected VertxMetricsFactory getMetrics() {
+    return new FakeMetricsFactory();
   }
 
   @Test(timeout = 30000)
@@ -55,7 +60,7 @@ public class PoolTest extends VertxTestBase {
     client = JDBCClient.createShared(vertx, config);
 
     vertx.setPeriodic(10, timerId -> {
-      FakePoolMetrics metrics = getMetrics();
+      FakePoolMetrics metrics = fakeMetrics();
       if (metrics != null && poolSize == metrics.numberOfRunningTasks()) {
         vertx.cancelTimer(timerId);
         complete();
@@ -95,7 +100,7 @@ public class PoolTest extends VertxTestBase {
     }
   }
 
-  private FakePoolMetrics getMetrics() {
+  private FakePoolMetrics fakeMetrics() {
     return (FakePoolMetrics) FakePoolMetrics.getPoolMetrics().get(JDBCClient.DEFAULT_DS_NAME);
   }
 }
