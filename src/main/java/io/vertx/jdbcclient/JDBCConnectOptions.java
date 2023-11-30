@@ -16,13 +16,15 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.sql.*;
 
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class JDBCConnectOptions extends SQLOptions {
 
   private String dataSourceImplementation = "AGROAL";
