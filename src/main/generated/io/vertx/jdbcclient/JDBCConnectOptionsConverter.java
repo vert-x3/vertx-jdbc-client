@@ -17,7 +17,7 @@ public class JDBCConnectOptionsConverter {
   private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
   private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
-  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, JDBCConnectOptions obj) {
+   static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, JDBCConnectOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
         case "readOnly":
@@ -129,11 +129,11 @@ public class JDBCConnectOptionsConverter {
     }
   }
 
-  public static void toJson(JDBCConnectOptions obj, JsonObject json) {
+   static void toJson(JDBCConnectOptions obj, JsonObject json) {
     toJson(obj, json.getMap());
   }
 
-  public static void toJson(JDBCConnectOptions obj, java.util.Map<String, Object> json) {
+   static void toJson(JDBCConnectOptions obj, java.util.Map<String, Object> json) {
     json.put("readOnly", obj.isReadOnly());
     if (obj.getCatalog() != null) {
       json.put("catalog", obj.getCatalog());
