@@ -17,7 +17,7 @@ public class ResultSetConverter {
   private static final Base64.Decoder BASE64_DECODER = JsonUtil.BASE64_DECODER;
   private static final Base64.Encoder BASE64_ENCODER = JsonUtil.BASE64_ENCODER;
 
-  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ResultSet obj) {
+   static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ResultSet obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
         case "columnNames":
@@ -62,11 +62,11 @@ public class ResultSetConverter {
     }
   }
 
-  public static void toJson(ResultSet obj, JsonObject json) {
+   static void toJson(ResultSet obj, JsonObject json) {
     toJson(obj, json.getMap());
   }
 
-  public static void toJson(ResultSet obj, java.util.Map<String, Object> json) {
+   static void toJson(ResultSet obj, java.util.Map<String, Object> json) {
     if (obj.getColumnNames() != null) {
       JsonArray array = new JsonArray();
       obj.getColumnNames().forEach(item -> array.add(item));
