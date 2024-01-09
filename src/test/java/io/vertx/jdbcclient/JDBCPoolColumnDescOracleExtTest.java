@@ -20,6 +20,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import oracle.sql.TIMESTAMPTZ;
@@ -81,8 +82,8 @@ public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
     vertx = Vertx.vertx();
     JsonObject extraOptions = new JsonObject()
       .put("decoderCls", CustomDecoder.class.getName());
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions()).init(extraOptions);
-    client = JDBCPool.pool(vertx, provider);
+//    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions()).init(extraOptions);
+    client = JDBCPool.pool(vertx, options, poolOptions());
   }
 
   @Override

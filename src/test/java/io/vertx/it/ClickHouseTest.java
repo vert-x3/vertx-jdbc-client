@@ -6,7 +6,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import org.junit.After;
 import org.junit.Before;
@@ -27,10 +29,8 @@ public class ClickHouseTest {
     container = new ClickHouseContainer("yandex/clickhouse-server:20.8");
     container.withInitScript("init-clickhouse.sql");
     container.start();
-    JsonObject config = new JsonObject()
-      .put("driver_class", "ru.yandex.clickhouse.ClickHouseDriver")
-      .put("url", "jdbc:clickhouse://localhost:" + container.getMappedPort(8123) + "/default");
-    client = JDBCPool.pool(vertx, config);
+    JDBCConnectOptions connectOptions = new JDBCConnectOptions().setJdbcUrl("jdbc:clickhouse://localhost:" + container.getMappedPort(8123) + "/default");
+    client = JDBCPool.pool(vertx, connectOptions, new PoolOptions());
   }
 
   @After

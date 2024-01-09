@@ -217,7 +217,7 @@ public class JDBCConnectionImpl implements SQLConnection {
     }, statementsQueue);
   }
 
-  private static void applyConnectionOptions(Connection conn, SQLOptions sqlOptions) throws SQLException {
+  public static void applyConnectionOptions(Connection conn, SQLOptions sqlOptions) throws SQLException {
     if (sqlOptions != null) {
       if (sqlOptions.isReadOnly()) {
         conn.setReadOnly(true);

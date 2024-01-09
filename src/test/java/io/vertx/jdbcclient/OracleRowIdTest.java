@@ -67,15 +67,10 @@ public class OracleRowIdTest {
       }
     }
 
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(
-      new JDBCConnectOptions()
-        .setJdbcUrl(jdbcUrl)
-        .setUser(username)
-        .setPassword(password),
-      new PoolOptions()
-        .setMaxSize(1));
-
-    client = JDBCPool.pool(rule.vertx(), provider);
+    client = JDBCPool.pool(rule.vertx(), new JDBCConnectOptions()
+      .setJdbcUrl(jdbcUrl)
+      .setUser(username)
+      .setPassword(password), new PoolOptions().setMaxSize(1));
   }
 
   @Test

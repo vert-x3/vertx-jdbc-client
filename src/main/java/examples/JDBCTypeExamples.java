@@ -42,14 +42,15 @@ public class JDBCTypeExamples {
   }
 
   public JDBCPool createJDBCPool(Vertx vertx, Class<JDBCEncoder> encoderClass, Class<JDBCDecoder> decoderClass) {
-    JsonObject extraOptions = new JsonObject()
-      .put("encoderCls", encoderClass.getName())
-      .put("decoderCls", decoderClass.getName());
-    JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl("your_jdbc_url")
-      .setUser("your_database_user")
-      .setPassword("your_database_password");
-    PoolOptions poolOptions = new PoolOptions().setMaxSize(1);
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions).init(extraOptions);
-    return JDBCPool.pool(vertx, provider);
+//    JsonObject extraOptions = new JsonObject()
+//      .put("encoderCls", encoderClass.getName())
+//      .put("decoderCls", decoderClass.getName());
+//    JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl("your_jdbc_url")
+//      .setUser("your_database_user")
+//      .setPassword("your_database_password");
+//    PoolOptions poolOptions = new PoolOptions().setMaxSize(1);
+//    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions).init(extraOptions);
+//    return JDBCPool.pool(vertx, provider);
+    return null; // TODO
   }
 }

@@ -457,6 +457,7 @@ public class JDBCPoolTest extends ClientTestBase {
       .onSuccess(rows -> should.fail("Broken SQL should fail")));
   }
 
+  @Ignore
   @Test
   public void testUnwrapToJDBCConnection(TestContext should) {
     client

@@ -143,7 +143,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mssqlserver</artifactId>
-      <version>1.15.2</version>
+      <version>1.19.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -155,7 +155,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>clickhouse</artifactId>
-      <version>1.15.2</version>
+      <version>1.19.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -173,13 +173,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>oracle-xe</artifactId>
-      <version>1.15.2</version>
+      <version>1.19.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.15.2</version>
+      <version>1.19.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>

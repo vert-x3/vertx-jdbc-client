@@ -18,10 +18,12 @@ package io.vertx.jdbcclient.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
-import io.vertx.ext.jdbc.impl.JDBCConnectionImpl;
+import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
+import io.vertx.ext.jdbc.impl.actions.JDBCClose;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.impl.actions.*;
@@ -31,26 +33,33 @@ import io.vertx.sqlclient.impl.QueryResultHandler;
 import io.vertx.sqlclient.impl.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 
+import static io.vertx.ext.jdbc.impl.JDBCConnectionImpl.applyConnectionOptions;
+
 public class ConnectionImpl implements Connection {
 
   final JDBCStatementHelper helper;
   final ContextInternal context;
-  final JDBCConnectionImpl conn;
+  final java.sql.Connection conn;
+  final ClientMetrics<?, ?, ?, ?> metrics;
   final SQLOptions sqlOptions;
   final String user;
   final String database;
+  final SocketAddress server;
+  final TaskQueue statementsQueue = new TaskQueue();
 
-  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, JDBCConnectionImpl conn, String user, String database) {
+  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?, ?> metrics, String user, String database, SocketAddress server) {
     this.conn = conn;
     this.helper = helper;
     this.context = context;
     this.sqlOptions = sqlOptions;
     this.user = user;
     this.database = database;
+    this.server = server;
+    this.metrics = metrics;
   }
 
   public java.sql.Connection getJDBCConnection() {
-    return conn.unwrap();
+    return conn;
   }
 
   @Override
@@ -70,7 +79,7 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public ClientMetrics metrics() {
-    return null;
+    return metrics;
   }
 
   @Override
@@ -80,7 +89,7 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public SocketAddress server() {
-    return conn.server();
+    return server;
   }
 
   @Override
@@ -104,7 +113,13 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public void close(Holder holder, Promise<Void> promise) {
-    conn.close(promise);
+    schedule(new JDBCClose(sqlOptions, null, null))
+      .andThen(ar -> {
+        if (metrics != null) {
+          metrics.close();
+        }
+      })
+      .onComplete(promise);
   }
 
   @Override
@@ -134,7 +149,7 @@ public class ConnectionImpl implements Connection {
 
   private Future<PreparedStatement> handle(PrepareStatementCommand command) {
     JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.sql());
-    return conn.schedule(action);
+    return schedule(action);
   }
 
   private <R> Future<Boolean> handle(ExtendedQueryCommand<R> command) {
@@ -153,14 +168,23 @@ public class ConnectionImpl implements Connection {
 
   private <R> Future<R> handle(TxCommand<R> command) {
     JDBCTxOp<R> action = new JDBCTxOp<>(helper, command, sqlOptions);
-    return conn.schedule(action);
+    return schedule(action);
   }
 
   private <R> Future<Boolean> handle(JDBCQueryAction<?, R> action, QueryResultHandler<R> handler) {
-    return conn.schedule(action)
+    return schedule(action)
       .map(response -> {
         response.handle(handler);
         return false;
       });
+  }
+
+  public <T> Future<T> schedule(AbstractJDBCAction<T> action) {
+    return context.executeBlocking(() -> {
+      // apply connection options
+      applyConnectionOptions(conn, sqlOptions);
+      // execute
+      return action.execute(conn);
+    }, statementsQueue);
   }
 }

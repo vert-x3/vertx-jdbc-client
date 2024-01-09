@@ -36,6 +36,7 @@ public class JDBCConnectOptions extends SQLOptions {
   private int connectTimeout = 60000;
   private int idleTimeout;
   private TracingPolicy tracingPolicy = TracingPolicy.PROPAGATE;
+  private JsonObject extraConfig;
 
   public JDBCConnectOptions() {}
 
@@ -130,6 +131,15 @@ public class JDBCConnectOptions extends SQLOptions {
    */
   public JDBCConnectOptions setTracingPolicy(TracingPolicy tracingPolicy) {
     this.tracingPolicy = tracingPolicy;
+    return this;
+  }
+
+  public JsonObject getExtraConfig() {
+    return extraConfig;
+  }
+
+  public JDBCConnectOptions setExtraConfig(JsonObject extraConfig) {
+    this.extraConfig = extraConfig;
     return this;
   }
 

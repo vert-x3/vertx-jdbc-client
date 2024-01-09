@@ -67,8 +67,7 @@ public class PostgresTest {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
       .setPassword(server.getPassword());
-    final DataSourceProvider provider = new AgroalCPDataSourceProvider(options, new PoolOptions().setMaxSize(1));
-    return JDBCPool.pool(rule.vertx(), provider.init(extraOption));
+    return JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
   }
 
   protected JDBCClient initJDBCClient(JsonObject extraOption) {

@@ -228,6 +228,13 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
     }).onComplete(handler);
   }
 
+  public Future<SQLConnection> connect(ContextInternal ctx) {
+    return getDataSourceHolder(ctx).flatMap(holder -> {
+
+      return null;
+    });
+  }
+
   public Future<SQLConnection> getConnection() {
     return getConnection(vertx.getOrCreateContext());
   }
