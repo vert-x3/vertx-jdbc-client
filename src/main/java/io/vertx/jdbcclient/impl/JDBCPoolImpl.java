@@ -26,7 +26,6 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -42,9 +41,6 @@ import java.util.regex.Pattern;
 public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
 
   private final VertxInternal vertx;
-  private final SQLOptions sqlOptions;
-  private final String user;
-  private final String database;
 
   private static class ConnectionFactory {
 
@@ -113,8 +109,6 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
                       JDBCConnectOptions sqlOptions,
                       Callable<Connection> connectionFactory,
                       PoolOptions poolOptions,
-                      String user,
-                      String database,
                       CloseFuture closeFuture) {
     super((VertxInternal) vertx,
       FakeDriver.INSTANCE,
@@ -126,9 +120,6 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
       null,
       closeFuture);
     this.vertx = (VertxInternal) vertx;
-    this.sqlOptions = sqlOptions;
-    this.user = user;
-    this.database = database;
   }
 
   @Override

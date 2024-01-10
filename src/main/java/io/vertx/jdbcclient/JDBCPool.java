@@ -56,15 +56,13 @@ public interface JDBCPool extends Pool {
       connectOptions,
       () -> DriverManager.getConnection(connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getPassword()),
       poolOptions,
-      connectOptions.getUser(),
-      connectOptions.getDatabase(),
       closeFuture);
     pool.init();
     return pool;
   }
 
   /**
-   * Create a JDBC pool using a pre-initialized data source.
+   * Create a JDBC pool using a pre-initialized data source, note this data source does not need to be a pool.
    *
    * @param vertx  the Vert.x instance
    * @param dataSource a pre-initialized data source
@@ -72,7 +70,15 @@ public interface JDBCPool extends Pool {
    * @since 4.2.0
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  static JDBCPool pool(Vertx vertx, DataSource dataSource) {
-    throw new UnsupportedOperationException("Not yet implemented (but could be)");
+  static JDBCPool pool(Vertx vertx, DataSource dataSource, PoolOptions poolOptions) {
+    CloseFuture closeFuture = new CloseFuture();
+    JDBCPoolImpl pool = new JDBCPoolImpl(
+      vertx,
+      new JDBCConnectOptions(),
+      () -> dataSource.getConnection(),
+      poolOptions,
+      closeFuture);
+    pool.init();
+    return pool;
   }
 }
