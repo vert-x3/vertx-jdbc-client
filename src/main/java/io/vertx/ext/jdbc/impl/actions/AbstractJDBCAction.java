@@ -29,7 +29,7 @@ import java.util.List;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-public abstract class AbstractJDBCAction<T> {
+public abstract class AbstractJDBCAction<T> implements JDBCAction<T> {
 
   protected final SQLOptions options;
   protected final JDBCStatementHelper helper;

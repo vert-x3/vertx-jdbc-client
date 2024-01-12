@@ -23,6 +23,7 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
+import io.vertx.ext.jdbc.impl.actions.JDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCClose;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
@@ -32,6 +33,8 @@ import io.vertx.sqlclient.impl.PreparedStatement;
 import io.vertx.sqlclient.impl.QueryResultHandler;
 import io.vertx.sqlclient.impl.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
+
+import java.util.function.Consumer;
 
 import static io.vertx.ext.jdbc.impl.JDBCConnectionImpl.applyConnectionOptions;
 
@@ -179,7 +182,7 @@ public class ConnectionImpl implements Connection {
       });
   }
 
-  public <T> Future<T> schedule(AbstractJDBCAction<T> action) {
+  public <T> Future<T> schedule(JDBCAction<T> action) {
     return context.executeBlocking(() -> {
       // apply connection options
       applyConnectionOptions(conn, sqlOptions);
