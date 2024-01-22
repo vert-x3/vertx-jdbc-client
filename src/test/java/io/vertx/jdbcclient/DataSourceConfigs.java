@@ -24,7 +24,7 @@ public class DataSourceConfigs {
 
   public static JDBCConnectOptions hsqldb(Class<?> clazz) {
     return new JDBCConnectOptions()
-      .setUser("jdbc:hsqldb:mem:" + clazz.getSimpleName() + "?shutdown=true");
+      .setJdbcUrl("jdbc:hsqldb:mem:" + clazz.getSimpleName() + "?shutdown=true");
 //      .put("driver_class", "org.hsqldb.jdbcDriver");
   }
 }

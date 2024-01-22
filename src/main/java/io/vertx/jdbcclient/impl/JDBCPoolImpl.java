@@ -16,31 +16,69 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
+import io.vertx.sqlclient.impl.CloseablePool;
 import io.vertx.sqlclient.impl.PoolImpl;
 import io.vertx.sqlclient.impl.SqlConnectionBase;
 
 import java.sql.Connection;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
 
+  private static final String SHARED_CLIENT_KEY = "__vertx.shared.jdbcclient";
+
+  public static Pool newPool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionSupplier) {
+    CloseFuture closeFuture = new CloseFuture();
+    VertxInternal vx = (VertxInternal) vertx;
+    PoolImpl pool;
+    if (poolOptions.isShared()) {
+      pool = vx.createSharedResource(SHARED_CLIENT_KEY, poolOptions.getName(), closeFuture, cf -> newPoolImpl(vx, connectOptions, poolOptions, connectionSupplier, cf));
+    } else {
+      pool = newPoolImpl(vx, connectOptions, poolOptions, connectionSupplier, closeFuture);
+    }
+    CloseablePool<Pool> closeablePool = new CloseablePool<>(vx, closeFuture, pool);
+    ContextInternal ctx = vx.getContext();
+    if (ctx != null) {
+      ctx.addCloseHook(closeFuture);
+    } else {
+      vx.addCloseHook(closeFuture);
+    }
+    return closeablePool;
+  }
+
+  private static JDBCPoolImpl newPoolImpl(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionCallable, CloseFuture closeFuture) {
+    JDBCPoolImpl pool = new JDBCPoolImpl(
+      vertx,
+      connectOptions,
+      connectionCallable,
+      poolOptions,
+      closeFuture);
+    pool.init();
+    return pool;
+  }
+
   private final VertxInternal vertx;
+  private final CloseFuture closeFuture;
 
   private static class ConnectionFactory {
 
@@ -120,6 +158,7 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
       null,
       closeFuture);
     this.vertx = (VertxInternal) vertx;
+    this.closeFuture = closeFuture;
   }
 
   @Override

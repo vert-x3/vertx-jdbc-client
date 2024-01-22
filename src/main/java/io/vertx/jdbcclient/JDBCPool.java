@@ -23,7 +23,9 @@ import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.concurrent.Callable;
 
 /**
  * JDBCPool is the interface that allows using the Sql Client API with plain JDBC.
@@ -50,15 +52,8 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static Pool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
-    CloseFuture closeFuture = new CloseFuture();
-    JDBCPoolImpl pool = new JDBCPoolImpl(
-      vertx,
-      connectOptions,
-      () -> DriverManager.getConnection(connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getPassword()),
-      poolOptions,
-      closeFuture);
-    pool.init();
-    return pool;
+    Callable<Connection> connectionCallable = () -> DriverManager.getConnection(connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getPassword());
+    return JDBCPoolImpl.newPool(vertx, connectOptions, poolOptions, connectionCallable);
   }
 
   /**
@@ -71,14 +66,6 @@ public interface JDBCPool extends Pool {
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   static Pool pool(Vertx vertx, DataSource dataSource, PoolOptions poolOptions) {
-    CloseFuture closeFuture = new CloseFuture();
-    JDBCPoolImpl pool = new JDBCPoolImpl(
-      vertx,
-      new JDBCConnectOptions(),
-      () -> dataSource.getConnection(),
-      poolOptions,
-      closeFuture);
-    pool.init();
-    return pool;
+    return JDBCPoolImpl.newPool(vertx, new JDBCConnectOptions(), poolOptions, () -> dataSource.getConnection());
   }
 }

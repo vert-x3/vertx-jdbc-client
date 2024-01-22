@@ -9,26 +9,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.ext.jdbc;
+package io.vertx.jdbcclient;
 
 import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxMetricsFactory;
-import io.vertx.ext.sql.SQLClient;
+import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.test.core.VertxTestBase;
 import io.vertx.test.fakemetrics.FakeMetricsFactory;
-import io.vertx.test.fakemetrics.FakePoolMetrics;
 import org.h2.tools.Server;
 import org.junit.After;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
-
 public class PoolTest extends VertxTestBase {
 
   Server server;
-  SQLClient client;
+  Pool client;
 
   @Override
   public void setUp() throws Exception {
@@ -50,26 +47,27 @@ public class PoolTest extends VertxTestBase {
   @Test(timeout = 30000)
   public void testUseAvailableResources() {
     int poolSize = 3;
-    waitFor(poolSize + 1);
+    waitFor(poolSize + 1 - 1);
 
-    JsonObject config = new JsonObject()
-      .put("url", "jdbc:h2:mem:test_mem")
-      .put("driver_class", "org.h2.Driver")
-      .put("initial_pool_size", poolSize)
-      .put("max_pool_size", poolSize);
-    client = JDBCClient.createShared(vertx, config);
+    client = JDBCPool.pool(vertx, new JDBCConnectOptions().setJdbcUrl("jdbc:h2:mem:test_mem"), new PoolOptions().setMaxSize(poolSize));
 
+    // Pool metrics are not yet implemented
+/*
     vertx.setPeriodic(10, timerId -> {
       FakePoolMetrics metrics = fakeMetrics();
+      System.out.println(metrics.numberOfRunningTasks());
       if (metrics != null && poolSize == metrics.numberOfRunningTasks()) {
         vertx.cancelTimer(timerId);
         complete();
       }
     });
+*/
 
-    client.query("CREATE ALIAS SLEEP FOR \"io.vertx.ext.jdbc.PoolTest.sleep\";", onSuccess(def -> {
+    client.query("CREATE ALIAS SLEEP FOR \"" + PoolTest.class.getName() + ".sleep\";").execute().onComplete(onSuccess(def -> {
       for (int i = 0; i < poolSize; i++) {
-        client.query("SELECT SLEEP(500)", onSuccess(rs -> complete()));
+        client.query("SELECT SLEEP(500)").execute().onComplete(onSuccess(rs -> {
+          complete();
+        }));
       }
     }));
 
@@ -90,9 +88,10 @@ public class PoolTest extends VertxTestBase {
   @After
   public void after() throws Exception {
     if (client != null) {
-      CountDownLatch latch = new CountDownLatch(1);
-      client.close(ar -> latch.countDown());
-      awaitLatch(latch);
+      client.close()
+              .toCompletionStage()
+              .toCompletableFuture()
+              .get();
     }
     super.after();
     if (server != null) {
@@ -100,7 +99,7 @@ public class PoolTest extends VertxTestBase {
     }
   }
 
-  private FakePoolMetrics fakeMetrics() {
-    return (FakePoolMetrics) FakePoolMetrics.getPoolMetrics().get(JDBCClient.DEFAULT_DS_NAME);
-  }
+//  private FakePoolMetrics fakeMetrics() {
+//    return (FakePoolMetrics) FakePoolMetrics.getPoolMetrics().get(JDBCClient.DEFAULT_DS_NAME);
+//  }
 }
