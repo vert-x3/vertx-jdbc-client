@@ -49,7 +49,7 @@ public interface JDBCPool extends Pool {
    * @param poolOptions the connection pool options
    * @return the client
    */
-  static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+  static Pool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
     CloseFuture closeFuture = new CloseFuture();
     JDBCPoolImpl pool = new JDBCPoolImpl(
       vertx,
@@ -70,7 +70,7 @@ public interface JDBCPool extends Pool {
    * @since 4.2.0
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  static JDBCPool pool(Vertx vertx, DataSource dataSource, PoolOptions poolOptions) {
+  static Pool pool(Vertx vertx, DataSource dataSource, PoolOptions poolOptions) {
     CloseFuture closeFuture = new CloseFuture();
     JDBCPoolImpl pool = new JDBCPoolImpl(
       vertx,

@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.Test;
@@ -22,7 +23,7 @@ public class DatasourceTest {
     dataSource.setUser("");
     dataSource.setPassword("");
     Vertx vertx = Vertx.vertx();
-    JDBCPool pool = JDBCPool.pool(vertx, dataSource, new PoolOptions());
+    Pool pool = JDBCPool.pool(vertx, dataSource, new PoolOptions());
     Async async = ctx.async();
     try {
       pool

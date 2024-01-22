@@ -8,6 +8,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import org.junit.After;
@@ -21,7 +22,7 @@ public class ClickHouseTest {
 
   private Vertx vertx;
   private ClickHouseContainer container;
-  protected JDBCPool client;
+  protected Pool client;
 
   @Before
   public void setUp() {

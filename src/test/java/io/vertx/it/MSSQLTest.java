@@ -28,6 +28,7 @@ import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -82,11 +83,11 @@ public class MSSQLTest {
 
   }
 
-  protected JDBCPool initJDBCPool() {
+  protected Pool initJDBCPool() {
     return initJDBCPool(new JsonObject());
   }
 
-  protected JDBCPool initJDBCPool(JsonObject extraOption) {
+  protected Pool initJDBCPool(JsonObject extraOption) {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
       .setPassword(server.getPassword())
@@ -104,7 +105,7 @@ public class MSSQLTest {
   @Test
   public void simpleTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     // this test would fail if we would attempt to read the generated ids after the end of the cursor
     // the fix implies that we must read them before we close the cursor.
     client.preparedQuery("select * from Fortune").execute().onComplete(should.asyncAssertSuccess(resultSet -> {
@@ -116,7 +117,7 @@ public class MSSQLTest {
   @Test
   public void simpleRSAfterUpdate(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     client.preparedQuery(//"set nocount on;\n" +
       "INSERT INTO test (field1)\n" + "SELECT ?").executeBatch(new ArrayList<Tuple>() {{
       Tuple.of(1);
@@ -126,7 +127,7 @@ public class MSSQLTest {
   @Test
   public void testProcedures(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
 
     client.preparedQuery("{ call rsp_vertx_test_1(?, ?)}")
       .execute(Tuple.of(1, SqlOutParam.OUT(JDBCType.VARCHAR)))
@@ -153,7 +154,7 @@ public class MSSQLTest {
   @Test
   public void testProcedures2(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
 
     client.preparedQuery("{ call rsp_vertx_test_2(?)}")
       .execute(Tuple.of(SqlOutParam.OUT(JDBCType.VARCHAR)))
@@ -173,7 +174,7 @@ public class MSSQLTest {
   @Test
   public void testQueryWithJDBCPool(TestContext should) {
     final Async async = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     client.query("SELECT * FROM special_datatype").execute().onFailure(should::fail).onSuccess(rows -> {
       should.assertNotNull(rows);
       should.assertEquals(1, rows.size());
@@ -192,7 +193,7 @@ public class MSSQLTest {
   @Test
   public void testQueryWithJDBCPoolHasMSSQLDecoder(TestContext should) {
     final Async async = should.async();
-    final JDBCPool client = initJDBCPool(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
+    final Pool client = initJDBCPool(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
     client.query("SELECT * FROM special_datatype").execute().onFailure(should::fail).onSuccess(rows -> {
       should.assertNotNull(rows);
       should.assertEquals(1, rows.size());

@@ -10,6 +10,7 @@ import io.vertx.ext.sql.SQLConnection;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -31,12 +32,12 @@ public class JDBCSqlClientExamples {
       .setPassword("");
     PoolOptions poolOptions = new PoolOptions()
       .setMaxSize(16);
-    JDBCPool pool = JDBCPool.pool(vertx, connectOptions, poolOptions);
+    Pool pool = JDBCPool.pool(vertx, connectOptions, poolOptions);
   }
 
   public void exampleCreateTypeSafe(Vertx vertx) {
 
-    JDBCPool pool = JDBCPool.pool(
+    Pool pool = JDBCPool.pool(
       vertx,
       // configure the connection
       new JDBCConnectOptions()

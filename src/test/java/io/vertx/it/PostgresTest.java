@@ -32,10 +32,7 @@ import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
-import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowStream;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.*;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,7 +60,7 @@ public class PostgresTest {
   public static final PostgreSQLContainer server = (PostgreSQLContainer) new PostgreSQLContainer("postgres:12-alpine")
     .withInitScript("init-pgsql.sql");
 
-  protected JDBCPool initJDBCPool(JsonObject extraOption) {
+  protected Pool initJDBCPool(JsonObject extraOption) {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
       .setPassword(server.getPassword());
@@ -104,7 +101,7 @@ public class PostgresTest {
   @Test
   public void simplePoolCallFunctionTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     pool
       .preparedQuery("{ call animal_stats(?, ?, ?) }")
@@ -129,7 +126,7 @@ public class PostgresTest {
   @Test
   public void simplePoolSelectFunctionTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     pool
       .preparedQuery("select * from animal_stats(?)")
@@ -151,7 +148,7 @@ public class PostgresTest {
   @Test
   public void simpleRowStreamTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     List<String> animals = Arrays.asList("dog", "cat", "cow");
 
@@ -265,7 +262,7 @@ public class PostgresTest {
   @Test
   public void testPoolQueryTemporalTable(TestContext should) {
     final Async async = should.async();
-    JDBCPool pool = initJDBCPool(new JsonObject());
+    Pool pool = initJDBCPool(new JsonObject());
     pool
       .preparedQuery("SELECT * FROM temporal_data_type WHERE id = 1").execute()
       .onSuccess(rows -> {
@@ -286,7 +283,7 @@ public class PostgresTest {
   @Test
   public void testInsertTemporalTable(TestContext should) throws SQLException {
     final Async async = should.strictAsync(2);
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
     final Tuple params = Tuple.tuple()
       .addValue(2)
       .addValue(LocalDate.parse("2022-05-30"))

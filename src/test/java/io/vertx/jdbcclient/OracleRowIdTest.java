@@ -17,6 +17,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -43,7 +44,7 @@ public class OracleRowIdTest {
 
   private static final List<String> SQL = new ArrayList<>();
 
-  private JDBCPool client;
+  private Pool client;
 
   static {
     SQL.add("DROP TABLE vegetables");

@@ -6,6 +6,7 @@ import io.vertx.ext.jdbc.DBConfigs;
 import io.vertx.ext.jdbc.JDBCClientTestBase;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import org.junit.After;
 import org.junit.Before;
@@ -18,7 +19,7 @@ public class ClientTestBase {
 //  public ThreadLeakCheckerRule leakRule = new ThreadLeakCheckerRule();
 
   protected Vertx vertx;
-  protected JDBCPool client;
+  protected Pool client;
 
   @Before
   public void setUp() throws Exception {

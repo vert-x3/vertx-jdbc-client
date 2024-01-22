@@ -22,6 +22,7 @@ import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Tuple;
@@ -43,7 +44,7 @@ public class OracleTest {
   public void testSimple(TestContext should) {
     final Async test = should.async();
 
-    final JDBCPool pool = JDBCPool.pool(
+    final Pool pool = JDBCPool.pool(
       rule.vertx(),
       new JDBCConnectOptions()
         .setJdbcUrl("jdbc:oracle:thin:@127.0.0.1:1521:xe")
@@ -78,7 +79,7 @@ public class OracleTest {
 
     final Async test = should.async();
 
-    final JDBCPool pool = JDBCPool.pool(
+    final Pool pool = JDBCPool.pool(
       rule.vertx(),
       new JDBCConnectOptions()
         .setJdbcUrl("jdbc:oracle:thin:@127.0.0.1:1521:xe")
@@ -109,7 +110,7 @@ public class OracleTest {
 
     final Async test = should.async();
 
-    final JDBCPool pool = JDBCPool.pool(
+    final Pool pool = JDBCPool.pool(
       rule.vertx(),
       new JDBCConnectOptions()
         .setJdbcUrl("jdbc:oracle:thin:@127.0.0.1:1521:xe")
