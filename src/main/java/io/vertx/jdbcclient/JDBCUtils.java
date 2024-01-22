@@ -30,17 +30,4 @@ public class JDBCUtils {
     }
     return (ConnectionImpl) internal;
   }
-
-  static Future<Integer> getTransactionIsolation(SqlConnection conn) {
-    ConnectionImpl impl = implOf(conn);
-    return impl.schedule(Connection::getTransactionIsolation);
-  }
-
-  static Future<Void> setTransactionIsolation(SqlConnection conn, int isolationLevel) {
-    ConnectionImpl impl = implOf(conn);
-    return impl.schedule(c -> {
-      c.setTransactionIsolation(isolationLevel);
-      return null;
-    });
-  }
 }

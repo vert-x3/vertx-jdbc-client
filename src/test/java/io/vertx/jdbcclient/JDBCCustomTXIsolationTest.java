@@ -38,9 +38,11 @@ public class JDBCCustomTXIsolationTest extends ClientTestBase {
   @Test
   public void testGetSet(TestContext ctx) {
     client.getConnection()
-      .compose(conn -> JDBCUtils
-        .getTransactionIsolation(conn)
-        .compose(level -> JDBCUtils
-          .setTransactionIsolation(conn, level))).onComplete(ctx.asyncAssertSuccess());
+      .compose(conn -> ((JDBCConnection)conn)
+        .getTransactionIsolation()
+        .compose(level -> ((JDBCConnection)conn)
+          .setTransactionIsolation(level))
+        .compose(v -> conn.close()))
+      .onComplete(ctx.asyncAssertSuccess());
   }
 }

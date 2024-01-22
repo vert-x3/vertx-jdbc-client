@@ -16,18 +16,17 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.future.PromiseInternal;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
@@ -39,7 +38,6 @@ import io.vertx.sqlclient.impl.SqlConnectionBase;
 
 import java.sql.Connection;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,6 +77,7 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
 
   private final VertxInternal vertx;
   private final CloseFuture closeFuture;
+  private final JDBCConnectOptions connectOptions;
 
   private static class ConnectionFactory {
 
@@ -144,7 +143,7 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
   }
 
   public JDBCPoolImpl(Vertx vertx,
-                      JDBCConnectOptions sqlOptions,
+                      JDBCConnectOptions connectOptions,
                       Callable<Connection> connectionFactory,
                       PoolOptions poolOptions,
                       CloseFuture closeFuture) {
@@ -152,13 +151,25 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
       FakeDriver.INSTANCE,
       false,
       poolOptions,
-      null,
-      null,
-      ctx -> new ConnectionFactory((VertxInternal) vertx, sqlOptions, connectionFactory).connect((ContextInternal) ctx),
+      conn -> {
+        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
+        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+        jdbc.sqlOptions = new SQLOptions(connectOptions);
+        return Future.succeededFuture();
+      },
+      conn -> {
+        Future<Void> voidFuture = Future.succeededFuture();
+        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
+        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+        jdbc.sqlOptions = null;
+        return voidFuture;
+      },
+      ctx -> new ConnectionFactory((VertxInternal) vertx, connectOptions, connectionFactory).connect((ContextInternal) ctx),
       null,
       closeFuture);
     this.vertx = (VertxInternal) vertx;
     this.closeFuture = closeFuture;
+    this.connectOptions = connectOptions;
   }
 
   @Override

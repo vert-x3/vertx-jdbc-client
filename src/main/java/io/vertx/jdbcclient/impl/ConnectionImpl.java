@@ -22,7 +22,6 @@ import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCAction;
 import io.vertx.ext.jdbc.impl.actions.JDBCClose;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
@@ -34,8 +33,6 @@ import io.vertx.sqlclient.impl.QueryResultHandler;
 import io.vertx.sqlclient.impl.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 
-import java.util.function.Consumer;
-
 import static io.vertx.ext.jdbc.impl.JDBCConnectionImpl.applyConnectionOptions;
 
 public class ConnectionImpl implements Connection {
@@ -44,11 +41,12 @@ public class ConnectionImpl implements Connection {
   final ContextInternal context;
   final java.sql.Connection conn;
   final ClientMetrics<?, ?, ?, ?> metrics;
-  final SQLOptions sqlOptions;
   final String user;
   final String database;
   final SocketAddress server;
   final TaskQueue statementsQueue = new TaskQueue();
+
+  SQLOptions sqlOptions;
 
   public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?, ?> metrics, String user, String database, SocketAddress server) {
     this.conn = conn;
@@ -145,6 +143,8 @@ public class ConnectionImpl implements Connection {
       return (Future<R>) handle((ExtendedQueryCommand<?>) commandBase);
     } else if (commandBase instanceof TxCommand) {
       return handle((TxCommand<R>) commandBase);
+    } else if (commandBase instanceof JDBCAction) {
+      return schedule((JDBCAction<R>) commandBase);
     } else {
       return Future.failedFuture("Not yet implemented " + commandBase);
     }

@@ -16,10 +16,7 @@
 
 package io.vertx.it;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -27,13 +24,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -93,13 +88,6 @@ public class MSSQLTest {
       .setPassword(server.getPassword())
       .setExtraConfig(extraOption);
     return JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
-  }
-
-  protected JDBCClient initJDBCClient(JsonObject extraOption) {
-    JsonObject options = new JsonObject().put("url", server.getJdbcUrl())
-      .put("user", server.getUsername())
-      .put("password", server.getPassword());
-    return JDBCClient.createShared(rule.vertx(), options.mergeIn(extraOption, true), "dbName");
   }
 
   @Test
@@ -207,22 +195,4 @@ public class MSSQLTest {
       async.complete();
     });
   }
-
-  @Test
-  public void testQueryWithJDBCClientHasMSSQLDecoder(TestContext should) {
-    final Async async = should.async();
-    final JDBCClient client = initJDBCClient(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
-    client.query("SELECT * FROM special_datatype", should.asyncAssertSuccess(resultSet -> {
-      Assert.assertEquals(1, resultSet.getNumRows());
-      final JsonArray row = resultSet.getResults().get(0);
-      Assert.assertEquals(1, (int) row.getInteger(0));
-      final Object dto = row.getValue(1);
-      final OffsetDateTime expected = OffsetDateTime.of(LocalDate.of(2020, 12, 12),
-        LocalTime.of(19, 30, 30, 123450000), ZoneOffset.UTC);
-      Assert.assertEquals(OffsetDateTime.class, dto.getClass());
-      Assert.assertEquals(expected, dto);
-      async.complete();
-    }));
-  }
-
 }

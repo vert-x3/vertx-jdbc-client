@@ -18,6 +18,7 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
 import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
@@ -132,8 +133,8 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
         cs.registerOutParameter(entry.getKey(), entry.getValue().vendorTypeNumber());
       }
     }
-    final ParameterMetaData metaData = ps.getParameterMetaData();
-    final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(metaData);
+    ParameterMetaData md = new CachedParameterMetaData(ps).putOutParams(outParams);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
     for (int idx = 1; idx <= params.size(); idx++) {
       Object value = params.getValue(idx - 1);
       if (value instanceof SqlOutParam) {
