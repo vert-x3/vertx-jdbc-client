@@ -25,7 +25,7 @@ import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.jdbcclient.impl.actions.JDBCAction;
 import io.vertx.jdbcclient.impl.actions.JDBCClose;
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.actions.*;
 import io.vertx.sqlclient.impl.Connection;
 import io.vertx.sqlclient.impl.PreparedStatement;
@@ -46,9 +46,9 @@ public class ConnectionImpl implements Connection {
   final SocketAddress server;
   final TaskQueue statementsQueue = new TaskQueue();
 
-  SQLOptions sqlOptions;
+  SqlOptions sqlOptions;
 
-  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SQLOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?, ?> metrics, String user, String database, SocketAddress server) {
+  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?, ?> metrics, String user, String database, SocketAddress server) {
     this.conn = conn;
     this.helper = helper;
     this.context = context;
@@ -191,7 +191,7 @@ public class ConnectionImpl implements Connection {
     }, statementsQueue);
   }
 
-  public static void applyConnectionOptions(java.sql.Connection conn, SQLOptions sqlOptions) throws SQLException {
+  public static void applyConnectionOptions(java.sql.Connection conn, SqlOptions sqlOptions) throws SQLException {
     if (sqlOptions != null) {
       if (sqlOptions.isReadOnly()) {
         conn.setReadOnly(true);

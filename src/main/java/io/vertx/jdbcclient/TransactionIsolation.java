@@ -13,9 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package io.vertx.ext.sql;
-
-import io.vertx.codegen.annotations.VertxGen;
+package io.vertx.jdbcclient;
 
 import java.sql.Connection;
 

@@ -13,25 +13,23 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package io.vertx.ext.sql;
-
-import io.vertx.codegen.annotations.VertxGen;
+package io.vertx.jdbcclient;
 
 import java.sql.ResultSet;
 
 /**
- * Represents the resultset concurrency hint
+ * Represents the resultset type hint
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */
-public enum ResultSetConcurrency {
-
-  READ_ONLY(ResultSet.CONCUR_READ_ONLY),
-  UPDATABLE(ResultSet.CONCUR_UPDATABLE);
+public enum ResultSetType {
+  FORWARD_ONLY(ResultSet.TYPE_FORWARD_ONLY),
+  SCROLL_INSENSITIVE(ResultSet.TYPE_SCROLL_INSENSITIVE),
+  SCROLL_SENSITIVE(ResultSet.TYPE_SCROLL_SENSITIVE);
 
   private final int type;
 
-  ResultSetConcurrency(int type) {
+  ResultSetType(int type) {
     this.type = type;
   }
 

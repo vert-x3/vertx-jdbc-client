@@ -26,7 +26,7 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
@@ -154,7 +154,7 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
       conn -> {
         // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
         ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-        jdbc.sqlOptions = new SQLOptions(connectOptions);
+        jdbc.sqlOptions = new SqlOptions(connectOptions);
         return Future.succeededFuture();
       },
       conn -> {

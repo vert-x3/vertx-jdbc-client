@@ -2,7 +2,6 @@ package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Future;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCConnection;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.impl.Connection;

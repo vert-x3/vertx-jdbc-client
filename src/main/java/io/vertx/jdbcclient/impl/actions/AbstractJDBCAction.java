@@ -17,7 +17,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
 
 import java.sql.*;
@@ -30,15 +30,15 @@ import java.util.Collections;
  */
 public abstract class AbstractJDBCAction<T> implements JDBCAction<T> {
 
-  protected final SQLOptions options;
+  protected final SqlOptions options;
   protected final JDBCStatementHelper helper;
   private static final JsonArray EMPTY = new JsonArray(Collections.unmodifiableList(new ArrayList<>()));
 
-  protected AbstractJDBCAction(SQLOptions options) {
+  protected AbstractJDBCAction(SqlOptions options) {
     this(null, options);
   }
 
-  protected AbstractJDBCAction(JDBCStatementHelper helper, SQLOptions options) {
+  protected AbstractJDBCAction(JDBCStatementHelper helper, SqlOptions options) {
     this.options = options;
     this.helper = helper;
   }
