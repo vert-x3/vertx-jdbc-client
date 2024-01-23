@@ -11,7 +11,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 
 import java.sql.JDBCType;

@@ -1,22 +1,16 @@
 package examples;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 
-import javax.sql.DataSource;
 import java.sql.JDBCType;
-import java.time.Instant;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -25,19 +19,18 @@ import java.time.Instant;
 public class JDBCSqlClientExamples {
 
   public void exampleCreateDefault(Vertx vertx) {
-    final JsonObject config = new JsonObject()
-      .put("jdbcUrl", "jdbc:h2:~/test")
-      .put("datasourceName", "pool-name")
-      .put("username", "sa")
-      .put("password", "")
-      .put("max_pool_size", 16);
-
-    JDBCPool pool = JDBCPool.pool(vertx, config);
+    JDBCConnectOptions connectOptions = new JDBCConnectOptions()
+      .setJdbcUrl("jdbc:h2:~/test")
+      .setUser("sa")
+      .setPassword("");
+    PoolOptions poolOptions = new PoolOptions()
+      .setMaxSize(16);
+    Pool pool = JDBCPool.pool(vertx, connectOptions, poolOptions);
   }
 
   public void exampleCreateTypeSafe(Vertx vertx) {
 
-    JDBCPool pool = JDBCPool.pool(
+    Pool pool = JDBCPool.pool(
       vertx,
       // configure the connection
       new JDBCConnectOptions()

@@ -13,7 +13,15 @@ public class JDBCUtils {
    * @return the JDBC connection
    */
   static java.sql.Connection unwrap(SqlConnection conn) {
-    ConnectionImpl impl = (ConnectionImpl) ((SqlConnectionInternal) conn).unwrap();
-    return impl.getJDBCConnection();
+    return implOf(conn).getJDBCConnection();
+  }
+
+  private static ConnectionImpl implOf(SqlConnection conn) {
+    io.vertx.sqlclient.impl.Connection internal = ((SqlConnectionInternal) conn).unwrap();
+    if (!(internal instanceof ConnectionImpl)) {
+      // Not pooled
+      internal = internal.unwrap();
+    }
+    return (ConnectionImpl) internal;
   }
 }

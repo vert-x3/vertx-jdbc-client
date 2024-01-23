@@ -54,7 +54,7 @@ public class JDBCTracingTest extends TracingTestBase {
       "INSERT INTO immutable (id, message) VALUES (12, 'フレームワークのベンチマーク');").split("\n"));
   }
 
-  private JDBCPool pool;
+  private Pool pool;
   private Server server;
   private final String connectionURL;
   private final int serverMode;
@@ -90,7 +90,7 @@ public class JDBCTracingTest extends TracingTestBase {
 
   @Override
   public void teardown(TestContext ctx) {
-    JDBCPool p = pool;
+    Pool p = pool;
     pool = null;
     if (p != null) {
       try {

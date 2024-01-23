@@ -16,10 +16,7 @@
 
 package io.vertx.it;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -27,12 +24,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -82,29 +78,22 @@ public class MSSQLTest {
 
   }
 
-  protected JDBCPool initJDBCPool() {
+  protected Pool initJDBCPool() {
     return initJDBCPool(new JsonObject());
   }
 
-  protected JDBCPool initJDBCPool(JsonObject extraOption) {
+  protected Pool initJDBCPool(JsonObject extraOption) {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
-      .setPassword(server.getPassword());
-    final DataSourceProvider provider = new AgroalCPDataSourceProvider(options, new PoolOptions().setMaxSize(1));
-    return JDBCPool.pool(rule.vertx(), provider.init(extraOption));
-  }
-
-  protected JDBCClient initJDBCClient(JsonObject extraOption) {
-    JsonObject options = new JsonObject().put("url", server.getJdbcUrl())
-      .put("user", server.getUsername())
-      .put("password", server.getPassword());
-    return JDBCClient.createShared(rule.vertx(), options.mergeIn(extraOption, true), "dbName");
+      .setPassword(server.getPassword())
+      .setExtraConfig(extraOption);
+    return JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
   }
 
   @Test
   public void simpleTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     // this test would fail if we would attempt to read the generated ids after the end of the cursor
     // the fix implies that we must read them before we close the cursor.
     client.preparedQuery("select * from Fortune").execute().onComplete(should.asyncAssertSuccess(resultSet -> {
@@ -116,7 +105,7 @@ public class MSSQLTest {
   @Test
   public void simpleRSAfterUpdate(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     client.preparedQuery(//"set nocount on;\n" +
       "INSERT INTO test (field1)\n" + "SELECT ?").executeBatch(new ArrayList<Tuple>() {{
       Tuple.of(1);
@@ -126,7 +115,7 @@ public class MSSQLTest {
   @Test
   public void testProcedures(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
 
     client.preparedQuery("{ call rsp_vertx_test_1(?, ?)}")
       .execute(Tuple.of(1, SqlOutParam.OUT(JDBCType.VARCHAR)))
@@ -153,7 +142,7 @@ public class MSSQLTest {
   @Test
   public void testProcedures2(TestContext should) {
     final Async test = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
 
     client.preparedQuery("{ call rsp_vertx_test_2(?)}")
       .execute(Tuple.of(SqlOutParam.OUT(JDBCType.VARCHAR)))
@@ -173,7 +162,7 @@ public class MSSQLTest {
   @Test
   public void testQueryWithJDBCPool(TestContext should) {
     final Async async = should.async();
-    final JDBCPool client = initJDBCPool();
+    final Pool client = initJDBCPool();
     client.query("SELECT * FROM special_datatype").execute().onFailure(should::fail).onSuccess(rows -> {
       should.assertNotNull(rows);
       should.assertEquals(1, rows.size());
@@ -192,7 +181,7 @@ public class MSSQLTest {
   @Test
   public void testQueryWithJDBCPoolHasMSSQLDecoder(TestContext should) {
     final Async async = should.async();
-    final JDBCPool client = initJDBCPool(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
+    final Pool client = initJDBCPool(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
     client.query("SELECT * FROM special_datatype").execute().onFailure(should::fail).onSuccess(rows -> {
       should.assertNotNull(rows);
       should.assertEquals(1, rows.size());
@@ -206,22 +195,4 @@ public class MSSQLTest {
       async.complete();
     });
   }
-
-  @Test
-  public void testQueryWithJDBCClientHasMSSQLDecoder(TestContext should) {
-    final Async async = should.async();
-    final JDBCClient client = initJDBCClient(new JsonObject().put("decoderCls", MSSQLDecoder.class.getName()));
-    client.query("SELECT * FROM special_datatype", should.asyncAssertSuccess(resultSet -> {
-      Assert.assertEquals(1, resultSet.getNumRows());
-      final JsonArray row = resultSet.getResults().get(0);
-      Assert.assertEquals(1, (int) row.getInteger(0));
-      final Object dto = row.getValue(1);
-      final OffsetDateTime expected = OffsetDateTime.of(LocalDate.of(2020, 12, 12),
-        LocalTime.of(19, 30, 30, 123450000), ZoneOffset.UTC);
-      Assert.assertEquals(OffsetDateTime.class, dto.getClass());
-      Assert.assertEquals(expected, dto);
-      async.complete();
-    }));
-  }
-
 }

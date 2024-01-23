@@ -16,9 +16,7 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.sqlclient.Row;
 
 import java.sql.Connection;
@@ -33,7 +31,7 @@ public class JDBCSimpleQueryAction<C, R> extends JDBCQueryAction<C, R> {
 
   private final String sql;
 
-  public JDBCSimpleQueryAction(JDBCStatementHelper helper, SQLOptions options, String sql, Collector<Row, C, R> collector) {
+  public JDBCSimpleQueryAction(JDBCStatementHelper helper, SqlOptions options, String sql, Collector<Row, C, R> collector) {
     super(helper, options, collector);
     this.sql = sql;
   }

@@ -4,11 +4,14 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.CloseFuture;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnectOptions;
 import io.vertx.sqlclient.SqlConnection;
+import io.vertx.sqlclient.impl.Connection;
+import io.vertx.sqlclient.impl.SqlConnectionInternal;
 import io.vertx.sqlclient.spi.ConnectionFactory;
 import io.vertx.sqlclient.spi.Driver;
 
@@ -45,5 +48,10 @@ public class FakeDriver implements Driver<SqlConnectOptions> {
   @Override
   public boolean acceptsOptions(SqlConnectOptions connectOptions) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public SqlConnectionInternal wrapConnection(ContextInternal context, ConnectionFactory<SqlConnectOptions> factory, Connection conn) {
+    return new JDBCConnectionImpl(context, factory, conn, FakeDriver.INSTANCE);
   }
 }

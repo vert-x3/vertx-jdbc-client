@@ -1,6 +1,7 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.core.Future;
+import io.vertx.ext.jdbc.JDBCClientTestBase;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.sqlclient.*;
@@ -14,6 +15,12 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(VertxUnitRunner.class)
 public class ClientTest extends ClientTestBase {
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    JDBCClientTestBase.resetDb(getClass());
+  }
 
   protected SqlConnection connection() throws Exception {
     return client.getConnection().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);

@@ -17,9 +17,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -32,7 +30,7 @@ public class JDBCPrepareStatementAction extends AbstractJDBCAction<io.vertx.sqlc
 
   private final String sql;
 
-  public JDBCPrepareStatementAction(JDBCStatementHelper helper, SQLOptions options, String sql) {
+  public JDBCPrepareStatementAction(JDBCStatementHelper helper, SqlOptions options, String sql) {
     super(helper, options);
     this.sql = sql;
   }

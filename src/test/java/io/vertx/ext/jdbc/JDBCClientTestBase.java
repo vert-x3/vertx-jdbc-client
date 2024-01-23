@@ -16,21 +16,11 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.ThreadLeakCheckerRule;
-import io.vertx.core.Promise;
-import io.vertx.core.json.JsonArray;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.UpdateResult;
 import io.vertx.test.core.VertxTestBase;
-import org.junit.After;
-import org.junit.Rule;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -75,55 +65,6 @@ public abstract class JDBCClientTestBase extends VertxTestBase {
     Connection conn = DriverManager.getConnection(DBConfigs.hsqldb(clazz).getString("url"));
     for (String statement : statements) {
       conn.createStatement().execute(statement);
-    }
-  }
-
-  //  @Rule
-//  public ThreadLeakCheckerRule rule = new ThreadLeakCheckerRule();
-
-  protected SQLClient client;
-
-  public void tearDown() throws Exception {
-    if (client != null) {
-      close(client);
-    }
-    super.tearDown();
-  }
-
-  protected void assertUpdate(UpdateResult result, int updated) {
-    assertUpdate(result, updated, false);
-  }
-
-  protected void assertUpdate(UpdateResult result, int updated, boolean generatedKeys) {
-    assertNotNull(result);
-    assertEquals(updated, result.getUpdated());
-    if (generatedKeys) {
-      JsonArray keys = result.getKeys();
-      assertNotNull(keys);
-      assertEquals(updated, keys.size());
-      Set<Integer> numbers = new HashSet<>();
-      for (int i = 0; i < updated; i++) {
-        assertTrue(keys.getValue(i) instanceof Integer);
-        assertTrue(numbers.add(i));
-      }
-    }
-  }
-
-  public static void close(SQLClient client) {
-    Promise<Void> promise = Promise.promise();
-    client.close(promise);
-    try {
-      promise.future().toCompletionStage().toCompletableFuture().get(20, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (Exception ignore) {
-    }
-  }
-
-  protected static void setLogLevel(String name, Level level) {
-    Logger logger = Logger.getLogger(name);
-    if (logger != null) {
-      logger.setLevel(level);
     }
   }
 }

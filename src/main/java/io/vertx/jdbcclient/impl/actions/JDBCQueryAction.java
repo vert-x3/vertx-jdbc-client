@@ -11,13 +11,9 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
-import io.vertx.ext.jdbc.spi.JDBCDecoder;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
+import io.vertx.jdbcclient.spi.JDBCDecoder;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
@@ -41,7 +37,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
   private final Collector<Row, C, R> collector;
 
-  public JDBCQueryAction(JDBCStatementHelper helper, SQLOptions options, Collector<Row, C, R> collector) {
+  public JDBCQueryAction(JDBCStatementHelper helper, SqlOptions options, Collector<Row, C, R> collector) {
     super(helper, options);
     this.collector = collector;
   }

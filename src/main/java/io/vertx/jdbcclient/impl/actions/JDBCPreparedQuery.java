@@ -18,11 +18,8 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
-import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -47,7 +44,7 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
   private final Tuple params = Tuple.tuple();
   private final CallableOutParams outParams = CallableOutParams.create();
 
-  public JDBCPreparedQuery(JDBCStatementHelper helper, SQLOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, Tuple params) {
+  public JDBCPreparedQuery(JDBCStatementHelper helper, SqlOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, Tuple params) {
     super(helper, options, collector);
     this.query = query;
     this.normalizeParams(params);
@@ -132,8 +129,8 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
         cs.registerOutParameter(entry.getKey(), entry.getValue().vendorTypeNumber());
       }
     }
-    final ParameterMetaData metaData = ps.getParameterMetaData();
-    final JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(metaData);
+    ParameterMetaData md = new CachedParameterMetaData(ps).putOutParams(outParams);
+    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
     for (int idx = 1; idx <= params.size(); idx++) {
       Object value = params.getValue(idx - 1);
       if (value instanceof SqlOutParam) {

@@ -16,9 +16,7 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.sql.SQLOptions;
+import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.sqlclient.impl.command.TxCommand;
 
 import java.sql.Connection;
@@ -31,7 +29,7 @@ public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
 
   private final TxCommand<R> op;
 
-  public JDBCTxOp(JDBCStatementHelper helper, TxCommand<R> op, SQLOptions options) {
+  public JDBCTxOp(JDBCStatementHelper helper, TxCommand<R> op, SqlOptions options) {
     super(helper, options);
     this.op = op;
   }

@@ -16,26 +16,17 @@
 
 package io.vertx.it;
 
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.jdbc.spi.DataSourceProvider;
-import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.JDBCConnection;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
-import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowStream;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.*;
+import io.vertx.test.core.TestUtils;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,49 +54,17 @@ public class PostgresTest {
   public static final PostgreSQLContainer server = (PostgreSQLContainer) new PostgreSQLContainer("postgres:12-alpine")
     .withInitScript("init-pgsql.sql");
 
-  protected JDBCPool initJDBCPool(JsonObject extraOption) {
+  protected Pool initJDBCPool(JsonObject extraOption) {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
       .setPassword(server.getPassword());
-    final DataSourceProvider provider = new AgroalCPDataSourceProvider(options, new PoolOptions().setMaxSize(1));
-    return JDBCPool.pool(rule.vertx(), provider.init(extraOption));
-  }
-
-  protected JDBCClient initJDBCClient(JsonObject extraOption) {
-    JsonObject options = new JsonObject().put("url", server.getJdbcUrl())
-      .put("user", server.getUsername())
-      .put("password", server.getPassword());
-    return JDBCClient.createShared(rule.vertx(), options.mergeIn(extraOption, true), "dbName");
-  }
-
-  @Test
-  public void simpleClientCallFunctionTest(TestContext should) {
-    final Async test = should.async();
-    final JDBCClient client = initJDBCClient(new JsonObject());
-
-    client.callWithParams(
-      "{ call animal_stats(?, ?, ?) }",
-      new JsonArray().add(false),
-      new JsonArray().addNull().add("BIGINT").add("REAL"),
-      asyncResult -> {
-        if (asyncResult.failed()) {
-          should.fail(asyncResult.cause());
-        } else {
-          ResultSet statsResult = asyncResult.result();
-          JsonArray output = statsResult.getOutput();
-          System.out.println(new JsonObject().put("stats", output.toString()).encodePrettily());
-          should.assertTrue(output.getValue(1) instanceof Number);
-          should.assertTrue(output.getValue(2) instanceof Number);
-          test.complete();
-        }
-      }
-    );
+    return JDBCPool.pool(rule.vertx(), options, new PoolOptions().setMaxSize(1));
   }
 
   @Test
   public void simplePoolCallFunctionTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     pool
       .preparedQuery("{ call animal_stats(?, ?, ?) }")
@@ -130,7 +89,7 @@ public class PostgresTest {
   @Test
   public void simplePoolSelectFunctionTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     pool
       .preparedQuery("select * from animal_stats(?)")
@@ -152,7 +111,7 @@ public class PostgresTest {
   @Test
   public void simpleRowStreamTest(TestContext should) {
     final Async test = should.async();
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
 
     List<String> animals = Arrays.asList("dog", "cat", "cow");
 
@@ -184,89 +143,59 @@ public class PostgresTest {
 
   @Test
   public void threeParamsTest(TestContext should) {
-    final Async test = should.async();
+    final Pool pool = initJDBCPool(new JsonObject());
 
-    final JDBCClient client = initJDBCClient(new JsonObject());
-    // 3x INOUT
-    callWithInOut(client, "{ call f_inout_inout_inout(?, ?, ?) }",
-      new JsonArray().add(false).add(false).add(false),             // OK
-      new JsonArray().add("BOOLEAN").add("BOOLEAN").add("BOOLEAN"))
-      .compose(v ->
-        // 1x IN, 2x INOUT
-        callWithInOut(client, "{ call f_in_inout_inout(?, ?, ?) }",
-          new JsonArray().add(false).add(false).add(false),             // OK
-          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
-      .compose(v ->
-        // 1x implicit IN, 2x INOUT
-        callWithInOut(client, "{ call f_blank_inout_inout(?, ?, ?) }",
-          new JsonArray().add(false).add(false).add(false),             // OK
-          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
-      .compose(v ->
-        // 1x IN, 2x OUT
-        callWithInOut(client, "{ call f_in_out_out(?, ?, ?) }",
-          new JsonArray().add(false),                                   // OK
-          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
-      .compose(v ->
-        // 1x implicit IN, 2x OUT
-        callWithInOut(client, "{ call f_blank_out_out(?, ?, ?) }",
-          new JsonArray(),                                   // failing
-          new JsonArray().addNull().add("BOOLEAN").add("BOOLEAN")))
-      .onFailure(should::fail)
-      .onSuccess(v -> test.complete());
+    boolean expected = TestUtils.randomBoolean();
+
+    testInOut(should, pool, "{ call f_inout_inout_inout(?, ?, ?) }", Tuple.of(
+      SqlOutParam.INOUT(true, JDBCType.BOOLEAN),
+      SqlOutParam.INOUT(true, JDBCType.BOOLEAN),
+      SqlOutParam.INOUT(true, JDBCType.BOOLEAN)), true, true, true);
+
+    testInOut(should, pool, "{ call f_in_inout_inout(?, ?, ?) }", Tuple.of(
+      false,
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN),
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN)), true, true);
+
+    testInOut(should, pool, "{ call f_blank_inout_inout(?, ?, ?) }", Tuple.of(
+      false,
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN),
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN)), true, true);
+
+    testInOut(should, pool, "{ call f_blank_inout_inout(?, ?, ?) }", Tuple.of(
+      false,
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN),
+      SqlOutParam.INOUT(false, JDBCType.BOOLEAN)), true, true);
+
+    testInOut(should, pool, "{ call f_in_out_out(?, ?, ?) }", Tuple.of(
+      expected,
+      SqlOutParam.OUT(JDBCType.BOOLEAN),
+      SqlOutParam.OUT(JDBCType.BOOLEAN)), expected, true);
+
+    testInOut(should, pool, "{ call f_blank_out_out(?, ?, ?) }", Tuple.of(
+      expected,
+      SqlOutParam.OUT(JDBCType.BOOLEAN),
+      SqlOutParam.OUT(JDBCType.BOOLEAN)), expected, true );
   }
 
-  private Future<Void> callWithInOut(JDBCClient client, String sql, JsonArray in, JsonArray out) {
-    final Promise<Void> promise = ((VertxInternal) rule.vertx()).promise();
-
-    client.callWithParams(
-      sql,
-      in,
-      out,
-      asyncResult -> {
-        if (asyncResult.failed()) {
-          printResults("FAIL ", sql, in, out, asyncResult.cause().getMessage());
-          promise.fail(asyncResult.cause());
-        } else {
-          ResultSet statsResult = asyncResult.result();
-          JsonArray output = statsResult.getOutput();
-          printResults("OK   ", sql, in, out, output.encodePrettily());
-          promise.complete();
+  private void testInOut(TestContext should, Pool pool, String stmt, Tuple tuple, Object... expected) {
+    pool
+      .preparedQuery(stmt)
+      .execute(tuple).onComplete(should.asyncAssertSuccess(rows -> {
+        if (rows.property(JDBCPool.OUTPUT)) {
+          Row row = rows.iterator().next();
+          should.assertEquals(row.size(), expected.length);
+          for (int i = 0;i < row.size();i++) {
+            should.assertEquals(expected[i], row.getValue(i));
+          }
         }
-      });
-
-    return promise.future();
-  }
-
-  private void printResults(String succMsg, String sql, JsonArray in, JsonArray out, String result) {
-    System.out.println(succMsg + " sql: " + sql + " \n"
-      + " IN: " + in.toString() + "\n"
-      + " OUT: " + out.toString() + "\n"
-      + " result: " + result);
-  }
-
-  @Test
-  public void testQueryTemporalTable(TestContext should) {
-    final Async async = should.async();
-    JDBCClient client = initJDBCClient(new JsonObject());
-    client
-      .query("SELECT * FROM temporal_data_type WHERE id = 1", should.asyncAssertSuccess(resultSet -> {
-        should.assertEquals(1, resultSet.getNumRows());
-        final JsonArray row = resultSet.getResults().get(0);
-        should.assertEquals(1, row.getInteger(0));
-        should.assertEquals(LocalDate.parse("2022-05-30"), row.getValue(1));
-        should.assertEquals(LocalTime.parse("18:00:00"), row.getValue(2));
-        should.assertEquals(OffsetTime.parse("04:00:00Z"), row.getValue(3));
-        should.assertEquals(LocalDateTime.parse("2022-05-14T07:00:00"), row.getValue(4));
-        should.assertEquals(OffsetDateTime.parse("2022-05-14T09:00:00Z"), row.getValue(5));
-        should.assertEquals("10 years 3 mons 332 days 20 hours 20 mins 20.999999 secs", row.getValue(6));
-        async.complete();
       }));
   }
 
   @Test
   public void testPoolQueryTemporalTable(TestContext should) {
     final Async async = should.async();
-    JDBCPool pool = initJDBCPool(new JsonObject());
+    Pool pool = initJDBCPool(new JsonObject());
     pool
       .preparedQuery("SELECT * FROM temporal_data_type WHERE id = 1").execute()
       .onSuccess(rows -> {
@@ -287,7 +216,7 @@ public class PostgresTest {
   @Test
   public void testInsertTemporalTable(TestContext should) throws SQLException {
     final Async async = should.strictAsync(2);
-    final JDBCPool pool = initJDBCPool(new JsonObject());
+    final Pool pool = initJDBCPool(new JsonObject());
     final Tuple params = Tuple.tuple()
       .addValue(2)
       .addValue(LocalDate.parse("2022-05-30"))
@@ -316,5 +245,17 @@ public class PostgresTest {
         should.assertEquals("10 years 3 mons 332 days 20 hours 20 mins 20.999999 secs", row.getValue(6));
         async.complete();
       });
+  }
+
+  @Test
+  public void queryTimeoutTest(TestContext should) {
+    final Pool pool = initJDBCPool(new JsonObject());
+    pool.withConnection(conn -> {
+      ((JDBCConnection)conn).setQueryTimeout(1);
+      return conn.query("select pg_sleep(2)").execute();
+    }).onComplete(should.asyncAssertFailure(err1 -> {
+      should.assertTrue(err1.getMessage().contains("canceling statement due to user request"));
+      pool.withConnection(conn -> conn.query("select pg_sleep(2)").execute()).onComplete(should.asyncAssertSuccess());
+    }));
   }
 }
