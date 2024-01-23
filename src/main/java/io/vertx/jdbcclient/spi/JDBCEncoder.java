@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.spi;
+package io.vertx.jdbcclient.spi;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.sqlclient.Tuple;
@@ -30,7 +30,7 @@ import java.sql.SQLException;
  * ({@code META-INF/services/io.vertx.ext.jdbc.spi.JDBCEncoder})
  *
  * @see <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html">Mapping of java.sql.Types to SQL types</a>
- * @see io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl
+ * @see JDBCEncoderImpl
  * @see java.sql.JDBCType
  * @see java.sql.SQLType
  * @since 4.2.0

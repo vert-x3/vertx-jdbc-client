@@ -1,10 +1,9 @@
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
+import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 public class JDBCRowDesc extends RowDesc {

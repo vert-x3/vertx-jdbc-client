@@ -14,15 +14,13 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.spi.impl;
+package io.vertx.jdbcclient.spi;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.jdbcclient.impl.actions.JDBCTypeWrapper;
 import io.vertx.jdbcclient.impl.actions.SQLValueProvider;
-import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
-import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.sqlclient.Tuple;
 

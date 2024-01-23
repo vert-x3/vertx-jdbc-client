@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.spi;
+package io.vertx.jdbcclient.spi;
 
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.jdbcclient.impl.actions.JDBCPropertyAccessor;

@@ -18,10 +18,10 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.ServiceHelper;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.spi.JDBCDecoder;
-import io.vertx.ext.jdbc.spi.JDBCEncoder;
-import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
-import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
+import io.vertx.jdbcclient.spi.JDBCDecoder;
+import io.vertx.jdbcclient.spi.JDBCEncoder;
+import io.vertx.jdbcclient.spi.JDBCDecoderImpl;
+import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 
 import java.util.Arrays;
 import java.util.Objects;

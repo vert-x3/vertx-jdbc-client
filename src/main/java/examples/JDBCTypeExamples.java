@@ -2,9 +2,9 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.docgen.Source;
-import io.vertx.ext.jdbc.spi.JDBCDecoder;
-import io.vertx.ext.jdbc.spi.JDBCEncoder;
-import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
+import io.vertx.jdbcclient.spi.JDBCDecoder;
+import io.vertx.jdbcclient.spi.JDBCEncoder;
+import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 

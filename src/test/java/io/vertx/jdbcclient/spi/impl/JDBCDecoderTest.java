@@ -1,8 +1,9 @@
-package io.vertx.ext.jdbc.spi.impl;
+package io.vertx.jdbcclient.spi.impl;
 
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 
+import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

@@ -18,7 +18,7 @@ package io.vertx.jdbcclient;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.DBConfigs;
-import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
+import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;

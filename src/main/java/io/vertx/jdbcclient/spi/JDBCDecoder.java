@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package io.vertx.ext.jdbc.spi;
+package io.vertx.jdbcclient.spi;
 
 import io.vertx.jdbcclient.impl.actions.SQLValueProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
@@ -33,7 +33,7 @@ import java.sql.SQLException;
  *
  * @see <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/jdbc_42.html">Mapping of java.sql.Types to
  * SQL types</a>
- * @see io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl
+ * @see JDBCDecoderImpl
  * @see java.sql.JDBCType
  * @see java.sql.SQLType
  * @since 4.2.0
