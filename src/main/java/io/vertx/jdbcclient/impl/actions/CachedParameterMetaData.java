@@ -1,4 +1,4 @@
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;

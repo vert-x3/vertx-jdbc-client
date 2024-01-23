@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.ServiceHelper;
 import io.vertx.core.json.JsonObject;

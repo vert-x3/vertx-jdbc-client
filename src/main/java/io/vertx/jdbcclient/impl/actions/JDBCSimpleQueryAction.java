@@ -16,8 +16,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.sqlclient.Row;
 

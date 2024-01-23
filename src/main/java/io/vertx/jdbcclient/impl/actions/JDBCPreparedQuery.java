@@ -18,10 +18,6 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
-import io.vertx.ext.jdbc.impl.actions.JDBCTypeWrapper;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.SqlOutParam;

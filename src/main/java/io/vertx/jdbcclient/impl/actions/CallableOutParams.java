@@ -1,4 +1,4 @@
-package io.vertx.ext.jdbc.impl.actions;
+package io.vertx.jdbcclient.impl.actions;
 
 import java.sql.JDBCType;
 import java.util.HashMap;

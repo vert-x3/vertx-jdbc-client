@@ -16,7 +16,7 @@
 
 package io.vertx.it;
 
-import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
+import io.vertx.jdbcclient.impl.actions.SQLValueProvider;
 import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import microsoft.sql.DateTimeOffset;

@@ -11,10 +11,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
-import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCDecoder;
 import io.vertx.ext.sql.SQLOptions;

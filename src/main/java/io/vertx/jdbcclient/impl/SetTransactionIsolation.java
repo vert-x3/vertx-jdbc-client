@@ -1,6 +1,6 @@
 package io.vertx.jdbcclient.impl;
 
-import io.vertx.ext.jdbc.impl.actions.JDBCAction;
+import io.vertx.jdbcclient.impl.actions.JDBCAction;
 import io.vertx.sqlclient.impl.command.CommandBase;
 
 import java.sql.Connection;

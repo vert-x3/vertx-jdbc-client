@@ -17,8 +17,6 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 
 import java.sql.Connection;

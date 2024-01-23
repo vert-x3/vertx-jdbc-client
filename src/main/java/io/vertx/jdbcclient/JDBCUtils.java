@@ -1,14 +1,8 @@
 package io.vertx.jdbcclient;
 
-import io.vertx.core.Future;
-import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
-import io.vertx.ext.jdbc.impl.actions.JDBCAction;
 import io.vertx.jdbcclient.impl.ConnectionImpl;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.impl.SqlConnectionInternal;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 
 public class JDBCUtils {
 

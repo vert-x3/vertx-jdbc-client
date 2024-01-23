@@ -15,7 +15,7 @@
  */
 package io.vertx.ext.jdbc.spi;
 
-import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
+import io.vertx.jdbcclient.impl.actions.SQLValueProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 
 import java.sql.CallableStatement;

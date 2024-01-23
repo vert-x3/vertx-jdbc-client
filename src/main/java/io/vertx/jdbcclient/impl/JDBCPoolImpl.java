@@ -25,7 +25,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;

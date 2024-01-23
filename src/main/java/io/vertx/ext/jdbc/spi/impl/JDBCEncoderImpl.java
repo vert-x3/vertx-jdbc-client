@@ -19,7 +19,7 @@ package io.vertx.ext.jdbc.spi.impl;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
+import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import io.vertx.ext.jdbc.spi.JDBCEncoder;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
