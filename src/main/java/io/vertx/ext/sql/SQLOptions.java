@@ -16,7 +16,6 @@
 package io.vertx.ext.sql;
 
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 /**
  * Represents the options one can use to customize the unwrapped connection/statement/resultset types
@@ -66,15 +65,6 @@ public class SQLOptions {
     this.fetchDirection = other.getFetchDirection();
     this.fetchSize = other.getFetchSize();
     this.maxRows = other.getMaxRows();
-  }
-
-  /**
-   * Constructor from JSON
-   *
-   * @param json  the json
-   */
-  public SQLOptions(JsonObject json) {
-    SQLOptionsConverter.fromJson(json, this);
   }
 
   public boolean isReadOnly() {

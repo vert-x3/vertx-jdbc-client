@@ -11,12 +11,10 @@
 
 package io.vertx.jdbcclient;
 
-import io.vertx.ext.jdbc.spi.DataSourceProvider;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;

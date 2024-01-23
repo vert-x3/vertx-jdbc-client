@@ -23,7 +23,6 @@ import io.vertx.ext.jdbc.spi.JDBCColumnDescriptorProvider;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -61,34 +60,6 @@ public abstract class AbstractJDBCAction<T> implements JDBCAction<T> {
         statement.setMaxRows(options.getMaxRows());
       }
     }
-  }
-
-  protected io.vertx.ext.sql.ResultSet asList(ResultSet rs) throws SQLException {
-
-    List<String> columnNames = new ArrayList<>();
-    JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(rs.getMetaData());
-    ResultSetMetaData metaData = rs.getMetaData();
-    int cols = metaData.getColumnCount();
-    for (int i = 1; i <= cols; i++) {
-      columnNames.add(metaData.getColumnLabel(i));
-    }
-
-    List<JsonArray> results = new ArrayList<>();
-
-    while (rs.next()) {
-      JsonArray result = new JsonArray();
-      for (int i = 1; i <= cols; i++) {
-        Object res = helper.getDecoder().parse(rs, i, provider);
-        if (res != null) {
-          result.add(res);
-        } else {
-          result.addNull();
-        }
-      }
-      results.add(result);
-    }
-
-    return new io.vertx.ext.sql.ResultSet(columnNames, results, null);
   }
 
   protected void fillStatement(PreparedStatement statement, JsonArray in) throws SQLException {

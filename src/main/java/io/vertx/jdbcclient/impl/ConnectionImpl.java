@@ -33,7 +33,7 @@ import io.vertx.sqlclient.impl.QueryResultHandler;
 import io.vertx.sqlclient.impl.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 
-import static io.vertx.ext.jdbc.impl.JDBCConnectionImpl.applyConnectionOptions;
+import java.sql.SQLException;
 
 public class ConnectionImpl implements Connection {
 
@@ -189,5 +189,19 @@ public class ConnectionImpl implements Connection {
       // execute
       return action.execute(conn);
     }, statementsQueue);
+  }
+
+  public static void applyConnectionOptions(java.sql.Connection conn, SQLOptions sqlOptions) throws SQLException {
+    if (sqlOptions != null) {
+      if (sqlOptions.isReadOnly()) {
+        conn.setReadOnly(true);
+      }
+      if (sqlOptions.getCatalog() != null) {
+        conn.setCatalog(sqlOptions.getCatalog());
+      }
+      if (sqlOptions.getSchema() != null) {
+        conn.setSchema(sqlOptions.getSchema());
+      }
+    }
   }
 }

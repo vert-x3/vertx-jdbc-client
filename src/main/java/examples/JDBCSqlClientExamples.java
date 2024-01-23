@@ -1,12 +1,7 @@
 package examples;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
-import io.vertx.ext.jdbc.JDBCClient;
-import io.vertx.ext.sql.ResultSet;
-import io.vertx.ext.sql.SQLClient;
-import io.vertx.ext.sql.SQLConnection;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
@@ -15,9 +10,7 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 
-import javax.sql.DataSource;
 import java.sql.JDBCType;
-import java.time.Instant;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
