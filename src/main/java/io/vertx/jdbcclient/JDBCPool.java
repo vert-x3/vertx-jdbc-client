@@ -18,7 +18,6 @@ package io.vertx.jdbcclient;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.CloseFuture;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
 

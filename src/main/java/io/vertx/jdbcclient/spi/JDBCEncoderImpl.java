@@ -16,8 +16,8 @@
 
 package io.vertx.jdbcclient.spi;
 
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.json.JsonArray;
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;

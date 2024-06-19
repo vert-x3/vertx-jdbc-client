@@ -1,7 +1,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
