@@ -17,7 +17,7 @@ import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
-import io.vertx.sqlclient.impl.RowDesc;
+import io.vertx.sqlclient.internal.RowDesc;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;

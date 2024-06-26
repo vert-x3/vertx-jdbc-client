@@ -2,7 +2,7 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
-import io.vertx.sqlclient.impl.RowDesc;
+import io.vertx.sqlclient.internal.RowDesc;
 
 import java.sql.SQLException;
 

@@ -2,7 +2,7 @@ package io.vertx.jdbcclient;
 
 import io.vertx.jdbcclient.impl.ConnectionImpl;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.impl.SqlConnectionInternal;
+import io.vertx.sqlclient.internal.SqlConnectionInternal;
 
 public class JDBCUtils {
 
@@ -17,7 +17,7 @@ public class JDBCUtils {
   }
 
   private static ConnectionImpl implOf(SqlConnection conn) {
-    io.vertx.sqlclient.impl.Connection internal = ((SqlConnectionInternal) conn).unwrap();
+    io.vertx.sqlclient.internal.Connection internal = ((SqlConnectionInternal) conn).unwrap();
     if (!(internal instanceof ConnectionImpl)) {
       // Not pooled
       internal = internal.unwrap();

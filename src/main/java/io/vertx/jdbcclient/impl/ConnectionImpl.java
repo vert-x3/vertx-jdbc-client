@@ -18,7 +18,7 @@ package io.vertx.jdbcclient.impl;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.internal.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
+//import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
@@ -27,10 +27,10 @@ import io.vertx.jdbcclient.impl.actions.JDBCClose;
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.actions.*;
-import io.vertx.sqlclient.impl.Connection;
-import io.vertx.sqlclient.impl.PreparedStatement;
-import io.vertx.sqlclient.impl.QueryResultHandler;
-import io.vertx.sqlclient.impl.command.*;
+import io.vertx.sqlclient.internal.Connection;
+import io.vertx.sqlclient.internal.PreparedStatement;
+import io.vertx.sqlclient.internal.QueryResultHandler;
+import io.vertx.sqlclient.internal.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 
 import java.sql.SQLException;
@@ -44,7 +44,7 @@ public class ConnectionImpl implements Connection {
   final String user;
   final String database;
   final SocketAddress server;
-  final TaskQueue statementsQueue = new TaskQueue();
+//  final TaskQueue statementsQueue = new TaskQueue();
 
   SqlOptions sqlOptions;
 
@@ -188,7 +188,7 @@ public class ConnectionImpl implements Connection {
       applyConnectionOptions(conn, sqlOptions);
       // execute
       return action.execute(conn);
-    }, statementsQueue);
+    }/*, statementsQueue*/);
   }
 
   public static void applyConnectionOptions(java.sql.Connection conn, SqlOptions sqlOptions) throws SQLException {

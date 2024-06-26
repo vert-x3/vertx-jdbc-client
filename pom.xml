@@ -46,7 +46,12 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen</artifactId>
+      <artifactId>vertx-codegen-api</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codegen-json</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -96,12 +101,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -193,12 +192,6 @@
       <artifactId>vertx-sql-client-templates</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen</artifactId>
-      <classifier>processor</classifier>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -206,6 +199,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
           <executions>
             <execution>
               <id>default-compile</id>
@@ -215,6 +209,35 @@
                   <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
                   <annotationProcessor>io.vertx.docgen.JavaDocGenProcessor</annotationProcessor>
                 </annotationProcessors>
+                <annotationProcessorPaths>
+                  <annotationProcessorPath>
+                    <groupId>io.vertx</groupId>
+                    <artifactId>vertx-codegen</artifactId>
+                  </annotationProcessorPath>
+                  <annotationProcessorPath>
+                    <groupId>io.vertx</groupId>
+                    <artifactId>vertx-docgen</artifactId>
+                  </annotationProcessorPath>
+                </annotationProcessorPaths>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-testCompile</id>
+              <configuration>
+                <useModulePath>false</useModulePath>
+                <annotationProcessors>
+                  <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
+                </annotationProcessors>
+                <annotationProcessorPaths>
+                  <annotationProcessorPath>
+                    <groupId>io.vertx</groupId>
+                    <artifactId>vertx-codegen</artifactId>
+                  </annotationProcessorPath>
+                  <annotationProcessorPath>
+                    <groupId>io.vertx</groupId>
+                    <artifactId>vertx-sql-client-templates</artifactId>
+                  </annotationProcessorPath>
+                </annotationProcessorPaths>
               </configuration>
             </execution>
           </executions>
@@ -227,6 +250,7 @@
               <!-- Necessary for HSQLDB blob testing -->
               <textdb.allow_full_path>true</textdb.allow_full_path>
             </systemPropertyVariables>
+            <useModulePath>false</useModulePath>
           </configuration>
         </plugin>
       </plugins>

@@ -16,10 +16,10 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
-import io.vertx.sqlclient.impl.ParamDesc;
-import io.vertx.sqlclient.impl.PreparedStatement;
-import io.vertx.sqlclient.impl.RowDesc;
-import io.vertx.sqlclient.impl.TupleInternal;
+import io.vertx.sqlclient.internal.ParamDesc;
+import io.vertx.sqlclient.internal.PreparedStatement;
+import io.vertx.sqlclient.internal.RowDesc;
+import io.vertx.sqlclient.internal.TupleInternal;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;

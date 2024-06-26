@@ -26,7 +26,6 @@ import io.vertx.jdbcclient.JDBCConnection;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.*;
-import io.vertx.test.core.TestUtils;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -145,7 +144,7 @@ public class PostgresTest {
   public void threeParamsTest(TestContext should) {
     final Pool pool = initJDBCPool(new JsonObject());
 
-    boolean expected = TestUtils.randomBoolean();
+    boolean expected = Math.random() >= 0.5D;
 
     testInOut(should, pool, "{ call f_inout_inout_inout(?, ?, ?) }", Tuple.of(
       SqlOutParam.INOUT(true, JDBCType.BOOLEAN),

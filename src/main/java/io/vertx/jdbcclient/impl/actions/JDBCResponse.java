@@ -17,8 +17,8 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.impl.QueryResultHandler;
-import io.vertx.sqlclient.impl.RowDesc;
+import io.vertx.sqlclient.internal.QueryResultHandler;
+import io.vertx.sqlclient.internal.RowDesc;
 
 import java.util.ArrayList;
 import java.util.List;

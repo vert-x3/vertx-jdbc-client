@@ -17,7 +17,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.SqlOptions;
-import io.vertx.sqlclient.impl.command.TxCommand;
+import io.vertx.sqlclient.internal.command.TxCommand;
 
 import java.sql.Connection;
 import java.sql.SQLException;
