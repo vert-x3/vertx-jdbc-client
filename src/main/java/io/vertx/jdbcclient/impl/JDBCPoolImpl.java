@@ -32,16 +32,16 @@ import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.impl.CloseablePool;
-import io.vertx.sqlclient.impl.PoolImpl;
-import io.vertx.sqlclient.impl.SqlConnectionBase;
+import io.vertx.sqlclient.internal.pool.CloseablePool;
+import io.vertx.sqlclient.internal.pool.PoolImpl;
+import io.vertx.sqlclient.internal.SqlConnectionBase;
 
 import java.sql.Connection;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
+public class JDBCPoolImpl {
 
   private static final String SHARED_CLIENT_KEY = "__vertx.shared.jdbcclient";
 
@@ -54,7 +54,7 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
     } else {
       pool = newPoolImpl(vx, connectOptions, poolOptions, connectionSupplier, closeFuture);
     }
-    CloseablePool<Pool> closeablePool = new CloseablePool<>(vx, closeFuture, pool);
+    CloseablePool closeablePool = new CloseablePool(vx, closeFuture, pool);
     ContextInternal ctx = vx.getContext();
     if (ctx != null) {
       ctx.addCloseHook(closeFuture);
@@ -64,20 +64,31 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
     return closeablePool;
   }
 
-  private static JDBCPoolImpl newPoolImpl(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionCallable, CloseFuture closeFuture) {
-    JDBCPoolImpl pool = new JDBCPoolImpl(
-      vertx,
-      connectOptions,
-      connectionCallable,
+  private static PoolImpl newPoolImpl(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionFactory, CloseFuture closeFuture) {
+    PoolImpl pool = new PoolImpl(
+      (VertxInternal) vertx,
+      FakeDriver.INSTANCE,
+      false,
       poolOptions,
+      conn -> {
+        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
+        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+        jdbc.sqlOptions = new SqlOptions(connectOptions);
+        return Future.succeededFuture();
+      },
+      conn -> {
+        Future<Void> voidFuture = Future.succeededFuture();
+        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
+        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+        jdbc.sqlOptions = null;
+        return voidFuture;
+      },
+      ctx -> new ConnectionFactory((VertxInternal) vertx, connectOptions, connectionFactory).connect((ContextInternal) ctx),
+      null,
       closeFuture);
     pool.init();
     return pool;
   }
-
-  private final VertxInternal vertx;
-  private final CloseFuture closeFuture;
-  private final JDBCConnectOptions connectOptions;
 
   private static class ConnectionFactory {
 
@@ -140,50 +151,5 @@ public class JDBCPoolImpl extends PoolImpl implements JDBCPool {
         return new SqlConnectionBase<>(context, null, new ConnectionImpl(helper, context, sqlOptions, conn, metrics, sqlOptions.getUser(), sqlOptions.getDatabase(), server), FakeDriver.INSTANCE);
       });
     }
-  }
-
-  public JDBCPoolImpl(Vertx vertx,
-                      JDBCConnectOptions connectOptions,
-                      Callable<Connection> connectionFactory,
-                      PoolOptions poolOptions,
-                      CloseFuture closeFuture) {
-    super((VertxInternal) vertx,
-      FakeDriver.INSTANCE,
-      false,
-      poolOptions,
-      conn -> {
-        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
-        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-        jdbc.sqlOptions = new SqlOptions(connectOptions);
-        return Future.succeededFuture();
-      },
-      conn -> {
-        Future<Void> voidFuture = Future.succeededFuture();
-        // SHOULD THIS BE UNWRAPPED BEFORE CALLING THIS ????
-        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-        jdbc.sqlOptions = null;
-        return voidFuture;
-      },
-      ctx -> new ConnectionFactory((VertxInternal) vertx, connectOptions, connectionFactory).connect((ContextInternal) ctx),
-      null,
-      closeFuture);
-    this.vertx = (VertxInternal) vertx;
-    this.closeFuture = closeFuture;
-    this.connectOptions = connectOptions;
-  }
-
-  @Override
-  protected ContextInternal context() {
-    return vertx.getOrCreateContext();
-  }
-
-  @Override
-  protected <T> PromiseInternal<T> promise() {
-    return vertx.promise();
-  }
-
-  @Override
-  public Future<Void> close() {
-    return super.close();
   }
 }

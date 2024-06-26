@@ -22,8 +22,8 @@ import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.impl.TupleInternal;
-import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
+import io.vertx.sqlclient.internal.TupleInternal;
+import io.vertx.sqlclient.internal.command.ExtendedQueryCommand;
 
 import java.sql.Connection;
 import java.sql.Date;

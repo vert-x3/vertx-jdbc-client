@@ -16,8 +16,6 @@
 
 package io.vertx.ext.jdbc;
 
-import io.vertx.test.core.VertxTestBase;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.*;
@@ -25,7 +23,7 @@ import java.util.*;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public abstract class JDBCClientTestBase extends VertxTestBase {
+public abstract class JDBCClientTestBase {
 
   private static final List<String> SQL = new ArrayList<>();
 

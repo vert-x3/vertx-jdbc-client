@@ -26,6 +26,7 @@ import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 
 /**
@@ -54,7 +55,8 @@ public final class JDBCStatementHelper {
   private JDBCEncoder initEncoder(JsonObject config) {
     JDBCEncoder encoder = initObject(config.getString("encoderCls"));
     if (encoder == null) {
-      encoder = Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCEncoder.class)).orElseGet(JDBCEncoderImpl::new);
+      ServiceLoader<JDBCEncoder> loader = ServiceLoader.load(JDBCEncoder.class);
+      encoder = loader.findFirst().orElseGet(JDBCEncoderImpl::new);
     }
     return encoder;
   }
@@ -62,7 +64,8 @@ public final class JDBCStatementHelper {
   private JDBCDecoder initDecoder(JsonObject config) {
     JDBCDecoder decoder = initObject(config.getString("decoderCls"));
     if (decoder == null) {
-      return Optional.ofNullable(ServiceHelper.loadFactoryOrNull(JDBCDecoder.class)).orElseGet(JDBCDecoderImpl::new);
+      ServiceLoader<JDBCDecoder> loader = ServiceLoader.load(JDBCDecoder.class);
+      decoder = loader.findFirst().orElseGet(JDBCDecoderImpl::new);
     }
     return decoder;
   }

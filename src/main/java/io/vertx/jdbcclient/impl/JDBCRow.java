@@ -11,8 +11,8 @@
 package io.vertx.jdbcclient.impl;
 
 import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.impl.ArrayTuple;
-import io.vertx.sqlclient.impl.RowDesc;
+import io.vertx.sqlclient.internal.ArrayTuple;
+import io.vertx.sqlclient.internal.RowDesc;
 
 import java.util.List;
 import java.util.Objects;
