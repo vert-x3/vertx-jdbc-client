@@ -72,30 +72,6 @@
       <optional>true</optional>
     </dependency>
 
-    <dependency>
-      <groupId>com.mchange</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>0.9.5.5</version>
-    </dependency>
-    <dependency>
-      <groupId>com.zaxxer</groupId>
-      <artifactId>HikariCP</artifactId>
-      <version>4.0.3</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.agroal</groupId>
-      <artifactId>agroal-api</artifactId>
-      <version>1.16</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.agroal</groupId>
-      <artifactId>agroal-pool</artifactId>
-      <version>1.16</version>
-      <optional>true</optional>
-    </dependency>
-
     <!-- Testing -->
     <dependency>
       <groupId>junit</groupId>
