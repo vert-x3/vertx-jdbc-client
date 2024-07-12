@@ -71,7 +71,9 @@ public interface JDBCPool extends Pool {
    * @param vertx  the Vert.x instance
    * @param config the options to configure the client using the same format as {@link io.vertx.ext.jdbc.JDBCClient}
    * @return the client
+   * @deprecated instead use {@link JDBCPool#pool(Vertx, JDBCConnectOptions, PoolOptions)}
    */
+  @Deprecated
   static JDBCPool pool(Vertx vertx, JsonObject config) {
     final ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
     String jdbcUrl = config.getString("jdbcUrl", config.getString("url"));
@@ -142,6 +144,7 @@ public interface JDBCPool extends Pool {
    * @since 4.2.0
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  @Deprecated
   static JDBCPool pool(Vertx vertx, DataSource dataSource, JsonObject config) {
     return pool(vertx, DataSourceProvider.create(dataSource, config));
   }
