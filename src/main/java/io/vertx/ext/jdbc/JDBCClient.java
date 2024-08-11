@@ -22,10 +22,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
 import io.vertx.ext.sql.SQLClient;
 
 import javax.sql.DataSource;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * An asynchronous client interface for interacting with a JDBC compliant database
@@ -37,9 +41,20 @@ import java.util.UUID;
 public interface JDBCClient extends SQLClient {
 
   /**
-   * The default data source provider is C3P0
+   * The default data source provider for this pool,
+   * loaded from JVM system properties with the {@link DataSourceProvider#DEFAULT_DATA_SOURCE_PROVIDER_NAME} key.
+   *
+   * The value can be one of:
+   * <ul>
+   *   <li>C3P0: {@link C3P0DataSourceProvider}</li>
+   *   <li>Hikari: {@link HikariCPDataSourceProvider}</li>
+   *   <li>Agroal: {@link AgroalCPDataSourceProvider}</li>
+   * </ul>
+   *
+   * When there is no JVM wide defined provider or the value is incorrect, {@link C3P0DataSourceProvider} is returned.
    */
-  String DEFAULT_PROVIDER_CLASS =  "io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider";
+  String DEFAULT_PROVIDER_CLASS =  DataSourceProvider.loadDefaultDataSourceProvider()
+    .orElseGet(() -> C3P0DataSourceProvider::new).get().getClass().getName();
 
   /**
    * The name of the default data source

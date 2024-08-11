@@ -16,7 +16,6 @@
 
 package io.vertx.jdbcclient;
 
-import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;

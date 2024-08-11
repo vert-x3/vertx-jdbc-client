@@ -12,11 +12,11 @@
 package io.vertx.jdbcclient;
 
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -67,13 +67,14 @@ public class OracleRowIdTest {
       }
     }
 
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(
-      new JDBCConnectOptions()
+    DataSourceProvider provider = new AgroalCPDataSourceProvider();
+
+    provider.init(provider.toJson(new JDBCConnectOptions()
         .setJdbcUrl(jdbcUrl)
         .setUser(username)
         .setPassword(password),
       new PoolOptions()
-        .setMaxSize(1));
+        .setMaxSize(1)));
 
     client = JDBCPool.pool(rule.vertx(), provider);
   }

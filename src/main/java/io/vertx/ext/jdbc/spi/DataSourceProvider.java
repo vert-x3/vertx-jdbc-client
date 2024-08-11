@@ -18,16 +18,63 @@ package io.vertx.ext.jdbc.spi;
 
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.sql.DataSource;
+import javax.swing.text.html.Option;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public interface DataSourceProvider {
+
+  /**
+   * The default data source provider name.
+   */
+  String DEFAULT_DATA_SOURCE_PROVIDER_NAME = "vertx.defaultDataSourceProvider";
+
+  /**
+   * Load a datasource provider form the JVM system properties with the {@link #DEFAULT_DATA_SOURCE_PROVIDER_NAME} key.
+   *
+   * The value can be one of:
+   * <ul>
+   *   <li>C3P0: {@link C3P0DataSourceProvider}</li>
+   *   <li>Hikari: {@link HikariCPDataSourceProvider}</li>
+   *   <li>Agroal: {@link AgroalCPDataSourceProvider}</li>
+   * </ul>
+   *
+   * When there is no JVM wide defined provider or the value is incorrect, {@link AgroalCPDataSourceProvider} is returned.
+   */
+  static Optional<Supplier<DataSourceProvider>> loadDefaultDataSourceProvider() {
+    String def = System.getProperty(DEFAULT_DATA_SOURCE_PROVIDER_NAME);
+    if (def != null) {
+      switch (def) {
+        case "C3P0":
+          return Optional.of(C3P0DataSourceProvider::new);
+        case "Hikari":
+          return Optional.of(HikariCPDataSourceProvider::new);
+        case "Agroal":
+          return Optional.of(AgroalCPDataSourceProvider::new);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Transforms the {@link JDBCConnectOptions} and {@link PoolOptions} into a config suitable to be passed
+   * as {@link #create(JsonObject)} argument.
+   */
+  default JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    return new JsonObject();
+  }
 
   /**
    * Init provider with specific configuration

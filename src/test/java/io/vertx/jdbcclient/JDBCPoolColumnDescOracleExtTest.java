@@ -15,10 +15,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.impl.actions.SQLValueProvider;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.jdbc.spi.impl.JDBCDecoderImpl;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
@@ -81,7 +81,8 @@ public class JDBCPoolColumnDescOracleExtTest extends ClientTestBase {
     vertx = Vertx.vertx();
     JsonObject extraOptions = new JsonObject()
       .put("decoderCls", CustomDecoder.class.getName());
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions()).init(extraOptions);
+    DataSourceProvider provider = new AgroalCPDataSourceProvider();
+    provider.init(provider.toJson(connectOptions(), poolOptions()).mergeIn(extraOptions));
     client = JDBCPool.pool(vertx, provider);
   }
 

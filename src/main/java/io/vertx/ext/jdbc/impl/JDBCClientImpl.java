@@ -120,6 +120,7 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
   public JDBCClientImpl(Vertx vertx, DataSourceProvider dataSourceProvider) {
     this(
       vertx,
+      new JsonObject(),
       dataSourceProvider,
       dataSourceProvider.getInitialConfig().getString("datasourceName", UUID.randomUUID().toString())
     );
@@ -128,13 +129,13 @@ public class JDBCClientImpl implements JDBCClient, Closeable {
   /**
    * Create client with shared datasource.
    */
-  public JDBCClientImpl(Vertx vertx, DataSourceProvider dataSourceProvider, final String datasourceName) {
+  public JDBCClientImpl(Vertx vertx, JsonObject config, DataSourceProvider dataSourceProvider, final String datasourceName) {
     Objects.requireNonNull(vertx);
     Objects.requireNonNull(dataSourceProvider);
 
     this.vertx = (VertxInternal) vertx;
     this.datasourceName = datasourceName;
-    this.config = dataSourceProvider.getInitialConfig();
+    this.config = config.copy().mergeIn(dataSourceProvider.getInitialConfig());
     holders = vertx.sharedData().getLocalMap(DS_LOCAL_MAP_NAME);
     holders.compute(datasourceName, (k, h) -> h == null ? new DataSourceHolder(dataSourceProvider) : h.increment());
     this.helper = new JDBCStatementHelper(this.config);

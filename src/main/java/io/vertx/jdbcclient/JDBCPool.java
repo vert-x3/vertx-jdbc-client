@@ -20,23 +20,42 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.C3P0DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.HikariCPDataSourceProvider;
 import io.vertx.ext.sql.SQLOptions;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
 
 import javax.sql.DataSource;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * JDBCPool is the interface that allows using the Sql Client API with plain JDBC.
  */
 @VertxGen
 public interface JDBCPool extends Pool {
+
+  /**
+   * The default data source provider for this pool,
+   * loaded from JVM system properties with the {@link DataSourceProvider#DEFAULT_DATA_SOURCE_PROVIDER_NAME} key.
+   *
+   * The value can be one of:
+   * <ul>
+   *   <li>C3P0: {@link C3P0DataSourceProvider}</li>
+   *   <li>Hikari: {@link HikariCPDataSourceProvider}</li>
+   *   <li>Agroal: {@link AgroalCPDataSourceProvider}</li>
+   * </ul>
+   *
+   * When there is no JVM wide defined provider or the value is incorrect, {@link AgroalCPDataSourceProvider} is returned.
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Supplier<DataSourceProvider> DEFAULT_DATA_SOURCE_PROVIDER = DataSourceProvider.loadDefaultDataSourceProvider()
+    .orElseGet(() -> AgroalCPDataSourceProvider::new);
 
   /**
    * The property to be used to retrieve the generated keys
@@ -49,7 +68,7 @@ public interface JDBCPool extends Pool {
   PropertyKind<Boolean> OUTPUT = PropertyKind.create("callable-statement-output", Boolean.class);
 
   /**
-   * Create a JDBC pool which maintains its own data source.
+   * Create a JDBC pool which maintains its own data source and the {@link #DEFAULT_DATA_SOURCE_PROVIDER default data source provider}.
    *
    * @param vertx  the Vert.x instance
    * @param connectOptions the options to configure the connection
@@ -57,9 +76,23 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    return pool(vertx, connectOptions, poolOptions, DEFAULT_DATA_SOURCE_PROVIDER.get());
+  }
+
+  /**
+   * Create a JDBC pool which maintains its own data source, with the specified provider
+   *
+   * @param vertx  the Vert.x instance
+   * @param connectOptions the options to configure the connection
+   * @param poolOptions the connection pool options
+   * @param provider the data source provider
+   * @return the client
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, DataSourceProvider provider) {
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions), poolOptions.getName()),
+      new JDBCClientImpl(vertx, provider.toJson(connectOptions, poolOptions), provider, poolOptions.getName()),
       connectOptions,
       connectOptions.getUser(),
       connectOptions.getDatabase());
