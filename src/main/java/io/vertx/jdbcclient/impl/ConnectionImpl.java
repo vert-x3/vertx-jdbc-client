@@ -40,7 +40,7 @@ public class ConnectionImpl implements Connection {
   final JDBCStatementHelper helper;
   final ContextInternal context;
   final java.sql.Connection conn;
-  final ClientMetrics<?, ?, ?, ?> metrics;
+  final ClientMetrics<?, ?, ?> metrics;
   final String user;
   final String database;
   final SocketAddress server;
@@ -48,7 +48,7 @@ public class ConnectionImpl implements Connection {
 
   SqlOptions sqlOptions;
 
-  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?, ?> metrics, String user, String database, SocketAddress server) {
+  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?> metrics, String user, String database, SocketAddress server) {
     this.conn = conn;
     this.helper = helper;
     this.context = context;

@@ -40,7 +40,7 @@ public class JDBCClose extends AbstractJDBCAction<Void> {
   public Void execute(Connection conn) throws SQLException {
     if (!conn.isClosed()) {
       if (metrics != null) {
-        metrics.end(metric, true);
+        metrics.end(metric);
       }
       conn.close();
     }

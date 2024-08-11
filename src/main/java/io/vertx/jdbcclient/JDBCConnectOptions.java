@@ -20,6 +20,7 @@ import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.tracing.TracingPolicy;
+import io.vertx.sqlclient.SqlConnectOptions;
 
 @DataObject
 @JsonGen(publicConverter = false)
@@ -35,11 +36,27 @@ public class JDBCConnectOptions extends SqlOptions {
   private int idleTimeout;
   private TracingPolicy tracingPolicy = TracingPolicy.PROPAGATE;
   private JsonObject extraConfig;
+  private String metricsName = "";
 
   public JDBCConnectOptions() {}
 
   public JDBCConnectOptions(JsonObject json) {
     JDBCConnectOptionsConverter.fromJson(json, this);
+  }
+
+  public JDBCConnectOptions(JDBCConnectOptions other) {
+    super(other);
+    this.dataSourceImplementation = other.dataSourceImplementation;
+    this.metricsEnabled = other.metricsEnabled;
+    this.jdbcUrl = other.jdbcUrl;
+    this.user = other.user;
+    this.password = other.password;
+    this.database = other.database;
+    this.connectTimeout = other.connectTimeout;
+    this.idleTimeout = other.idleTimeout;
+    this.tracingPolicy = other.tracingPolicy;
+    this.extraConfig = other.extraConfig != null ? other.extraConfig.copy() : null;
+    this.metricsName = other.metricsName;
   }
 
   public String getDataSourceImplementation() {
@@ -111,6 +128,25 @@ public class JDBCConnectOptions extends SqlOptions {
 
   public JDBCConnectOptions setIdleTimeout(int idleTimeout) {
     this.idleTimeout = idleTimeout;
+    return this;
+  }
+
+  /**
+   * @return the metrics name identifying the reported metrics.
+   */
+  public String getMetricsName() {
+    return metricsName;
+  }
+
+  /**
+   * Set the metrics name identifying the reported metrics, useful for grouping metrics
+   * with the same name.
+   *
+   * @param metricsName the metrics name
+   * @return a reference to this, so the API can be used fluently
+   */
+  public JDBCConnectOptions setMetricsName(String metricsName) {
+    this.metricsName = metricsName;
     return this;
   }
 
