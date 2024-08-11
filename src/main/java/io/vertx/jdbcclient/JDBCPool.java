@@ -20,11 +20,10 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.tracing.TracingPolicy;
 import io.vertx.ext.jdbc.impl.JDBCClientImpl;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.sql.SQLOptions;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.JDBCPoolImpl;
 import io.vertx.sqlclient.*;
 
@@ -57,9 +56,10 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    AgroalCPDataSourceProvider dsProvider = new AgroalCPDataSourceProvider();
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, new AgroalCPDataSourceProvider(connectOptions, poolOptions), poolOptions.getName()),
+      new JDBCClientImpl(vertx, dsProvider.toJson(connectOptions, poolOptions), dsProvider, poolOptions.getName()),
       connectOptions,
       connectOptions.getUser(),
       connectOptions.getDatabase());

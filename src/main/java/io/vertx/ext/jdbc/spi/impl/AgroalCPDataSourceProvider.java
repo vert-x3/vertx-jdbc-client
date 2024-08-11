@@ -7,6 +7,8 @@ import io.agroal.api.security.NamePrincipal;
 import io.agroal.api.security.SimplePassword;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -40,6 +42,27 @@ public class AgroalCPDataSourceProvider implements DataSourceProvider {
   }
 
   @Override
+  public JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    JsonObject config = new JsonObject();
+    config.put("dataSourceImplementation", connectOptions.getDataSourceImplementation());
+    config.put("connectionValidationTimeout", connectOptions.getConnectTimeout());
+    config.put("minSize", 0);
+    config.put("initialSize", 1);
+    config.put("maxSize", poolOptions.getMaxSize());
+    config.put("acquisitionTimeout", connectOptions.getConnectTimeout());
+    config.put("connectionReapTimeout", connectOptions.getIdleTimeout());
+    config.put("connectionLeakTimeout", connectOptions.getIdleTimeout());
+    config.put("jdbcUrl", connectOptions.getJdbcUrl());
+    if (connectOptions.getUser() != null) {
+      config.put("principal", connectOptions.getUser());
+    }
+    if (connectOptions.getPassword() != null) {
+      config.put("credential", connectOptions.getPassword());
+    }
+    return config;
+  }
+
+  @Override
   public DataSource getDataSource(JsonObject cfg) throws SQLException {
     JsonObject config = cfg == null || cfg.isEmpty() ? initConfig : cfg;
     AgroalDataSourceConfigurationSupplier dataSourceConfigurationBuilder = new AgroalDataSourceConfigurationSupplier()
@@ -53,10 +76,15 @@ public class AgroalCPDataSourceProvider implements DataSourceProvider {
         .acquisitionTimeout(Duration.ofMillis(config.getInteger("acquisitionTimeout", 0)))
         .reapTimeout(Duration.ofMillis(config.getLong("connectionReapTimeout", 0L)))
         .leakTimeout(Duration.ofMillis(config.getLong("connectionLeakTimeout", 0L)))
-        .connectionFactoryConfiguration( cf -> cf
-          .jdbcUrl(config.getString("jdbcUrl"))
-          .principal(new NamePrincipal(config.getString("principal")))
-          .credential(new SimplePassword(config.getString("credential")))
+        .connectionFactoryConfiguration(cf -> {
+            if (config.getString("principal") != null) {
+              cf = cf.principal(new NamePrincipal(config.getString("principal")));
+            }
+            if (config.getString("credential") != null) {
+              cf = cf.credential(new SimplePassword(config.getString("credential")));
+            }
+            return cf.jdbcUrl(config.getString("jdbcUrl"));
+          }
         )
       );
 

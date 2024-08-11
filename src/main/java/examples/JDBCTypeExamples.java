@@ -10,7 +10,6 @@ import io.vertx.ext.jdbc.spi.JDBCEncoder;
 import io.vertx.ext.jdbc.spi.impl.JDBCEncoderImpl;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.sqlclient.PoolOptions;
 
@@ -49,7 +48,8 @@ public class JDBCTypeExamples {
       .setUser("your_database_user")
       .setPassword("your_database_password");
     PoolOptions poolOptions = new PoolOptions().setMaxSize(1);
-    DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions).init(extraOptions);
-    return JDBCPool.pool(vertx, provider);
+    // TODO
+    // DataSourceProvider provider = new AgroalCPDataSourceProvider(options, poolOptions).init(extraOptions);
+    return JDBCPool.pool(vertx, (JsonObject) null);
   }
 }

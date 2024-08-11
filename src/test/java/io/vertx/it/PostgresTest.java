@@ -23,6 +23,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.ext.jdbc.spi.impl.AgroalCPDataSourceProvider;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -31,7 +32,6 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
-import io.vertx.jdbcclient.impl.AgroalCPDataSourceProvider;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowStream;
@@ -67,8 +67,8 @@ public class PostgresTest {
     final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
       .setUser(server.getUsername())
       .setPassword(server.getPassword());
-    final DataSourceProvider provider = new AgroalCPDataSourceProvider(options, new PoolOptions().setMaxSize(1));
-    return JDBCPool.pool(rule.vertx(), provider.init(extraOption));
+    final DataSourceProvider provider = new AgroalCPDataSourceProvider();
+    return JDBCPool.pool(rule.vertx(), provider.init(provider.toJson(options, new PoolOptions().setMaxSize(1)).mergeIn(extraOption)));
   }
 
   protected JDBCClient initJDBCClient(JsonObject extraOption) {

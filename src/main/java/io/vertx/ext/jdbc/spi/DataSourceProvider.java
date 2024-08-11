@@ -23,11 +23,17 @@ import javax.sql.DataSource;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public interface DataSourceProvider {
+
+  default JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    return new JsonObject();
+  }
 
   /**
    * Init provider with specific configuration
