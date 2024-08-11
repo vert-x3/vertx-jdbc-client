@@ -20,14 +20,11 @@ import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.tracing.TracingPolicy;
-import io.vertx.sqlclient.SqlConnectOptions;
 
 @DataObject
 @JsonGen(publicConverter = false)
 public class JDBCConnectOptions extends SqlOptions {
 
-  private String dataSourceImplementation = "AGROAL";
-  private boolean metricsEnabled;
   private String jdbcUrl;
   private String user;
   private String password;
@@ -46,8 +43,6 @@ public class JDBCConnectOptions extends SqlOptions {
 
   public JDBCConnectOptions(JDBCConnectOptions other) {
     super(other);
-    this.dataSourceImplementation = other.dataSourceImplementation;
-    this.metricsEnabled = other.metricsEnabled;
     this.jdbcUrl = other.jdbcUrl;
     this.user = other.user;
     this.password = other.password;
@@ -57,24 +52,6 @@ public class JDBCConnectOptions extends SqlOptions {
     this.tracingPolicy = other.tracingPolicy;
     this.extraConfig = other.extraConfig != null ? other.extraConfig.copy() : null;
     this.metricsName = other.metricsName;
-  }
-
-  public String getDataSourceImplementation() {
-    return dataSourceImplementation;
-  }
-
-  public JDBCConnectOptions setDataSourceImplementation(String dataSourceImplementation) {
-    this.dataSourceImplementation = dataSourceImplementation;
-    return this;
-  }
-
-  public boolean isMetricsEnabled() {
-    return metricsEnabled;
-  }
-
-  public JDBCConnectOptions setMetricsEnabled(boolean metricsEnabled) {
-    this.metricsEnabled = metricsEnabled;
-    return this;
   }
 
   public String getJdbcUrl() {
