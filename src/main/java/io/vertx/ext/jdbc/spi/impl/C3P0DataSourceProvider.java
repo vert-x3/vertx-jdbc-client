@@ -35,6 +35,8 @@ import java.util.Optional;
  */
 public class C3P0DataSourceProvider implements DataSourceProvider {
 
+  public static final String NAME = "C3P0";
+
   private JsonObject initConfig;
 
   @Override

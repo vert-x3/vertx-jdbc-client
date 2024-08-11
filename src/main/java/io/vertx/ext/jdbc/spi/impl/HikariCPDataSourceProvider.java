@@ -32,6 +32,8 @@ import java.util.Optional;
  */
 public class HikariCPDataSourceProvider implements DataSourceProvider {
 
+  public static final String NAME = "Hikari";
+
   private JsonObject initConfig;
 
   @Override

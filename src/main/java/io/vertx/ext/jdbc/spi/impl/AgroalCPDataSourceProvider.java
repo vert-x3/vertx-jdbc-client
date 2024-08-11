@@ -20,6 +20,8 @@ import java.util.Optional;
  */
 public class AgroalCPDataSourceProvider implements DataSourceProvider {
 
+  public static final String NAME = "Agroal";
+
   private JsonObject initConfig;
 
   @Override
