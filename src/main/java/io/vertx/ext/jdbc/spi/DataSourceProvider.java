@@ -31,6 +31,10 @@ import io.vertx.sqlclient.PoolOptions;
  */
 public interface DataSourceProvider {
 
+  /**
+   * Transforms the {@link JDBCConnectOptions} and {@link PoolOptions} into a config suitable to be passed
+   * as {@link #create(JsonObject)} argument.
+   */
   default JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
     return new JsonObject();
   }

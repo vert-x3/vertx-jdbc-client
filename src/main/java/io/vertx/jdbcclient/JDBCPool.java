@@ -56,10 +56,22 @@ public interface JDBCPool extends Pool {
    * @return the client
    */
   static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
-    AgroalCPDataSourceProvider dsProvider = new AgroalCPDataSourceProvider();
+    return pool(vertx, connectOptions, poolOptions, new AgroalCPDataSourceProvider());
+  }
+
+  /**
+   * Create a JDBC pool which maintains its own data source.
+   *
+   * @param vertx  the Vert.x instance
+   * @param connectOptions the options to configure the connection
+   * @param poolOptions the connection pool options
+   * @param provider the data source provider
+   * @return the client
+   */
+  static JDBCPool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, DataSourceProvider provider) {
     return new JDBCPoolImpl(
       vertx,
-      new JDBCClientImpl(vertx, dsProvider.toJson(connectOptions, poolOptions), dsProvider, poolOptions.getName()),
+      new JDBCClientImpl(vertx, provider.toJson(connectOptions, poolOptions), provider, poolOptions.getName()),
       connectOptions,
       connectOptions.getUser(),
       connectOptions.getDatabase());

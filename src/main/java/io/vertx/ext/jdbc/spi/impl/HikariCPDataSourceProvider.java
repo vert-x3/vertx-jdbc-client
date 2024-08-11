@@ -19,6 +19,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -41,6 +43,23 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
   @Override
   public JsonObject getInitialConfig() {
     return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
+  }
+
+  @Override
+  public JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+    JsonObject config = new JsonObject();
+    config.put("validationTimeout", connectOptions.getConnectTimeout());
+    config.put("maximumPoolSize", poolOptions.getMaxSize());
+    config.put("connectionTimeout", connectOptions.getConnectTimeout());
+    config.put("idleTimeout", connectOptions.getIdleTimeout());
+    config.put("jdbcUrl", connectOptions.getJdbcUrl());
+    if (connectOptions.getUser() != null) {
+      config.put("username", connectOptions.getUser());
+    }
+    if (connectOptions.getPassword() != null) {
+      config.put("password", connectOptions.getPassword());
+    }
+    return config;
   }
 
   @Override

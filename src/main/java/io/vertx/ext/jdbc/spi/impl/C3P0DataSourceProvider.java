@@ -22,6 +22,8 @@ import com.mchange.v2.c3p0.cfg.C3P0Config;
 import com.mchange.v2.c3p0.impl.C3P0Defaults;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.spi.DataSourceProvider;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -46,7 +48,21 @@ public class C3P0DataSourceProvider implements DataSourceProvider {
    return Optional.ofNullable(initConfig).orElseGet(DataSourceProvider.super::getInitialConfig);
   }
 
-  @Override
+   @Override
+   public JsonObject toJson(JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
+     JsonObject config = new JsonObject();
+     config.put("max_pool_size", poolOptions.getMaxSize());
+     config.put("url", connectOptions.getJdbcUrl());
+     if (connectOptions.getUser() != null) {
+       config.put("user", connectOptions.getUser());
+     }
+     if (connectOptions.getPassword() != null) {
+       config.put("password", connectOptions.getPassword());
+     }
+     return config;
+   }
+
+   @Override
   public DataSource getDataSource(JsonObject cfg) throws SQLException {
     JsonObject config = cfg == null || cfg.isEmpty() ? initConfig : cfg;
     String url = config.getString("url");
