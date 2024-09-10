@@ -16,7 +16,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.core.ServiceHelper;
 import io.vertx.core.json.JsonObject;
 import io.vertx.jdbcclient.spi.JDBCDecoder;
 import io.vertx.jdbcclient.spi.JDBCEncoder;
