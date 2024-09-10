@@ -7,7 +7,7 @@ module io.vertx.client.jdbc {
   requires static io.vertx.codegen.api;
   requires static io.vertx.codegen.json;
   requires java.sql;
-  requires static vertx.docgen;
+  requires static io.vertx.docgen;
   exports io.vertx.jdbcclient;
   exports io.vertx.jdbcclient.spi;
   uses JDBCEncoder;
