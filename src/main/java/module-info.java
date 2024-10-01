@@ -12,7 +12,7 @@ module io.vertx.client.jdbc {
   exports io.vertx.jdbcclient;
   exports io.vertx.jdbcclient.spi;
 
-  uses JDBCEncoder;
-  uses JDBCDecoder;
+  uses io.vertx.jdbcclient.spi.JDBCEncoder;
+  uses io.vertx.jdbcclient.spi.JDBCDecoder;
 
 }
