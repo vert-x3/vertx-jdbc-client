@@ -37,8 +37,12 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testcontainers.containers.Container;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
+import java.io.IOException;
 import java.sql.JDBCType;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,6 +50,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 @RunWith(VertxUnitRunner.class)
 public class MSSQLTest {
@@ -58,40 +64,88 @@ public class MSSQLTest {
   @BeforeClass
   public static void setup(TestContext should) {
     final Async test = should.async();
-    rule.vertx().executeBlocking(p -> {
-      try {
-        server = new MSSQLTest.MSSQLServer();
-        server.withInitScript("init-mssql.sql");
-        server.start();
-        p.complete();
-      } catch (RuntimeException e) {
-        p.fail(e);
-      }
+    rule.vertx().executeBlocking(() -> {
+      server = new MSSQLServer();
+      server.start();
+      return null;
     }, true).onSuccess(o -> test.complete()).onFailure(should::fail);
   }
 
   @AfterClass
   public static void tearDown() {
-    server.close();
+    server.stop();
   }
 
-  static class MSSQLServer extends MSSQLServerContainer {
+  static class MSSQLServer {
 
-    @Override
-    protected void configure() {
-      this.addExposedPort(MSSQLServerContainer.MS_SQL_SERVER_PORT);
-      this.addEnv("ACCEPT_EULA", "Y");
-      this.addEnv("SA_PASSWORD", this.getPassword());
+    private static final String USER = "SA";
+    private static final String PASSWORD = "A_Str0ng_Required_Password";
+    private static final String INIT_SQL = "/opt/data/init.sql";
+
+    private GenericContainer genericContainer;
+
+    public void start() throws Exception {
+      String containerVersion = "2019-latest";
+      genericContainer = new GenericContainer<>("mcr.microsoft.com/mssql/server:" + containerVersion)
+        .withLogConsumer(fr -> {
+          System.out.print("MSSQL: " + fr.getUtf8String());
+        })
+        .withEnv("ACCEPT_EULA", "Y")
+        .withEnv("TZ", "UTC")
+        .withEnv("SA_PASSWORD", PASSWORD)
+        .withExposedPorts(MSSQLServerContainer.MS_SQL_SERVER_PORT)
+        .withClasspathResourceMapping("init-mssql.sql", INIT_SQL, READ_ONLY)
+        .waitingFor(Wait.forLogMessage(".*The tempdb database has \\d+ data file\\(s\\).*\\n", 2));
+      genericContainer.start();
+      initDb();
     }
 
+    public int getPort() {
+      return genericContainer.getMappedPort(MSSQLServerContainer.MS_SQL_SERVER_PORT);
+    }
+
+    public String getUsername() {
+      return USER;
+    }
+
+    public String getPassword() {
+      return PASSWORD;
+    }
+
+    public void stop() {
+      genericContainer.stop();
+    }
+
+    private void initDb() throws IOException {
+      try {
+        Container.ExecResult execResult = genericContainer.execInContainer(
+          "/opt/mssql-tools18/bin/sqlcmd",
+          "-S", "localhost",
+          "-U", USER,
+          "-P", PASSWORD,
+          "-i", INIT_SQL,
+          "-C", "-No"
+        );
+        System.out.println("Init stdout: " + execResult.getStdout());
+        System.out.println("Init stderr: " + execResult.getStderr());
+        if (execResult.getExitCode() != 0) {
+          throw new RuntimeException(String.format("Failure while initializing database%nstdout:%s%nstderr:%s%n", execResult.getStdout(), execResult.getStderr()));
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
   }
+
 
   protected JDBCPool initJDBCPool() {
     return initJDBCPool(new JsonObject());
   }
 
   protected JDBCPool initJDBCPool(JsonObject extraOption) {
-    final JDBCConnectOptions options = new JDBCConnectOptions().setJdbcUrl(server.getJdbcUrl())
+    final JDBCConnectOptions options = new JDBCConnectOptions()
+      .setJdbcUrl("jdbc:sqlserver://localhost:" + server.getPort() + ";encrypt=false")
       .setUser(server.getUsername())
       .setPassword(server.getPassword());
     final DataSourceProvider provider = new AgroalCPDataSourceProvider();
@@ -100,7 +154,7 @@ public class MSSQLTest {
   }
 
   protected JDBCClient initJDBCClient(JsonObject extraOption) {
-    JsonObject options = new JsonObject().put("url", server.getJdbcUrl())
+    JsonObject options = new JsonObject().put("url", "jdbc:sqlserver://localhost:" + server.getPort() + ";encrypt=false")
       .put("user", server.getUsername())
       .put("password", server.getPassword());
     return JDBCClient.createShared(rule.vertx(), options.mergeIn(extraOption, true), "dbName");
@@ -112,7 +166,8 @@ public class MSSQLTest {
     final JDBCPool client = initJDBCPool();
     // this test would fail if we would attempt to read the generated ids after the end of the cursor
     // the fix implies that we must read them before we close the cursor.
-    client.preparedQuery("select * from Fortune").execute(should.asyncAssertSuccess(resultSet -> {
+    client.preparedQuery("select * from Fortune")
+      .execute().onComplete(should.asyncAssertSuccess(resultSet -> {
       should.assertEquals(12, resultSet.size());
       test.complete();
     }));
