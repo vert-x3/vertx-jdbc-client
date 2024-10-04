@@ -12,6 +12,8 @@ begin
   set NOCOUNT off
 end;
 
+GO
+
 CREATE procedure [dbo].[rsp_vertx_test_2]
 @echo varchar(16) out
 as
@@ -22,6 +24,8 @@ begin
 
   set NOCOUNT off
 end;
+
+GO
 
 -- TCK usage --
 -- immutable for select query testing --
