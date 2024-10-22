@@ -1,6 +1,7 @@
 package io.vertx.jdbcclient;
 
-import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.VerticleBase;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -32,7 +33,7 @@ public class CloseTest extends ClientTestBase {
 
   private static List<Pool> poolsInTest = Collections.synchronizedList(new ArrayList<>());
 
-  public static class ClientVerticle extends AbstractVerticle {
+  public static class ClientVerticle extends VerticleBase {
 
     private final boolean shared;
 
@@ -41,15 +42,13 @@ public class CloseTest extends ClientTestBase {
     }
 
     @Override
-    public void start(io.vertx.core.Promise<Void> promise) throws Exception {
+    public Future<?> start() throws Exception {
       Pool pool = JDBCPool.pool(vertx, theConfig, new PoolOptions().setShared(shared));
       poolsInTest.add(pool);
       String sql = "SELECT ID, FNAME, LNAME FROM select_table ORDER BY ID";
-      pool
+      return pool
         .query(sql)
-        .execute()
-        .<Void>mapEmpty()
-        .onComplete(promise);
+        .execute();
     }
   }
 
