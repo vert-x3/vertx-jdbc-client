@@ -1,4 +1,4 @@
-module io.vertx.jdbc.client {
+module io.vertx.sql.client.jdbc {
 
   requires static io.vertx.codegen.api;
   requires static io.vertx.codegen.json;
@@ -6,7 +6,7 @@ module io.vertx.jdbc.client {
 
   requires io.vertx.core;
   requires io.vertx.core.logging;
-  requires io.vertx.client.sql;
+  requires io.vertx.sql.client;
   requires java.sql;
 
   exports io.vertx.jdbcclient;
