@@ -1,4 +1,4 @@
-module io.vertx.client.jdbc {
+module io.vertx.jdbc.client {
 
   requires static io.vertx.codegen.api;
   requires static io.vertx.codegen.json;
