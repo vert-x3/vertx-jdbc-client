@@ -83,27 +83,18 @@ public class JDBCSqlClientExamples {
 
     pool
       .getConnection()
-      .onFailure(e -> {
-        // failed to get a connection
+      .compose(conn -> conn
+        .query("SELECT * FROM user")
+        .execute()
+        // very important! don't forget to return the connection
+        .eventually(conn::close))
+      .onSuccess(rows -> {
+        for (Row row : rows) {
+          System.out.println(row.getString("FIRST_NAME"));
+        }
       })
-      .onSuccess(conn -> {
-        conn
-          .query("SELECT * FROM user")
-          .execute()
-          .onFailure(e -> {
-            // handle the failure
-
-            // very important! don't forget to return the connection
-            conn.close();
-          })
-          .onSuccess(rows -> {
-            for (Row row : rows) {
-              System.out.println(row.getString("FIRST_NAME"));
-            }
-
-            // very important! don't forget to return the connection
-            conn.close();
-          });
+      .onFailure(e -> {
+        // handle the failure
       });
   }
 
@@ -111,28 +102,18 @@ public class JDBCSqlClientExamples {
 
     pool
       .getConnection()
-      .onFailure(e -> {
-        // failed to get a connection
+      .compose(conn -> conn
+        .preparedQuery("SELECT * FROM user WHERE emp_id > ?")
+        .execute(Tuple.of(1000))
+        // very important! don't forget to return the connection
+        .eventually(conn::close))
+      .onSuccess(rows -> {
+        for (Row row : rows) {
+          System.out.println(row.getString("FIRST_NAME"));
+        }
       })
-      .onSuccess(conn -> {
-        conn
-          .preparedQuery("SELECT * FROM user WHERE emp_id > ?")
-          // the emp_id to look up
-          .execute(Tuple.of(1000))
-          .onFailure(e -> {
-            // handle the failure
-
-            // very important! don't forget to return the connection
-            conn.close();
-          })
-          .onSuccess(rows -> {
-            for (Row row : rows) {
-              System.out.println(row.getString("FIRST_NAME"));
-            }
-
-            // very important! don't forget to return the connection
-            conn.close();
-          });
+      .onFailure(e -> {
+        // handle the failure
       });
   }
 
