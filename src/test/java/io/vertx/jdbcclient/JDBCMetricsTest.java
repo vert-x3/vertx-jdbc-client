@@ -6,7 +6,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.sqlclient.*;
-import io.vertx.sqlclient.tck.MetricsTestBase;
+import io.vertx.tests.sqlclient.tck.MetricsTestBase;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

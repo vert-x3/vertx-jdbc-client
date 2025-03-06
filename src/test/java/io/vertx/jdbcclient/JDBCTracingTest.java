@@ -6,7 +6,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunnerWithParametersFactory;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.tck.TracingTestBase;
+import io.vertx.tests.sqlclient.tck.TracingTestBase;
 import org.hsqldb.Server;
 import org.junit.Assume;
 import org.junit.runner.RunWith;
