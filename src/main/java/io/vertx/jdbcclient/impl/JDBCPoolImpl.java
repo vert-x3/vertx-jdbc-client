@@ -145,7 +145,7 @@ public class JDBCPoolImpl {
       JDBCStatementHelper helper = new JDBCStatementHelper(cfg);
       return context.executeBlockingInternal(() -> {
         Connection conn = connectionFactory.call();
-        VertxMetrics vertxMetrics = vertx.metricsSPI();
+        VertxMetrics vertxMetrics = vertx.metrics();
         SocketAddress server = getServer(conn);
         ClientMetrics metrics = vertxMetrics != null ? vertxMetrics.createClientMetrics(server, "sql", sqlOptions.getMetricsName()) : null;
         return new SqlConnectionBase<>(context, null, new ConnectionImpl(helper, context, sqlOptions, conn, metrics, sqlOptions.getUser(), sqlOptions.getDatabase(), server), FakeDriver.INSTANCE);
