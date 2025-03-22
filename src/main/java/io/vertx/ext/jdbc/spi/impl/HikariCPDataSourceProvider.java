@@ -141,6 +141,9 @@ public class HikariCPDataSourceProvider implements DataSourceProvider {
         case "leakDetectionThreshold":
           config.setLeakDetectionThreshold(getLong(entry.getValue()));
           break;
+        case "exceptionOverrideClassName":
+          config.setExceptionOverrideClassName((String)entry.getValue());
+          break;
         case "dataSource":
           throw new UnsupportedOperationException(entry.getKey());
         case "threadFactory":
