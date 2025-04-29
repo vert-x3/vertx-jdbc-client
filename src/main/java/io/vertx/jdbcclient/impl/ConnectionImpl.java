@@ -15,6 +15,7 @@
  */
 package io.vertx.jdbcclient.impl;
 
+import io.vertx.core.Completable;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.internal.ContextInternal;
@@ -134,20 +135,22 @@ public class ConnectionImpl implements Connection {
   }
 
   @Override
-  public <R> Future<R> schedule(ContextInternal contextInternal, CommandBase<R> commandBase) {
-    if (commandBase instanceof SimpleQueryCommand<?>) {
-      return (Future<R>)handle((SimpleQueryCommand<?>) commandBase);
-    } else if (commandBase instanceof PrepareStatementCommand) {
-      return (Future<R>) handle((PrepareStatementCommand) commandBase);
-    } else if (commandBase instanceof ExtendedQueryCommand) {
-      return (Future<R>) handle((ExtendedQueryCommand<?>) commandBase);
-    } else if (commandBase instanceof TxCommand) {
-      return handle((TxCommand<R>) commandBase);
-    } else if (commandBase instanceof JDBCAction) {
-      return schedule((JDBCAction<R>) commandBase);
+  public <R> void schedule(CommandBase<R> cmd, Completable<R> handler) {
+    Future<R> fut;
+    if (cmd instanceof SimpleQueryCommand<?>) {
+      fut = (Future<R>) handle((SimpleQueryCommand<?>) cmd);
+    } else if (cmd instanceof PrepareStatementCommand) {
+      fut = (Future<R>) handle((PrepareStatementCommand) cmd);
+    } else if (cmd instanceof ExtendedQueryCommand) {
+      fut = (Future<R>) handle((ExtendedQueryCommand<?>) cmd);
+    } else if (cmd instanceof TxCommand) {
+      fut = handle((TxCommand<R>) cmd);
+    } else if (cmd instanceof JDBCAction) {
+      fut = schedule((JDBCAction<R>) cmd);
     } else {
-      return Future.failedFuture("Not yet implemented " + commandBase);
+      fut = Future.failedFuture("Not yet implemented " + cmd);
     }
+    fut.onComplete(handler);
   }
 
   private Future<PreparedStatement> handle(PrepareStatementCommand command) {

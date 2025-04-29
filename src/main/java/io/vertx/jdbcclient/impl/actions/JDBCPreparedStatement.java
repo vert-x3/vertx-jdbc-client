@@ -70,7 +70,7 @@ public class JDBCPreparedStatement implements PreparedStatement {
   }
 
   @Override
-  public String prepare(TupleInternal values) {
-    return null;
+  public TupleInternal prepare(TupleInternal values) {
+    return values;
   }
 }
