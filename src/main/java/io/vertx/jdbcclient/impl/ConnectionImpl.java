@@ -114,7 +114,7 @@ public class ConnectionImpl implements Connection {
   }
 
   @Override
-  public void close(Holder holder, Promise<Void> promise) {
+  public void close(Holder holder, Completable<Void> promise) {
     schedule(new JDBCClose(sqlOptions, null, null))
       .andThen(ar -> {
         if (metrics != null) {
