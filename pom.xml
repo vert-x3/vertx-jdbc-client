@@ -17,7 +17,7 @@
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <name>Vertx JDBC Client</name>
+  <name>Vert.x JDBC Client</name>
   <artifactId>vertx-jdbc-client</artifactId>
   <version>4.5.16-SNAPSHOT</version>
 
