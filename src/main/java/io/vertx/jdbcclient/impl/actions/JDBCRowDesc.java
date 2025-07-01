@@ -2,11 +2,11 @@ package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
-import io.vertx.sqlclient.internal.RowDesc;
+import io.vertx.sqlclient.internal.RowDescriptorBase;
 
 import java.sql.SQLException;
 
-public class JDBCRowDesc extends RowDesc {
+public class JDBCRowDesc extends RowDescriptorBase {
 
   private static ColumnDescriptor[] foo(JDBCColumnDescriptorProvider provider, int cols) throws SQLException {
     ColumnDescriptor[] columnDescriptors = new ColumnDescriptor[cols];

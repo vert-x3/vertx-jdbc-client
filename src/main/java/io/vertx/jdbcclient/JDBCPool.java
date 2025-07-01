@@ -17,8 +17,11 @@ package io.vertx.jdbcclient;
 
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.jdbcclient.impl.JDBCPoolImpl;
+import io.vertx.core.net.NetClientOptions;
+import io.vertx.jdbcclient.impl.FakeDriver;
+import io.vertx.jdbcclient.impl.FakeSqlConnectOptions;
 import io.vertx.sqlclient.*;
 
 import javax.sql.DataSource;
@@ -52,7 +55,8 @@ public interface JDBCPool extends Pool {
    */
   static Pool pool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions) {
     Callable<Connection> connectionCallable = () -> DriverManager.getConnection(connectOptions.getJdbcUrl(), connectOptions.getUser(), connectOptions.getPassword());
-    return JDBCPoolImpl.newPool(vertx, connectOptions, poolOptions, connectionCallable);
+    FakeDriver driver = new FakeDriver(connectionCallable);
+    return driver.createPool(vertx, () -> Future.succeededFuture(new FakeSqlConnectOptions(connectOptions)), poolOptions, new NetClientOptions(), null);
   }
 
   /**
@@ -65,6 +69,8 @@ public interface JDBCPool extends Pool {
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   static Pool pool(Vertx vertx, DataSource dataSource, PoolOptions poolOptions) {
-    return JDBCPoolImpl.newPool(vertx, new JDBCConnectOptions(), poolOptions, () -> dataSource.getConnection());
+    Callable<Connection> connectionCallable = () -> dataSource.getConnection();
+    FakeDriver driver = new FakeDriver(connectionCallable);
+    return driver.createPool(vertx, () -> Future.succeededFuture(new FakeSqlConnectOptions(new JDBCConnectOptions())), poolOptions, new NetClientOptions(), null);
   }
 }

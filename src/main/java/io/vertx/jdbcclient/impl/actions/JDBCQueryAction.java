@@ -17,7 +17,6 @@ import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.JDBCRow;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
-import io.vertx.sqlclient.internal.RowDesc;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -81,7 +80,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     BiConsumer<C, Row> accumulator = collector.accumulator();
 
-    RowDesc desc = new JDBCRowDesc(new ColumnDescriptor[0]);
+    JDBCRowDesc desc = new JDBCRowDesc(new ColumnDescriptor[0]);
     C container = collector.supplier().get();
     for (int result : returnedBatchResult) {
       Row row = new JDBCRow(desc);
@@ -106,14 +105,14 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
 
     ResultSetMetaData metaData = rs.getMetaData();
     JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
-    RowDesc desc = new JDBCRowDesc(provider, metaData.getColumnCount());
+    JDBCRowDesc desc = new JDBCRowDesc(provider, metaData.getColumnCount());
 
     C container = collector.supplier().get();
     int size = 0;
     while (rs.next()) {
       size++;
       Row row = new JDBCRow(desc);
-      for (int i = 1; i <= desc.columnDescriptor().size(); i++) {
+      for (int i = 1; i <= desc.columnDescriptors().size(); i++) {
         row.addValue(helper.getDecoder().parse(rs, i, provider));
       }
       accumulator.accept(container, row);
@@ -129,7 +128,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     ResultSetMetaData metaData = rs.getMetaData();
     JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
     int cols = metaData.getColumnCount();
-    RowDesc desc = new JDBCRowDesc(provider, cols);
+    JDBCRowDesc desc = new JDBCRowDesc(provider, cols);
     C container = collector.supplier().get();
 
     while (rs.next()) {
@@ -151,7 +150,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     // the result is unlabeled
     ParameterMetaData md = new CachedParameterMetaData(cs).putOutParams(outParams);
     JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromParameterMetaData(md);
-    RowDesc desc = new JDBCRowDesc(provider, outParams.size());
+    JDBCRowDesc desc = new JDBCRowDesc(provider, outParams.size());
     Row row = new JDBCRow(desc);
     JDBCDecoder decoder = helper.getDecoder();
     for (Integer idx : outParams.keySet()) {
@@ -184,7 +183,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
           JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
           int cols = metaData.getColumnCount();
           if (cols > 0) {
-            RowDesc keysDesc = new JDBCRowDesc(provider, cols);
+            JDBCRowDesc keysDesc = new JDBCRowDesc(provider, cols);
 
             keys = new JDBCRow(keysDesc);
             for (int i = 1; i <= cols; i++) {

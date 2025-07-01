@@ -17,7 +17,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.SqlOptions;
-import io.vertx.sqlclient.internal.command.TxCommand;
+import io.vertx.sqlclient.spi.protocol.TxCommand;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -36,11 +36,11 @@ public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
 
   @Override
   public R execute(Connection conn) throws SQLException {
-    if (op.kind == TxCommand.Kind.BEGIN) {
+    if (op.kind() == TxCommand.Kind.BEGIN) {
       conn.setAutoCommit(false);
     } else {
       try {
-        if (op.kind == TxCommand.Kind.COMMIT) {
+        if (op.kind() == TxCommand.Kind.COMMIT) {
           conn.commit();
         } else {
           conn.rollback();
@@ -49,6 +49,6 @@ public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
         conn.setAutoCommit(false);
       }
     }
-    return op.result;
+    return op.result();
   }
 }

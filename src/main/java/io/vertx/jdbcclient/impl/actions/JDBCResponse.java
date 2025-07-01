@@ -18,7 +18,6 @@ package io.vertx.jdbcclient.impl.actions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.internal.QueryResultHandler;
-import io.vertx.sqlclient.internal.RowDesc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +27,9 @@ public class JDBCResponse<R> {
   static class RS<R> {
     R holder;
     int size;
-    RowDesc desc;
+    JDBCRowDesc desc;
 
-    RS(R holder, RowDesc desc, int size) {
+    RS(R holder, JDBCRowDesc desc, int size) {
       this.holder = holder;
       this.desc = desc;
       this.size = size;
@@ -47,7 +46,7 @@ public class JDBCResponse<R> {
     this.update = updateCount;
   }
 
-  public void push(R decodeResultSet, RowDesc desc, int size) {
+  public void push(R decodeResultSet, JDBCRowDesc desc, int size) {
     if (rs == null) {
       rs = new ArrayList<>();
     }
@@ -62,7 +61,7 @@ public class JDBCResponse<R> {
     this.empty = apply;
   }
 
-  public void outputs(R decodeResultSet, RowDesc desc, int size) {
+  public void outputs(R decodeResultSet, JDBCRowDesc desc, int size) {
     if (output == null) {
       output = new ArrayList<>();
     }

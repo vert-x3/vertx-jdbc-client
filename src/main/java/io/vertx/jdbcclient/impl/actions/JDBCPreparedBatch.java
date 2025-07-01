@@ -22,8 +22,8 @@ import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.internal.TupleInternal;
-import io.vertx.sqlclient.internal.command.ExtendedQueryCommand;
+import io.vertx.sqlclient.internal.TupleBase;
+import io.vertx.sqlclient.spi.protocol.ExtendedQueryCommand;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -44,9 +44,9 @@ import java.util.stream.Collector;
 public class JDBCPreparedBatch<C, R> extends JDBCQueryAction<C, R> {
 
   private final ExtendedQueryCommand<R> query;
-  private final List<TupleInternal> listParams;
+  private final List<TupleBase> listParams;
 
-  public JDBCPreparedBatch(JDBCStatementHelper helper, SqlOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, List<TupleInternal> listParams) {
+  public JDBCPreparedBatch(JDBCStatementHelper helper, SqlOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, List<TupleBase> listParams) {
     super(helper, options, collector);
     this.query = query;
     this.listParams = listParams;
