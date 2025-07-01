@@ -1,28 +1,44 @@
 package io.vertx.jdbcclient.impl;
 
+import io.vertx.core.Completable;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.internal.CloseFuture;
 import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.net.NetClientOptions;
-import io.vertx.sqlclient.Pool;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnectOptions;
-import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.internal.Connection;
+import io.vertx.sqlclient.spi.connection.Connection;
+import io.vertx.sqlclient.spi.connection.ConnectionFactory;
 import io.vertx.sqlclient.internal.SqlConnectionInternal;
-import io.vertx.sqlclient.spi.ConnectionFactory;
-import io.vertx.sqlclient.spi.Driver;
+import io.vertx.sqlclient.spi.DriverBase;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * For now fake as we don't use the driver system, perhaps implemented later.
  */
-public class FakeDriver implements Driver<SqlConnectOptions> {
+public class FakeDriver extends DriverBase<FakeSqlConnectOptions> {
 
-  public static final FakeDriver INSTANCE = new FakeDriver();
+  private static final Function<Connection, Future<Void>> AFTER_ACQUIRE = conn -> {
+    ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+    jdbc.beforeUsage();
+    return Future.succeededFuture();
+  };
+
+  private static final Function<Connection, Future<Void>> BEFORE_RECYCLE = conn -> {
+    ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
+    jdbc.afterUsage();
+    return Future.succeededFuture();
+  };
+
+  final Callable<java.sql.Connection> connectionFactory;
+
+  public FakeDriver(Callable<java.sql.Connection> connectionFactory) {
+    super("jdbcclient", AFTER_ACQUIRE, BEFORE_RECYCLE);
+    this.connectionFactory = connectionFactory;
+  }
 
   @Override
   public SqlConnectOptions parseConnectionUri(String s) {
@@ -31,17 +47,21 @@ public class FakeDriver implements Driver<SqlConnectOptions> {
 
 
   @Override
-  public Pool newPool(Vertx vertx, Supplier<Future<SqlConnectOptions>> databases, PoolOptions options, NetClientOptions transportOptions, Handler<SqlConnection> connectHandler, CloseFuture closeFuture) {
-    throw new UnsupportedOperationException();
+  public ConnectionFactory<FakeSqlConnectOptions> createConnectionFactory(Vertx vertx, NetClientOptions transportOptions) {
+    return new ConnectionFactory<>() {
+      @Override
+      public Future<Connection> connect(Context context, FakeSqlConnectOptions options) {
+        return new JDBCPoolImpl.ConnectionFactory((VertxInternal) vertx, options.actual, connectionFactory).connect((ContextInternal) context);
+      }
+      @Override
+      public void close(Completable<Void> completion) {
+        completion.succeed();
+      }
+    };
   }
 
   @Override
-  public ConnectionFactory<SqlConnectOptions> createConnectionFactory(Vertx vertx, NetClientOptions transportOptions) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public SqlConnectOptions downcast(SqlConnectOptions connectOptions) {
+  public FakeSqlConnectOptions downcast(SqlConnectOptions connectOptions) {
     throw new UnsupportedOperationException();
   }
 
@@ -51,7 +71,7 @@ public class FakeDriver implements Driver<SqlConnectOptions> {
   }
 
   @Override
-  public SqlConnectionInternal wrapConnection(ContextInternal context, ConnectionFactory<SqlConnectOptions> factory, Connection conn) {
-    return new JDBCConnectionImpl(context, factory, conn, FakeDriver.INSTANCE);
+  public SqlConnectionInternal wrapConnection(ContextInternal context, ConnectionFactory<FakeSqlConnectOptions> factory, Connection conn) {
+    return new JDBCConnectionImpl(context, factory, conn, this);
   }
 }

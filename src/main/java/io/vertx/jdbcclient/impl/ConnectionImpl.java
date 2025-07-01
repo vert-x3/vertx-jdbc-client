@@ -17,9 +17,7 @@ package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Completable;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.internal.ContextInternal;
-//import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
@@ -28,11 +26,16 @@ import io.vertx.jdbcclient.impl.actions.JDBCClose;
 import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.actions.*;
-import io.vertx.sqlclient.internal.Connection;
 import io.vertx.sqlclient.internal.PreparedStatement;
 import io.vertx.sqlclient.internal.QueryResultHandler;
-import io.vertx.sqlclient.internal.command.*;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
+import io.vertx.sqlclient.spi.connection.Connection;
+import io.vertx.sqlclient.spi.connection.ConnectionContext;
+import io.vertx.sqlclient.spi.protocol.CommandBase;
+import io.vertx.sqlclient.spi.protocol.ExtendedQueryCommand;
+import io.vertx.sqlclient.spi.protocol.PrepareStatementCommand;
+import io.vertx.sqlclient.spi.protocol.SimpleQueryCommand;
+import io.vertx.sqlclient.spi.protocol.TxCommand;
 
 import java.sql.SQLException;
 
@@ -45,19 +48,29 @@ public class ConnectionImpl implements Connection {
   final String user;
   final String database;
   final SocketAddress server;
+  final SqlOptions sqlOptionsBackup;
+  SqlOptions sqlOptions;
 //  final TaskQueue statementsQueue = new TaskQueue();
 
-  SqlOptions sqlOptions;
 
   public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?> metrics, String user, String database, SocketAddress server) {
     this.conn = conn;
     this.helper = helper;
     this.context = context;
-    this.sqlOptions = sqlOptions;
     this.user = user;
     this.database = database;
     this.server = server;
     this.metrics = metrics;
+    this.sqlOptionsBackup = sqlOptions;
+    this.sqlOptions = null;
+  }
+
+  void beforeUsage() {
+    sqlOptions = new SqlOptions(sqlOptionsBackup);
+  }
+
+  void afterUsage() {
+    sqlOptions = null;
   }
 
   public java.sql.Connection getJDBCConnection() {
@@ -105,16 +118,17 @@ public class ConnectionImpl implements Connection {
   }
 
   @Override
-  public DatabaseMetadata getDatabaseMetaData() {
+  public DatabaseMetadata databaseMetadata() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void init(Holder holder) {
+  public void init(ConnectionContext context) {
+
   }
 
   @Override
-  public void close(Holder holder, Completable<Void> promise) {
+  public void close(ConnectionContext holder, Completable<Void> promise) {
     schedule(new JDBCClose(sqlOptions, null, null))
       .andThen(ar -> {
         if (metrics != null) {
@@ -122,16 +136,6 @@ public class ConnectionImpl implements Connection {
         }
       })
       .onComplete(promise);
-  }
-
-  @Override
-  public int getProcessId() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int getSecretKey() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

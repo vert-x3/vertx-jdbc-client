@@ -23,7 +23,7 @@ import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import io.vertx.sqlclient.internal.command.ExtendedQueryCommand;
+import io.vertx.sqlclient.spi.protocol.ExtendedQueryCommand;
 
 import java.sql.Blob;
 import java.sql.CallableStatement;

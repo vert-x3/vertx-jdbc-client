@@ -17,7 +17,7 @@ public class JDBCUtils {
   }
 
   private static ConnectionImpl implOf(SqlConnection conn) {
-    io.vertx.sqlclient.internal.Connection internal = ((SqlConnectionInternal) conn).unwrap();
+    io.vertx.sqlclient.spi.connection.Connection internal = ((SqlConnectionInternal) conn).unwrap();
     if (!(internal instanceof ConnectionImpl)) {
       // Not pooled
       internal = internal.unwrap();

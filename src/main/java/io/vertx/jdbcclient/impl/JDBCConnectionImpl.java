@@ -4,16 +4,16 @@ import io.vertx.core.Future;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.jdbcclient.JDBCConnection;
 import io.vertx.sqlclient.SqlConnection;
-import io.vertx.sqlclient.internal.Connection;
+import io.vertx.sqlclient.spi.connection.Connection;
+import io.vertx.sqlclient.spi.connection.ConnectionFactory;
 import io.vertx.sqlclient.internal.SqlConnectionBase;
 import io.vertx.sqlclient.internal.SqlConnectionInternal;
-import io.vertx.sqlclient.spi.ConnectionFactory;
 import io.vertx.sqlclient.spi.Driver;
 
 public class JDBCConnectionImpl extends SqlConnectionBase<JDBCConnectionImpl> implements JDBCConnection {
 
   static ConnectionImpl implOf(SqlConnection conn) {
-    io.vertx.sqlclient.internal.Connection internal = ((SqlConnectionInternal) conn).unwrap();
+    io.vertx.sqlclient.spi.connection.Connection internal = ((SqlConnectionInternal) conn).unwrap();
     if (!(internal instanceof ConnectionImpl)) {
       // Not pooled
       internal = internal.unwrap();

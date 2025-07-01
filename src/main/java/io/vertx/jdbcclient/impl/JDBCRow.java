@@ -10,18 +10,18 @@
  */
 package io.vertx.jdbcclient.impl;
 
+import io.vertx.jdbcclient.impl.actions.JDBCRowDesc;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.internal.ArrayTuple;
-import io.vertx.sqlclient.internal.RowDesc;
 
 import java.util.List;
 import java.util.Objects;
 
 public class JDBCRow extends ArrayTuple implements Row {
 
-  private final RowDesc desc;
+  private final JDBCRowDesc desc;
 
-  public JDBCRow(RowDesc desc) {
+  public JDBCRow(JDBCRowDesc desc) {
     super(desc.columnNames().size());
     this.desc = desc;
   }
