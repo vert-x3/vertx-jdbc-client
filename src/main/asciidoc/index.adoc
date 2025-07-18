@@ -41,18 +41,6 @@ It all starts with a pool. Creating a pool is simple. The shortest example would
 {@link examples.JDBCSqlClientExamples#exampleCreateDefault}
 ----
 
-In this case we are reusing the JDBC client API to create the pool. The configuration is free form and users need to
-look up the properties required for the underlying connection pool of choice.
-
-For a type safe alternative, a second factory method is present. This second factory method ensures that the config is
-correct (as it's properties and type is validated by the compiler) but currently only works with the `Agroal` connection
-pool.
-
-[source,$lang]
-----
-{@link examples.JDBCSqlClientExamples#exampleCreateTypeSafe}
-----
-
 ==== Using the Pool
 
 Once you have a pool, you can start using your database, the pool operates in 2 modes:
