@@ -28,26 +28,6 @@ public class JDBCSqlClientExamples {
     Pool pool = JDBCPool.pool(vertx, connectOptions, poolOptions);
   }
 
-  public void exampleCreateTypeSafe(Vertx vertx) {
-
-    Pool pool = JDBCPool.pool(
-      vertx,
-      // configure the connection
-      new JDBCConnectOptions()
-        // H2 connection string
-        .setJdbcUrl("jdbc:h2:~/test")
-        // username
-        .setUser("sa")
-        // password
-        .setPassword(""),
-      // configure the pool
-      new PoolOptions()
-        .setMaxSize(16)
-        .setName("pool-name")
-    );
-
-  }
-
   public void exampleQueryManaged(JDBCPool pool) {
 
     pool
