@@ -80,7 +80,9 @@ public interface JDBCPool extends Pool {
   }
 
   /**
-   * Create a JDBC pool which maintains its own data source, with the specified provider
+   * Create a JDBC pool which maintains its own data source, with the specified provider.
+   * <p>
+   * The datasource will be named after {@link PoolOptions#getName()}, even though the Javadoc in this class indicates that the name is only used when the {@link Pool} is shared.
    *
    * @param vertx  the Vert.x instance
    * @param connectOptions the options to configure the connection
