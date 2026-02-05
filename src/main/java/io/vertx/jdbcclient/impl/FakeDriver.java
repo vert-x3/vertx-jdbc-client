@@ -8,10 +8,10 @@ import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.net.NetClientOptions;
 import io.vertx.sqlclient.SqlConnectOptions;
-import io.vertx.sqlclient.spi.connection.Connection;
-import io.vertx.sqlclient.spi.connection.ConnectionFactory;
 import io.vertx.sqlclient.internal.SqlConnectionInternal;
 import io.vertx.sqlclient.spi.DriverBase;
+import io.vertx.sqlclient.spi.connection.Connection;
+import io.vertx.sqlclient.spi.connection.ConnectionFactory;
 
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -23,14 +23,12 @@ public class FakeDriver extends DriverBase<FakeSqlConnectOptions> {
 
   private static final Function<Connection, Future<Void>> AFTER_ACQUIRE = conn -> {
     ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-    jdbc.beforeUsage();
-    return Future.succeededFuture();
+    return jdbc.beforeUsage();
   };
 
   private static final Function<Connection, Future<Void>> BEFORE_RECYCLE = conn -> {
     ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-    jdbc.afterUsage();
-    return Future.succeededFuture();
+    return jdbc.afterUsage();
   };
 
   final Callable<java.sql.Connection> connectionFactory;
