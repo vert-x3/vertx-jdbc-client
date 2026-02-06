@@ -34,11 +34,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.JDBCType;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
+import java.time.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -256,5 +252,33 @@ public class PostgresTest {
       should.assertTrue(err1.getMessage().contains("canceling statement due to user request"));
       pool.withConnection(conn -> conn.query("select pg_sleep(2)").execute()).onComplete(should.asyncAssertSuccess());
     }));
+  }
+
+  @Test
+  public void testConditionalFunction(TestContext should) {
+    final Async async = should.strictAsync(2);
+    final Pool pool = initJDBCPool(new JsonObject());
+
+    pool
+      .preparedQuery("SELECT * FROM conditional_proc(?)")
+      .execute(Tuple.of(0))
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        // Should complete without throwing any exception
+        should.assertNotNull(rows);
+        should.assertEquals(0, rows.size());
+        async.countDown();
+      });
+
+    pool
+      .preparedQuery("SELECT * FROM conditional_proc(?)")
+      .execute(Tuple.of(1))
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        should.assertNotNull(rows);
+        should.assertEquals(1, rows.size());
+        should.assertEquals("One", rows.iterator().next().getString(0));
+        async.countDown();
+      });
   }
 }
