@@ -11,6 +11,8 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
 import io.vertx.ext.jdbc.impl.actions.CachedParameterMetaData;
 import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
@@ -23,14 +25,7 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ParameterMetaData;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
@@ -38,6 +33,8 @@ import java.util.stream.Collector;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCResponse<R>> {
+
+  private static final Logger log = LoggerFactory.getLogger(JDBCQueryAction.class);
 
   private final Collector<Row, C, R> collector;
 
@@ -176,10 +173,14 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   }
 
   private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {
-    Row keys = null;
-
-    ResultSet keysRS = statement.getGeneratedKeys();
-
+    ResultSet keysRS;
+    try {
+      keysRS = statement.getGeneratedKeys();
+    } catch (SQLException e) {
+      // MS SQL Server may throw an exception after invoking a stored procedure that didn't actually execute any statement
+      log.trace("Failed to retrieve generated keys, skipping", e);
+      return;
+    }
     if (keysRS != null) {
       if (keysRS.next()) {
         // only try to access metadata if there are rows
@@ -187,6 +188,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
         if (metaData != null) {
           JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
           int cols = metaData.getColumnCount();
+          Row keys = null;
           if (cols > 0) {
             RowDesc keysDesc = new JDBCRowDesc(provider, cols);
 

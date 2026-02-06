@@ -49,6 +49,19 @@ BEGIN
   b3:= true;
 END;' LANGUAGE plpgsql;
 
+-- Make sure the client does not fail
+-- When executing a procedure that can (conditionally) return no result set
+CREATE FUNCTION conditional_proc(p_number INTEGER)
+  RETURNS TABLE
+          (
+            result TEXT
+          ) AS '
+BEGIN
+  IF p_number = 1 THEN
+    RETURN QUERY SELECT ''One''::TEXT;
+  END IF;
+END;' LANGUAGE plpgsql;
+
 CREATE TABLE temporal_data_type
 (
   "id"          INTEGER NOT NULL PRIMARY KEY,

@@ -27,6 +27,19 @@ end;
 
 GO
 
+-- Make sure the client does not fail
+-- When executing a procedure that can (conditionally) return no result set
+CREATE procedure [dbo].[conditional_proc]
+  @number int
+as
+begin
+IF
+(@number = 1)
+SELECT 'One'
+end;
+
+GO
+
 -- TCK usage --
 -- immutable for select query testing --
 DROP TABLE IF EXISTS immutable;
