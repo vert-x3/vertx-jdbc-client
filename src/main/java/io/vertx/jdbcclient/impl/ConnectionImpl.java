@@ -18,12 +18,10 @@ package io.vertx.jdbcclient.impl;
 import io.vertx.core.Completable;
 import io.vertx.core.Future;
 import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.PromiseInternal;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
-import io.vertx.jdbcclient.impl.actions.JDBCAction;
-import io.vertx.jdbcclient.impl.actions.JDBCClose;
-import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.actions.*;
 import io.vertx.sqlclient.internal.PreparedStatement;
@@ -31,11 +29,7 @@ import io.vertx.sqlclient.internal.QueryResultHandler;
 import io.vertx.sqlclient.spi.DatabaseMetadata;
 import io.vertx.sqlclient.spi.connection.Connection;
 import io.vertx.sqlclient.spi.connection.ConnectionContext;
-import io.vertx.sqlclient.spi.protocol.CommandBase;
-import io.vertx.sqlclient.spi.protocol.ExtendedQueryCommand;
-import io.vertx.sqlclient.spi.protocol.PrepareStatementCommand;
-import io.vertx.sqlclient.spi.protocol.SimpleQueryCommand;
-import io.vertx.sqlclient.spi.protocol.TxCommand;
+import io.vertx.sqlclient.spi.protocol.*;
 
 import java.sql.SQLException;
 
@@ -65,12 +59,24 @@ public class ConnectionImpl implements Connection {
     this.sqlOptions = null;
   }
 
-  void beforeUsage() {
+  Future<Void> beforeUsage() {
     sqlOptions = new SqlOptions(sqlOptionsBackup);
+    PromiseInternal<Void> promise = context.owner().promise();
+    context.<Void>executeBlocking(() -> {
+      conn.beginRequest();
+      return null;
+    }, false).onComplete(promise);
+    return promise.future();
   }
 
-  void afterUsage() {
+  Future<Void> afterUsage() {
     sqlOptions = null;
+    PromiseInternal<Void> promise = context.owner().promise();
+    context.<Void>executeBlocking(() -> {
+      conn.endRequest();
+      return null;
+    }, false).onComplete(promise);
+    return promise.future();
   }
 
   public java.sql.Connection getJDBCConnection() {
