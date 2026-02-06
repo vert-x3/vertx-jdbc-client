@@ -212,6 +212,28 @@ public class MSSQLTest {
   }
 
   @Test
+  public void testConditionalStoredProcedure() throws Exception {
+    final Pool client = initJDBCPool();
+
+    RowSet<Row> rows = client
+      .preparedQuery("{ call conditional_proc(?)}")
+      .execute(Tuple.of(0))
+      .await(20, TimeUnit.SECONDS);
+
+    // Should complete without throwing any exception
+    assertNotNull(rows);
+
+    rows = client
+      .preparedQuery("{ call conditional_proc(?)}")
+      .execute(Tuple.of(1))
+      .await(20, TimeUnit.SECONDS);
+
+    assertNotNull(rows);
+    assertEquals(1, rows.size());
+    assertEquals("One", rows.iterator().next().getString(0));
+  }
+
+  @Test
   public void testQueryWithJDBCPool() throws Exception {
     final Pool client = initJDBCPool();
     RowSet<Row> rows = client
