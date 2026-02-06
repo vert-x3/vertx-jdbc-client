@@ -28,14 +28,11 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.jdbcclient.SqlOutParam;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
@@ -51,6 +48,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 @RunWith(VertxUnitRunner.class)
@@ -228,6 +227,28 @@ public class MSSQLTest {
         }
         test.complete();
       });
+  }
+
+  @Test
+  public void testConditionalStoredProcedure(TestContext should) throws Exception {
+    final Pool client = initJDBCPool();
+
+    client
+      .preparedQuery("{ call conditional_proc(?)}")
+      .execute(Tuple.of(0))
+      .onComplete(should.asyncAssertSuccess(rows -> {
+        // Should complete without throwing any exception
+        assertNotNull(rows);
+      }));
+
+    client
+      .preparedQuery("{ call conditional_proc(?)}")
+      .execute(Tuple.of(1))
+      .onComplete(should.asyncAssertSuccess(rows -> {
+        assertNotNull(rows);
+        assertEquals(1, rows.size());
+        assertEquals("One", rows.iterator().next().getString(0));
+      }));
   }
 
   @Test
