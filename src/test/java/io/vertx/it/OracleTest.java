@@ -1,116 +1,113 @@
-/*
- * Copyright (c) 2011-2014 The original author or authors
- * ------------------------------------------------------
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
- *
- *     The Eclipse Public License is available at
- *     http://www.eclipse.org/legal/epl-v10.html
- *
- *     The Apache License v2.0 is available at
- *     http://www.opensource.org/licenses/apache2.0.php
- *
- * You may elect to redistribute this code under either of these licenses.
- */
-
 package io.vertx.it;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.JDBCPrepareOptions;
+import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.Tuple;
+import org.junit.*;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.OracleContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
-/**
- * @author <a href="mailto:Fyro-Ing@users.noreply.github.com">Fyro</a>
- */
 @RunWith(VertxUnitRunner.class)
-@Ignore("This container doesn't start on GitHub")
 public class OracleTest {
 
   @ClassRule
-  public static final RunTestOnContext rule = new RunTestOnContext();
+  public static final GenericContainer<?> server = new GenericContainer<>("gvenzl/oracle-free:23-slim-faststart")
+    .withEnv("ORACLE_PASSWORD", "vertx")
+    .withExposedPorts(1521)
+    .waitingFor(Wait.forLogMessage(".*DATABASE IS READY TO USE!.*", 1))
+    .withStartupTimeout(Duration.ofMinutes(5));
 
-  @ClassRule
-  public static final OracleContainer server = new OracleContainer("wnameless/oracle-xe-11g-r2:latest")
-    .withInitScript("init-oracle.sql");
+  private static String jdbcUrl;
+  private static String username;
+  private static String password;
+
+  private Vertx vertx;
+
+  @BeforeClass
+  public static void setupDatabase() throws Exception {
+    jdbcUrl = String.format("jdbc:oracle:thin:@//%s:%d/FREEPDB1", server.getHost(), server.getMappedPort(1521));
+    username = "sys as sysdba";
+    password = "vertx";
+
+    // Create test table with auto-generated key support using JDBC directly
+    try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password)) {
+      // Drop table if exists (ignore errors)
+      try {
+        conn.createStatement().execute("DROP TABLE test_insert_table");
+      } catch (Exception ignore) {
+      }
+
+      // Create table with identity column for auto-generated keys
+      conn.createStatement().execute(
+        "CREATE TABLE test_insert_table (" +
+          "  id NUMBER GENERATED ALWAYS AS IDENTITY(START WITH 1 INCREMENT BY 1), " +
+          "  fname VARCHAR2(255), " +
+          "  lname VARCHAR2(255), " +
+          "  CONSTRAINT test_insert_table_pk PRIMARY KEY (id))"
+      );
+    }
+  }
+
+  @Before
+  public void before() {
+    vertx = Vertx.vertx();
+  }
+
+  @After
+  public void after(TestContext should) throws Exception {
+    vertx
+      .close()
+      .onComplete(should.asyncAssertSuccess());
+  }
+
+  protected Pool initJDBCPool() {
+    final JDBCConnectOptions options = new JDBCConnectOptions()
+      .setJdbcUrl(jdbcUrl)
+      .setUser(username)
+      .setPassword(password);
+    return JDBCPool.pool(vertx, options, new PoolOptions().setMaxSize(1));
+  }
 
   @Test
-  public void simpleDeleteTest(TestContext should) {
+  public void testBatchWithDisabledGeneratedKeys(TestContext should) {
     final Async test = should.async();
-    JDBCClient client = initJDBCClient();
-    client
-      .updateWithParams("DELETE FROM insert_table WHERE id = ?", new JsonArray().add(1),
-        should.asyncAssertSuccess(resultSet -> {
-          should.assertEquals(1, resultSet.getUpdated());
-          test.complete();
-        }));
-  }
+    final Pool client = initJDBCPool();
 
-  @Test
-  public void simpleSelectTest(TestContext should) {
-    final Async async = should.async();
-    JDBCClient client = initJDBCClient();
-    client
-      .query("SELECT * FROM insert_table WHERE id = 2", should.asyncAssertSuccess(resultSet -> {
-        Assert.assertEquals(1, resultSet.getNumRows());
-        final JsonArray row = resultSet.getResults().get(0);
-        Assert.assertEquals(2, (int) row.getInteger(0));
-        Assert.assertEquals("hello", row.getValue(1));
-        Assert.assertEquals("vertx", row.getValue(2));
-        Assert.assertEquals(LocalDateTime.class, row.getValue(3).getClass());
-        Assert.assertEquals(LocalDateTime.class, row.getValue(4).getClass());
-        async.complete();
-      }));
-  }
+    String sql = "INSERT INTO test_insert_table (fname, lname) VALUES (?, ?)";
+    List<Tuple> batch = Arrays.asList(
+      Tuple.of("alice", "wonderland"),
+      Tuple.of("bob", "builder"),
+      Tuple.of("charlie", "brown")
+    );
 
-  @Test
-  public void simpleInsertTest(TestContext should) {
-    final Async async = should.async();
-    JDBCClient client = initJDBCClient();
-    client
-      .updateWithParams("INSERT INTO insert_table VALUES (?, ?, ?, ?, ?)",
-        new JsonArray().add(3).add("doe").add("john")
-          .add(LocalDateTime.of(2001, 1, 1, 0, 0))
-          .add(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())),
-        should.asyncAssertSuccess(resultSet -> {
-          Assert.assertEquals(1, resultSet.getUpdated());
-          async.complete();
-        }));
-  }
+    // Create prepare options with auto-generated keys disabled
+    JDBCPrepareOptions options = new JDBCPrepareOptions()
+      .setAutoGeneratedKeys(false);
 
-  @Test
-  public void simpleUpdateTest(TestContext should) {
-    final Async async = should.async();
-    JDBCClient client = initJDBCClient();
     client
-      .updateWithParams("UPDATE insert_table SET lname=?, cdate=? WHERE id = 2",
-        new JsonArray().add("aName").add(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())),
-        should.asyncAssertSuccess(resultSet -> {
-          should.assertEquals(1, resultSet.getUpdated());
-          async.complete();
-        }));
-  }
-
-  private JDBCClient initJDBCClient() {
-    JsonObject options = new JsonObject()
-      .put("url", server.getJdbcUrl())
-      .put("user", server.getUsername())
-      .put("password", server.getPassword())
-      .put("driver_class", "oracle.jdbc.driver.OracleDriver");
-    return JDBCClient.createShared(rule.vertx(), options, "dbName");
+      .preparedQuery(sql, options)
+      .executeBatch(batch)
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        should.assertNotNull(rows);
+        should.assertEquals(3, rows.rowCount());
+        // Verify no generated keys were returned
+        should.assertNull(rows.property(JDBCPool.GENERATED_KEYS));
+        client.close().onComplete(v -> test.complete());
+      });
   }
 }
