@@ -271,8 +271,9 @@ public class JDBCPoolTest extends ClientTestBase {
       .onSuccess(rows -> {
         should.assertEquals(1, rows.size());
         for (Row row : rows) {
-          should.assertNotNull(row.getString(0));
-//          should.assertNull(row.getBuffer(0));
+          String clobValue = row.getString(0);
+          should.assertNotNull(clobValue);
+          should.assertEquals("こんにちは世界 🌍 Ñoño", clobValue);
         }
         test.complete();
 

@@ -18,7 +18,8 @@ package io.vertx.ext.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -48,7 +49,7 @@ public abstract class JDBCClientTestBase {
     SQL.add("insert into delete_table values (1, 'doe', 'john', '2001-01-01');");
     SQL.add("insert into delete_table values (2, 'doe', 'jane', '2002-02-02');");
     SQL.add("create table blob_table (b blob, c clob, a int array default array[]);");
-    SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('Hello', clob),  ARRAY[1,2,3])");
+    SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('こんにちは世界 🌍 Ñoño', clob),  ARRAY[1,2,3])");
     SQL.add("create table big_table(id int primary key, name varchar(255))");
     for (int i = 0; i < 200; i++) {
       SQL.add("insert into big_table values(" + i + ", 'Hello')");
