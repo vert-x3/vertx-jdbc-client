@@ -11,6 +11,7 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.ext.jdbc.impl.actions.AbstractJDBCAction;
@@ -27,6 +28,9 @@ import io.vertx.sqlclient.desc.ColumnDescriptor;
 import io.vertx.sqlclient.impl.RowDesc;
 
 import java.sql.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.function.BiConsumer;
 import java.util.stream.Collector;
 
@@ -227,4 +231,23 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
     return false;
   }
 
+  protected Object adaptType(Connection conn, Object value) throws SQLException {
+    if (value instanceof LocalTime) {
+      // -> java.sql.Time
+      return Time.valueOf((LocalTime) value);
+    } else if (value instanceof LocalDate) {
+      // -> java.sql.Date
+      return Date.valueOf((LocalDate) value);
+    } else if (value instanceof Instant) {
+      // -> java.sql.Timestamp
+      return Timestamp.from((Instant) value);
+    } else if (value instanceof Buffer) {
+      // -> java.sql.Blob
+      Buffer buffer = (Buffer) value;
+      Blob blob = conn.createBlob();
+      blob.setBytes(1, buffer.getBytes());
+      return blob;
+    }
+    return value;
+  }
 }

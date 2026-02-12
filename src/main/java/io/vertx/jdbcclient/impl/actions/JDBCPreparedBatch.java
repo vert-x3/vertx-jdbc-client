@@ -16,7 +16,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
 import io.vertx.ext.sql.SQLOptions;
@@ -27,10 +26,10 @@ import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.impl.TupleInternal;
 import io.vertx.sqlclient.impl.command.ExtendedQueryCommand;
 
-import java.sql.*;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Collector;
 
@@ -111,29 +110,5 @@ public class JDBCPreparedBatch<C, R> extends JDBCQueryAction<C, R> {
         ps.setObject(i + 1, value);
       }
     }
-  }
-
-  private Object adaptType(Connection conn, Object value) throws SQLException {
-    // we must convert types (to comply to JDBC)
-
-    if (value instanceof LocalTime) {
-      // -> java.sql.Time
-      LocalTime time = (LocalTime) value;
-      return Time.valueOf(time);
-    } else if (value instanceof LocalDate) {
-      // -> java.sql.Date
-      LocalDate date = (LocalDate) value;
-      return Date.valueOf(date);
-    } else if (value instanceof Instant) {
-      // -> java.sql.Timestamp
-      Instant timestamp = (Instant) value;
-      return Timestamp.from(timestamp);
-    } else if (value instanceof Buffer) {
-      // -> java.sql.Blob
-      Buffer blob = (Buffer) value;
-      return conn.createBlob().setBytes(0, blob.getBytes());
-    }
-
-    return value;
   }
 }

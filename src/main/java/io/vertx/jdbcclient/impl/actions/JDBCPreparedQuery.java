@@ -16,7 +16,6 @@
 
 package io.vertx.jdbcclient.impl.actions;
 
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.jdbc.impl.actions.CallableOutParams;
 import io.vertx.ext.jdbc.impl.actions.JDBCStatementHelper;
@@ -139,17 +138,4 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
       ps.setObject(idx, adaptType(conn, helper.getEncoder().encode(params, idx, provider)));
     }
   }
-
-  private Object adaptType(Connection conn, Object value) throws SQLException {
-    if (value instanceof Buffer) {
-      // -> java.sql.Blob
-      Buffer buffer = (Buffer) value;
-      Blob blob = conn.createBlob();
-      blob.setBytes(1, buffer.getBytes());
-      return blob;
-    }
-
-    return value;
-  }
-
 }
