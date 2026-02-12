@@ -164,15 +164,15 @@ public class ConnectionImpl implements Connection {
   }
 
   private Future<PreparedStatement> handle(PrepareStatementCommand command) {
-    JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.sql());
+    JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.options(), command.sql());
     return schedule(action);
   }
 
   private <R> Future<Boolean> handle(ExtendedQueryCommand<R> command) {
     JDBCQueryAction<?, R> action =
       command.isBatch() ?
-        new JDBCPreparedBatch<>(helper, sqlOptions, command, command.collector(), command.paramsList()) :
-        new JDBCPreparedQuery<>(helper, sqlOptions, command, command.collector(), command.params());
+        new JDBCPreparedBatch<>(helper, sqlOptions, command.options(), command, command.collector(), command.paramsList()) :
+        new JDBCPreparedQuery<>(helper, sqlOptions, command.options(), command, command.collector(), command.params());
 
     return handle(action, command.resultHandler());
   }
