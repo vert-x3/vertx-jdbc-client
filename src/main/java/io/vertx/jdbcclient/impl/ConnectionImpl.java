@@ -17,15 +17,10 @@ package io.vertx.jdbcclient.impl;
 
 import io.vertx.core.Completable;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.internal.ContextInternal;
-//import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.tracing.TracingPolicy;
-import io.vertx.jdbcclient.impl.actions.JDBCAction;
-import io.vertx.jdbcclient.impl.actions.JDBCClose;
-import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.impl.actions.*;
 import io.vertx.sqlclient.internal.Connection;
@@ -154,15 +149,15 @@ public class ConnectionImpl implements Connection {
   }
 
   private Future<PreparedStatement> handle(PrepareStatementCommand command) {
-    JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.sql());
+    JDBCPrepareStatementAction action = new JDBCPrepareStatementAction(helper, sqlOptions, command.options(), command.sql());
     return schedule(action);
   }
 
   private <R> Future<Boolean> handle(ExtendedQueryCommand<R> command) {
     JDBCQueryAction<?, R> action =
       command.isBatch() ?
-        new JDBCPreparedBatch<>(helper, sqlOptions, command, command.collector(), command.paramsList()) :
-        new JDBCPreparedQuery<>(helper, sqlOptions, command, command.collector(), command.params());
+        new JDBCPreparedBatch<>(helper, sqlOptions, command.options(), command, command.collector(), command.paramsList()) :
+        new JDBCPreparedQuery<>(helper, sqlOptions, command.options(), command, command.collector(), command.params());
 
     return handle(action, command.resultHandler());
   }
