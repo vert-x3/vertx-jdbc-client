@@ -64,7 +64,7 @@ public class JDBCPoolTest extends ClientTestBase {
     SQL.add("insert into delete_table values (1, 'doe', 'john', '2001-01-01');");
     SQL.add("insert into delete_table values (2, 'doe', 'jane', '2002-02-02');");
     SQL.add("create table blob_table (b blob, c clob, a int array default array[]);");
-    SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('Hello', clob),  ARRAY[1,2,3])");
+    SQL.add("insert into blob_table (b, c, a) values (load_file('pom.xml'), convert('こんにちは世界 🌍 Ñoño', clob),  ARRAY[1,2,3])");
     SQL.add("create table big_table(id int primary key, name varchar(255))");
     for (int i = 0; i < 200; i++) {
       SQL.add("insert into big_table values(" + i + ", 'Hello')");
@@ -311,8 +311,9 @@ public class JDBCPoolTest extends ClientTestBase {
       .onSuccess(rows -> {
         should.assertEquals(1, rows.size());
         for (Row row : rows) {
-          should.assertNotNull(row.getString(0));
-//          should.assertNull(row.getBuffer(0));
+          String clobValue = row.getString(0);
+          should.assertNotNull(clobValue);
+          should.assertEquals("こんにちは世界 🌍 Ñoño", clobValue);
         }
         test.complete();
 
