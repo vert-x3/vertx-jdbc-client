@@ -21,6 +21,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
 import io.vertx.jdbcclient.spi.JDBCColumnDescriptorProvider;
+import io.vertx.sqlclient.PrepareOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.spi.protocol.ExtendedQueryCommand;
@@ -38,8 +39,8 @@ public class JDBCPreparedQuery<C, R> extends JDBCQueryAction<C, R> {
   private final Tuple params = Tuple.tuple();
   private final CallableOutParams outParams = CallableOutParams.create();
 
-  public JDBCPreparedQuery(JDBCStatementHelper helper, SqlOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, Tuple params) {
-    super(helper, options, collector);
+  public JDBCPreparedQuery(JDBCStatementHelper helper, SqlOptions options, PrepareOptions prepareOptions, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, Tuple params) {
+    super(helper, options, prepareOptions, collector);
     this.query = query;
     this.normalizeParams(params);
   }

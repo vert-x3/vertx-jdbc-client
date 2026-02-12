@@ -20,6 +20,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.jdbcclient.SqlOptions;
 import io.vertx.jdbcclient.SqlOutParam;
+import io.vertx.sqlclient.PrepareOptions;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import io.vertx.sqlclient.internal.TupleBase;
@@ -40,8 +41,8 @@ public class JDBCPreparedBatch<C, R> extends JDBCQueryAction<C, R> {
   private final ExtendedQueryCommand<R> query;
   private final List<TupleBase> listParams;
 
-  public JDBCPreparedBatch(JDBCStatementHelper helper, SqlOptions options, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, List<TupleBase> listParams) {
-    super(helper, options, collector);
+  public JDBCPreparedBatch(JDBCStatementHelper helper, SqlOptions options, PrepareOptions prepareOptions, ExtendedQueryCommand<R> query, Collector<Row, C, R> collector, List<TupleBase> listParams) {
+    super(helper, options, prepareOptions, collector);
     this.query = query;
     this.listParams = listParams;
   }
