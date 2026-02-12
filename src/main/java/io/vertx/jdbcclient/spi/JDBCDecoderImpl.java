@@ -19,35 +19,18 @@ package io.vertx.jdbcclient.spi;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
+import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.jdbcclient.impl.actions.JDBCTypeWrapper;
 import io.vertx.jdbcclient.impl.actions.SQLValueProvider;
-import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
 import io.vertx.sqlclient.Tuple;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.JDBCType;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLXML;
-import java.sql.Struct;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.ZoneOffset;
+import java.sql.*;
+import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
@@ -120,7 +103,7 @@ public class JDBCDecoderImpl implements JDBCDecoder {
 
     if (value instanceof Clob) {
       Clob v = (Clob) value;
-      return v.length() == 0L ? "" : streamToBuffer(v.getAsciiStream(), Clob.class).toString();
+      return v.length() == 0L ? "" : readerToString(v.getCharacterStream(), Clob.class);
     }
 
     if (value instanceof Ref) {
@@ -344,6 +327,20 @@ public class JDBCDecoderImpl implements JDBCDecoder {
       return buffer;
     } catch (IOException ioe) {
       throw new SQLException("Unable to read binary stream from " + dataTypeClass.getName(), ioe);
+    }
+  }
+
+  protected String readerToString(Reader reader, Class<?> dataTypeClass) throws SQLException {
+    try (Reader in = reader) {
+      StringBuilder buffer = new StringBuilder();
+      char[] buf = new char[1024];
+      int l;
+      while ((l = in.read(buf)) > -1) {
+        buffer.append(buf, 0, l);
+      }
+      return buffer.toString();
+    } catch (IOException ioe) {
+      throw new SQLException("Unable to read character stream from " + dataTypeClass.getName(), ioe);
     }
   }
 
