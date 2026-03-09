@@ -38,6 +38,8 @@ import java.time.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+
 @RunWith(VertxUnitRunner.class)
 public class PostgresTest {
 
@@ -280,5 +282,75 @@ public class PostgresTest {
         should.assertEquals("One", rows.iterator().next().getString(0));
         async.countDown();
       });
+  }
+
+  @Test
+  public void testReadArrayOfIntegers(TestContext should) {
+    Pool pool = initJDBCPool(new JsonObject());
+    pool
+      .query("SELECT int_array FROM array_data_type WHERE id = 1").execute()
+      .onComplete(should.asyncAssertSuccess(rows -> {
+        should.assertEquals(1, rows.size());
+        Row row = rows.value().iterator().next();
+        Integer[] expected = {1, 2, 3, 4, 5};
+        Integer[] actual = row.getArrayOfIntegers(0);
+        should.assertNotNull(expected);
+        should.verify(v -> assertArrayEquals(expected, actual));
+      }));
+  }
+
+  @Test
+  public void testInsertArrayOfIntegers(TestContext should) {
+    Pool pool = initJDBCPool(new JsonObject());
+    Integer[] expected = {76, 31, 13};
+    pool
+      .preparedQuery("INSERT INTO array_data_type (id, int_array) VALUES (?, ?)").execute(Tuple.of(2, (Object) expected))
+      .onComplete(should.asyncAssertSuccess(result -> {
+        should.assertEquals(1, result.rowCount());
+        pool
+          .query("SELECT int_array FROM array_data_type WHERE id = 2").execute()
+          .onComplete(should.asyncAssertSuccess(rows -> {
+            should.assertEquals(1, rows.size());
+            Row row = rows.value().iterator().next();
+            Integer[] actual = row.getArrayOfIntegers(0);
+            should.assertNotNull(expected);
+            should.verify(v -> assertArrayEquals(expected, actual));
+          }));
+      }));
+  }
+
+  @Test
+  public void testReadArrayOfStrings(TestContext should) {
+    Pool pool = initJDBCPool(new JsonObject());
+    pool
+      .query("SELECT varchar_array FROM array_data_type WHERE id = 1").execute()
+      .onComplete(should.asyncAssertSuccess(rows -> {
+        should.assertEquals(1, rows.size());
+        Row row = rows.value().iterator().next();
+        String[] expected = {"apple", "banana", "cherry"};
+        String[] actual = row.getArrayOfStrings(0);
+        should.assertNotNull(expected);
+        should.verify(v -> assertArrayEquals(expected, actual));
+      }));
+  }
+
+  @Test
+  public void testInsertArrayOfStrings(TestContext should) {
+    Pool pool = initJDBCPool(new JsonObject());
+    String[] expected = {"Peter", "Paolo", "Jakub"};
+    pool
+      .preparedQuery("INSERT INTO array_data_type (id, varchar_array) VALUES (?, ?)").execute(Tuple.of(3, (Object) expected))
+      .onComplete(should.asyncAssertSuccess(result -> {
+        should.assertEquals(1, result.rowCount());
+        pool
+          .query("SELECT varchar_array FROM array_data_type WHERE id = 3").execute()
+          .onComplete(should.asyncAssertSuccess(rows -> {
+            should.assertEquals(1, rows.size());
+            Row row = rows.value().iterator().next();
+            String[] actual = row.getArrayOfStrings(0);
+            should.assertNotNull(expected);
+            should.verify(v -> assertArrayEquals(expected, actual));
+          }));
+      }));
   }
 }

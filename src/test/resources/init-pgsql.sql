@@ -77,3 +77,15 @@ CREATE TABLE temporal_data_type
 INSERT INTO temporal_data_type ("id", "Date", "Time", "TimeTz", "Timestamp", "TimestampTz", "Interval")
 VALUES (1, '2022-05-30', '18:00:00', '06:00:00+02:00', '2022-05-14 07:00:00',
         '2022-05-14 07:00:00-02:00', '10 years 3 months 332 days 20 hours 20 minutes 20.999999 seconds');
+
+-- Array types test table
+CREATE TABLE array_data_type
+(
+  "id"           INTEGER NOT NULL PRIMARY KEY,
+  "int_array"    INTEGER[],
+  "varchar_array" VARCHAR[]
+);
+
+-- Test data for array types
+INSERT INTO array_data_type ("id", "int_array", "varchar_array")
+VALUES (1, ARRAY[1, 2, 3, 4, 5], ARRAY['apple', 'banana', 'cherry']);
