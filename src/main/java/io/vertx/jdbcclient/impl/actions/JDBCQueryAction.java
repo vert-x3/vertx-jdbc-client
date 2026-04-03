@@ -187,7 +187,7 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       return;
     }
     if (keysRS != null) {
-      if (keysRS.next()) {
+      while (keysRS.next()) {
         // only try to access metadata if there are rows
         ResultSetMetaData metaData = keysRS.getMetaData();
         if (metaData != null) {

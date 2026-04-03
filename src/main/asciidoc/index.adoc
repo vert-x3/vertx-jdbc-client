@@ -83,11 +83,11 @@ Of course same is to say that prepared statements are also applicable to this mo
 === Retrieving the generated keys
 
 Generated keys is a common feature of JDBC drivers. The pool allows you to retrieve the keys using a special property:
-`JDBCPool.GENERATED_KEYS`. For example:
+`JDBCPool.GENERATED_KEYS_LIST`. For example:
 
 [source,$lang]
 ----
-{@link examples.JDBCSqlClientExamples#exampleGeneratedKeys}
+{@link examples.JDBCSqlClientExamples#exampleGeneratedKeysList}
 ----
 
 

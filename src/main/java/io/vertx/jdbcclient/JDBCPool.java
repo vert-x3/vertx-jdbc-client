@@ -37,8 +37,15 @@ public interface JDBCPool extends Pool {
 
   /**
    * The property to be used to retrieve the generated keys
+   * Only the first row will be present
    */
+  @Deprecated
   PropertyKind<Row> GENERATED_KEYS = PropertyKind.create("generated-keys", Row.class);
+
+  /**
+   * Property used to get the full list of generated keys
+   */
+  PropertyKind<RowsList> GENERATED_KEYS_LIST = PropertyKind.create("generated-keys-list", RowsList.class);
 
   /**
    * The property to be used to retrieve the output of the callable statement

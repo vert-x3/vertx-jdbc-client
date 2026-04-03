@@ -107,6 +107,12 @@ public class JDBCPoolTest extends ClientTestBase {
         Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS);
         should.assertNotNull(lastInsertId);
         should.assertTrue(lastInsertId.getLong(0) > 0);
+
+        List<Row> lastInsertIds = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows();
+        should.assertNotNull(lastInsertIds);
+        should.assertTrue(lastInsertIds.size() == 1);
+        should.assertTrue(lastInsertIds.get(0).getLong(0) > 0);
+
         test.complete();
       });
   }
@@ -189,7 +195,9 @@ public class JDBCPoolTest extends ClientTestBase {
                 // updated rows
                 should.assertEquals(1, rows.rowCount());
                 // extract the last inserted id
-                int id = rows.property(JDBCPool.GENERATED_KEYS).getInteger(0);
+                int id = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows().get(0).getInteger(0);
+                // check the deprecated property
+                should.assertEquals(id, rows.property(JDBCPool.GENERATED_KEYS).getInteger(0));
 
                 // verify that the data in stored
                 conn
@@ -442,6 +450,7 @@ public class JDBCPoolTest extends ClientTestBase {
         should.assertEquals(3, rows.size());
         // Verify no generated keys were returned
         should.assertNull(rows.property(JDBCPool.GENERATED_KEYS));
+        should.assertNull(rows.property(JDBCPool.GENERATED_KEYS_LIST));
         test.complete();
       });
   }
@@ -472,6 +481,11 @@ public class JDBCPoolTest extends ClientTestBase {
         // H2 database should support generated keys
         if (keys != null) {
           should.assertTrue(keys.size() > 0, "Generated keys should be returned");
+        }
+        List<Row> keysList = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows();
+        // H2 database should return the full list of generated keys
+        if (keysList != null) {
+          should.assertTrue(keysList.size() == 2, "The full list of the generated keys should be returned");
         }
         test.complete();
       });
@@ -505,6 +519,7 @@ public class JDBCPoolTest extends ClientTestBase {
         should.assertEquals(1, rows.size());
         // Verify no generated keys despite connection-level setting
         should.assertNull(rows.property(JDBCPool.GENERATED_KEYS));
+        should.assertNull(rows.property(JDBCPool.GENERATED_KEYS_LIST));
         poolWithKeys.close().onComplete(v -> test.complete());
       });
   }
