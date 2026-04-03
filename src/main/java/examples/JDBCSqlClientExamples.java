@@ -11,6 +11,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 
 import java.sql.JDBCType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -170,6 +173,26 @@ public class JDBCSqlClientExamples {
         Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS);
         // just refer to the position as usual:
         long newId = lastInsertId.getLong(0);
+      });
+  }
+
+  public void exampleGeneratedKeysList(JDBCPool pool) {
+
+    String sql = "INSERT INTO insert_table (FNAME, LNAME) VALUES (?, ?)";
+    List<Tuple> batch = Arrays.asList(
+      Tuple.of("dave", "developer"),
+      Tuple.of("eve", "engineer")
+    );
+
+    pool
+      .preparedQuery(sql)
+      .executeBatch(batch)
+      .onSuccess(rows -> {
+        // the full list of generated keys are returned as extra rows
+        List<Row> lastInsertIds = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows();
+        // just refer to the position as usual:
+        List<Long> newIds = lastInsertIds.stream()
+          .map(r -> r.getLong(0)).collect(Collectors.toList());
       });
   }
 }
