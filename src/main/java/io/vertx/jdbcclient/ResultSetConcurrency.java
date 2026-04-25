@@ -15,6 +15,8 @@
  */
 package io.vertx.jdbcclient;
 
+import io.vertx.codegen.annotations.VertxGen;
+
 import java.sql.ResultSet;
 
 /**
