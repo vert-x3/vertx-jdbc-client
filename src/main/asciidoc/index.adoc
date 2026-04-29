@@ -90,6 +90,7 @@ Generated keys is a common feature of JDBC drivers. The pool allows you to retri
 {@link examples.JDBCSqlClientExamples#exampleGeneratedKeysList}
 ----
 
+Note that the value of this property depends on the specific JDBC driver and its limitations.
 
 === Working with Procedures and Functions
 
