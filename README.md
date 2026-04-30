@@ -8,8 +8,4 @@ database for which there is a JDBC driver.
 
 Please see the main documentation on the web-site for a full description:
 
-* https://vertx.io/docs/vertx-jdbc-client/java/[Java documentation]
-* https://vertx.io/docs/vertx-jdbc-client/js/[JavaScript documentation]
-* https://vertx.io/docs/vertx-jdbc-client/kotlin/[Kotlin documentation]
-* https://vertx.io/docs/vertx-jdbc-client/groovy/[Groovy documentation]
-* https://vertx.io/docs/vertx-jdbc-client/ruby/[Ruby documentation]
+* [Java documentation](https://vertx.io/docs/vertx-jdbc-client/java/)
