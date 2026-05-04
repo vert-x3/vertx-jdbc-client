@@ -37,6 +37,8 @@ import java.sql.SQLException;
 import java.time.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -350,6 +352,40 @@ public class PostgresTest {
             String[] actual = row.getArrayOfStrings(0);
             should.assertNotNull(expected);
             should.verify(v -> assertArrayEquals(expected, actual));
+          }));
+      }));
+  }
+
+  @Test
+  public void testGeneratedKeys(TestContext should) {
+    Pool pool = initJDBCPool(new JsonObject());
+    pool.query("select max(ID) from animal")
+      .execute()
+      .onComplete(should.asyncAssertSuccess(maxIdResult -> {
+        int maxId = maxIdResult.value().iterator().next().getInteger(0); // we already have 3 animals
+        pool.preparedQuery("insert into animal (is_pet, name) values (?, ?)")
+          .executeBatch(Arrays.asList(Tuple.of(true, "pig"), Tuple.of(false, "bear")))
+          .onComplete(should.asyncAssertSuccess(inserted -> {
+            should.assertNotNull(inserted);
+            should.assertEquals(2, inserted.rowCount());
+            Row insertedRow = inserted.property(JDBCPool.GENERATED_KEYS);
+            List<Row> insertedRows = inserted.property(JDBCPool.GENERATED_KEYS_LIST).rows();
+            should.assertEquals(2, insertedRows.size());
+            should.assertTrue(insertedRows.contains(insertedRow));
+            for (Row row : insertedRows) {
+              should.assertTrue(row.getInteger(0) > maxId);
+            }
+            pool.preparedQuery("delete from animal where ID > ?")
+              .execute(Tuple.of(maxId))
+              .onComplete(should.asyncAssertSuccess(deleted -> {
+                should.assertNotNull(deleted);
+                should.assertEquals(2, deleted.rowCount());
+                Row deletedRow = deleted.property(JDBCPool.GENERATED_KEYS);
+                List<Row> deletedRows = deleted.property(JDBCPool.GENERATED_KEYS_LIST).rows();
+                should.assertTrue(deletedRows.contains(deletedRow));
+                Set<String> deletedNames = deletedRows.stream().map(r -> r.getString("name")).collect(Collectors.toSet());
+                should.assertEquals(Set.of("pig", "bear"), deletedNames);
+              }));
           }));
       }));
   }

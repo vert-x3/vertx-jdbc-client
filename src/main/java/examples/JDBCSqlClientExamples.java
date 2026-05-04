@@ -11,6 +11,9 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 
 import java.sql.JDBCType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -158,18 +161,23 @@ public class JDBCSqlClientExamples {
     Tuple.of(param);
   }
 
-  public void exampleGeneratedKeys(JDBCPool pool) {
+  public void exampleGeneratedKeysList(JDBCPool pool) {
 
     String sql = "INSERT INTO insert_table (FNAME, LNAME) VALUES (?, ?)";
+    List<Tuple> batch = Arrays.asList(
+      Tuple.of("dave", "developer"),
+      Tuple.of("eve", "engineer")
+    );
 
     pool
       .preparedQuery(sql)
-      .execute(Tuple.of("Paulo", "Lopes"))
+      .executeBatch(batch)
       .onSuccess(rows -> {
-        // the generated keys are returned as an extra row
-        Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS);
+        // the full list of generated keys are returned as extra rows
+        List<Row> lastInsertIds = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows();
         // just refer to the position as usual:
-        long newId = lastInsertId.getLong(0);
+        List<Long> newIds = lastInsertIds.stream()
+          .map(r -> r.getLong(0)).collect(Collectors.toList());
       });
   }
 }

@@ -125,6 +125,7 @@ public class OracleTest {
         should.assertEquals(3, rows.rowCount());
         // Verify no generated keys were returned
         should.assertNull(rows.property(JDBCPool.GENERATED_KEYS));
+        should.assertNull(rows.property(JDBCPool.GENERATED_KEYS_LIST));
         client.close().onComplete(v -> test.complete());
       });
   }

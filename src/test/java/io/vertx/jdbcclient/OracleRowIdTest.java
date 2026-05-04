@@ -35,7 +35,7 @@ import java.util.List;
 @RunWith(VertxUnitRunner.class)
 public class OracleRowIdTest {
 
-  // docker run --rm -p 1521:1521 -e ORACLE_PASSWORD=vertx gvenzl/oracle-xe
+  // docker run --rm -p 1521:1521 -e ORACLE_PASSWORD=vertx gvenzl/oracle-free:23-slim-faststart
 
   @ClassRule
   public static final RunTestOnContext rule = new RunTestOnContext();
@@ -55,8 +55,8 @@ public class OracleRowIdTest {
 
   @Before
   public void setUp() throws Exception {
-    String jdbcUrl = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
-    String username = "system";
+    String jdbcUrl = "jdbc:oracle:thin:@//127.0.0.1:1521/FREEPDB1";
+    String username = "sys as sysdba";
     String password = "vertx";
     Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
     for (String sql : SQL) {
@@ -82,7 +82,8 @@ public class OracleRowIdTest {
       .onFailure(should::fail)
       .onSuccess(rows -> {
         should.assertNotNull(rows);
-        Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS);
+        Row lastInsertId = rows.property(JDBCPool.GENERATED_KEYS_LIST).rows().get(0);
+        should.assertTrue(lastInsertId == rows.property(JDBCPool.GENERATED_KEYS));
         byte[] newId = lastInsertId.get(byte[].class, 0);
         should.assertNotNull(newId);
         client

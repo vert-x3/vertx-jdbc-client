@@ -16,6 +16,7 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.jdbcclient.impl.RowsListImpl;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.internal.QueryResultHandler;
 
@@ -38,7 +39,7 @@ public class JDBCResponse<R> {
 
   private final int update;
   private List<RS<R>> rs;
-  private Row ids;
+  private List<Row> ids;
   private List<RS<R>> output;
   private R empty;
 
@@ -54,7 +55,10 @@ public class JDBCResponse<R> {
   }
 
   public void returnedKeys(Row keys) {
-    this.ids = keys;
+    if (ids == null) {
+      ids = new ArrayList<>();
+    }
+    ids.add(keys);
   }
 
   public void empty(R apply) {
@@ -68,13 +72,18 @@ public class JDBCResponse<R> {
     output.add(new RS<>(decodeResultSet, desc, size));
   }
 
+  private void addIds(QueryResultHandler<R> handler) {
+    if (ids != null && !ids.isEmpty()) {
+      handler.addProperty(JDBCPool.GENERATED_KEYS, ids.get(0));
+      handler.addProperty(JDBCPool.GENERATED_KEYS_LIST, new RowsListImpl(ids));
+    }
+  }
+
   public void handle(QueryResultHandler<R> handler) {
     if (rs != null) {
       for (RS<R> rs : this.rs) {
         handler.handleResult(update, rs.size, rs.desc, rs.holder, null);
-        if (ids != null) {
-          handler.addProperty(JDBCPool.GENERATED_KEYS, ids);
-        }
+        addIds(handler);
       }
     }
     if (output != null) {
@@ -85,9 +94,7 @@ public class JDBCResponse<R> {
     }
     if (rs == null && output == null) {
       handler.handleResult(update, -1, null, empty, null);
-      if (ids != null) {
-        handler.addProperty(JDBCPool.GENERATED_KEYS, ids);
-      }
+      addIds(handler);
     }
   }
 }
