@@ -1,16 +1,22 @@
 /*
- * Copyright (c) 2011-2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2011-2026 The original author or authors
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
+ *
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
  */
 
 package io.vertx.it;
 
+import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
@@ -120,5 +126,41 @@ public class MySQLTest {
               }));
           }));
       }));
+  }
+
+  @Test
+  public void testAutoCommitRestoredAfterCommit(TestContext should) {
+    testAutoCommitRestored(should, true);
+  }
+
+  @Test
+  public void testAutoCommitRestoredAfterRollback(TestContext should) {
+    testAutoCommitRestored(should, false);
+  }
+
+  private void testAutoCommitRestored(TestContext should, boolean commit) {
+    Pool pool = initJDBCPool(new JsonObject());
+    Pool checkerPool = initJDBCPool(new JsonObject());
+    pool.query("TRUNCATE TABLE people").execute().onComplete(should.asyncAssertSuccess(v0 -> {
+      pool.withTransaction(conn -> {
+        if (!commit) {
+          return Future.failedFuture("boom");
+        }
+        return conn.preparedQuery("INSERT INTO people (name) VALUES (?)")
+          .execute(Tuple.of("Thomas"));
+      }).otherwiseEmpty().onComplete(should.asyncAssertSuccess(v1 -> {
+        pool.withConnection(conn -> {
+          return conn.preparedQuery("INSERT INTO people (name) VALUES (?)")
+            .execute(Tuple.of("Julien"));
+        }).compose(v2 -> {
+          return checkerPool.withConnection(conn -> {
+            return conn.query("SELECT COUNT(*) FROM people").execute();
+          });
+        }).onComplete(should.asyncAssertSuccess(rows -> {
+          should.assertEquals(1, rows.size());
+          should.assertEquals(commit ? 2 : 1, rows.iterator().next().getInteger(0));
+        }));
+      }));
+    }));
   }
 }
