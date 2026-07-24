@@ -1,12 +1,17 @@
 /*
- * Copyright (c) 2011-2021 Contributors to the Eclipse Foundation
+ * Copyright (c) 2011-2026 The original author or authors
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
- * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
+ *
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
  */
 
 package io.vertx.jdbcclient.impl.actions;
@@ -178,33 +183,30 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   }
 
   private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {
-    ResultSet keysRS;
-    try {
-      keysRS = statement.getGeneratedKeys();
+    try (ResultSet keysRS = statement.getGeneratedKeys()) {
+      if (keysRS != null) {
+        while (keysRS.next()) {
+          // only try to access metadata if there are rows
+          ResultSetMetaData metaData = keysRS.getMetaData();
+          if (metaData != null) {
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
+            int cols = metaData.getColumnCount();
+            Row keys = null;
+            if (cols > 0) {
+              JDBCRowDesc keysDesc = new JDBCRowDesc(provider, cols);
+
+              keys = new JDBCRow(keysDesc);
+              for (int i = 1; i <= cols; i++) {
+                keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
+              }
+            }
+            response.returnedKeys(keys);
+          }
+        }
+      }
     } catch (SQLException e) {
       // MS SQL Server may throw an exception after invoking a stored procedure that didn't actually execute any statement
       log.trace("Failed to retrieve generated keys, skipping", e);
-      return;
-    }
-    if (keysRS != null) {
-      while (keysRS.next()) {
-        // only try to access metadata if there are rows
-        ResultSetMetaData metaData = keysRS.getMetaData();
-        if (metaData != null) {
-          JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
-          int cols = metaData.getColumnCount();
-          Row keys = null;
-          if (cols > 0) {
-            JDBCRowDesc keysDesc = new JDBCRowDesc(provider, cols);
-
-            keys = new JDBCRow(keysDesc);
-            for (int i = 1; i <= cols; i++) {
-              keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
-            }
-          }
-          response.returnedKeys(keys);
-        }
-      }
     }
   }
 
