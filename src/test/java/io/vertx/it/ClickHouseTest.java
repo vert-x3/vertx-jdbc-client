@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2011-2026 The original author or authors
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
+ *
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
+ *
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
+ */
+
 package io.vertx.it;
 
 import io.vertx.core.Vertx;
@@ -15,7 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.ClickHouseContainer;
+import org.testcontainers.clickhouse.ClickHouseContainer;
 
 @RunWith(VertxUnitRunner.class)
 public class ClickHouseTest {
@@ -27,10 +43,13 @@ public class ClickHouseTest {
   @Before
   public void setUp() {
     vertx = Vertx.vertx();
-    container = new ClickHouseContainer("yandex/clickhouse-server:20.8");
+    container = new ClickHouseContainer("clickhouse/clickhouse-server:21.11-alpine");
     container.withInitScript("init-clickhouse.sql");
     container.start();
-    JDBCConnectOptions connectOptions = new JDBCConnectOptions().setJdbcUrl("jdbc:clickhouse://localhost:" + container.getMappedPort(8123) + "/default");
+    JDBCConnectOptions connectOptions = new JDBCConnectOptions()
+      .setJdbcUrl(container.getJdbcUrl())
+      .setUser(container.getUsername())
+      .setPassword(container.getPassword());
     client = JDBCPool.pool(vertx, connectOptions, new PoolOptions());
   }
 
