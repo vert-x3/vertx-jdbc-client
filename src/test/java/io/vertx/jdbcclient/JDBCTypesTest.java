@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
- * ------------------------------------------------------
+ * Copyright (c) 2011-2026 The original author or authors
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Apache License v2.0 which accompanies this distribution.
  *
- *     The Eclipse Public License is available at
- *     http://www.eclipse.org/legal/epl-v10.html
+ *      The Eclipse Public License is available at
+ *      http://www.eclipse.org/legal/epl-v10.html
  *
- *     The Apache License v2.0 is available at
- *     http://www.opensource.org/licenses/apache2.0.php
+ *      The Apache License v2.0 is available at
+ *      http://www.opensource.org/licenses/apache2.0.php
  *
  * You may elect to redistribute this code under either of these licenses.
  */
@@ -18,13 +18,14 @@ package io.vertx.jdbcclient;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.DBConfigs;
-import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.jdbcclient.impl.actions.JDBCColumnDescriptor;
+import io.vertx.jdbcclient.spi.JDBCEncoderImpl;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import junit.framework.AssertionFailedError;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeoutException;
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
 @RunWith(VertxUnitRunner.class)
-public class JDBCTypesTestBase extends ClientTestBase {
+public class JDBCTypesTest extends ClientTestBase {
 
   private static final List<String> SQL = new ArrayList<>();
 
@@ -74,7 +75,8 @@ public class JDBCTypesTestBase extends ClientTestBase {
 
   @BeforeClass
   public static void createDb() throws Exception {
-    Connection conn = DriverManager.getConnection(DBConfigs.derby(JDBCTypesTestBase.class).getString("url"));
+    Assume.assumeTrue("Derby requires Java 21+", Runtime.version().feature() >= 21);
+    Connection conn = DriverManager.getConnection(DBConfigs.derby(JDBCTypesTest.class).getString("url"));
     for (String sql : SQL) {
       conn.createStatement().execute(sql);
     }
