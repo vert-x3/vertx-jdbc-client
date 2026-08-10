@@ -32,64 +32,6 @@ import java.util.regex.Pattern;
 
 public class JDBCPoolImpl {
 
-  private static final String SHARED_CLIENT_KEY = "__vertx.shared.jdbcclient";
-
-/*
-  public static Pool newPool(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionSupplier) {
-    CloseFuture closeFuture = new CloseFuture();
-    VertxInternal vx = (VertxInternal) vertx;
-    PoolImpl pool;
-    if (poolOptions.isShared()) {
-      pool = vx.createSharedResource(SHARED_CLIENT_KEY, poolOptions.getName(), closeFuture, cf -> newPoolImpl(vx, connectOptions, poolOptions, connectionSupplier, cf));
-    } else {
-      pool = newPoolImpl(vx, connectOptions, poolOptions, connectionSupplier, closeFuture);
-    }
-    CloseablePool closeablePool = new CloseablePool(vx, closeFuture, pool);
-    ContextInternal ctx = vx.getContext();
-    if (ctx != null) {
-      ctx.addCloseHook(closeFuture);
-    } else {
-      vx.addCloseHook(closeFuture);
-    }
-    return closeablePool;
-  }
-*/
-
-/*
-  private static PoolImpl newPoolImpl(Vertx vertx, JDBCConnectOptions connectOptions, PoolOptions poolOptions, Callable<Connection> connectionFactory, CloseFuture closeFuture) {
-    PoolImpl pool = new PoolImpl(
-      (VertxInternal) vertx,
-      FakeDriver.INSTANCE,
-      false,
-      poolOptions,
-      conn -> {
-        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-        jdbc.beforeUsage();
-        return Future.succeededFuture();
-      },
-      conn -> {
-        ConnectionImpl jdbc = (ConnectionImpl) (conn).unwrap();
-        jdbc.afterUsage();
-        return Future.succeededFuture();
-      },
-      new io.vertx.sqlclient.spi.ConnectionFactory<>() {
-        @Override
-        public Future<io.vertx.sqlclient.internal.Connection> connect(Context context, FakeSqlConnectOptions options) {
-          return new JDBCPoolImpl.ConnectionFactory((VertxInternal) vertx, options.actual, connectionFactory).connect((ContextInternal) context);
-        }
-        @Override
-        public void close(Completable<Void> completion) {
-        }
-      },
-//      ctx -> new ConnectionFactory((VertxInternal) vertx, connectOptions, connectionFactory).connect((ContextInternal) ctx),
-      () -> Future.succeededFuture(new FakeSqlConnectOptions(connectOptions)),
-      null,
-      closeFuture);
-    pool.init();
-    return pool;
-  }
-*/
-
   public static class ConnectionFactory {
 
     private static final String NET_LOCATION_REGEX = "(?<netloc>[0-9.]+|\\[[a-zA-Z0-9:]+]|[a-zA-Z0-9\\-._~%]+)"; // ip v4/v6 address, host, domain socket address
