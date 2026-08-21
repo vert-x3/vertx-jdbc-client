@@ -212,6 +212,26 @@ public class MSSQLTest {
   }
 
   @Test
+  public void testErrorAfterUpdateCount() throws Exception {
+    final Pool client = initJDBCPool();
+
+    // the first result of the statement is an update count, the error comes after the result set
+    String sql = "insert into multi_statement (id) values (?)\n" +
+      "select id from multi_statement\n" +
+      "insert into multi_statement (id) values (?)";
+
+    try {
+      client
+        .preparedQuery(sql)
+        // the second insert reuses the key of the row created by the init script
+        .execute(Tuple.of(2, 1))
+        .await(20, TimeUnit.SECONDS);
+      fail("the primary key violation should be reported to the caller");
+    } catch (Exception expected) {
+    }
+  }
+
+  @Test
   public void testConditionalStoredProcedure() throws Exception {
     final Pool client = initJDBCPool();
 
