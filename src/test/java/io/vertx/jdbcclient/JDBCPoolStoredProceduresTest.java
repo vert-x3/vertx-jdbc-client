@@ -62,6 +62,14 @@ public class JDBCPoolStoredProceduresTest extends ClientTestBase {
     SQL.add("create procedure times2(INOUT param INT)\n" +
       "  modifies sql data\n" +
       "  SET param = param * 2");
+    SQL.add("drop procedure if exists out_params_order");
+    SQL.add("create procedure out_params_order(IN p1 INT, IN p2 INT, IN p3 INT, IN p4 INT, IN p5 INT, IN p6 INT, IN p7 INT, IN p8 INT, IN p9 INT, IN p10 INT, IN p11 INT, IN p12 INT, IN p13 INT, IN p14 INT, OUT o1 BIGINT, OUT o2 BIGINT, OUT o3 BIGINT)\n" +
+      "  modifies sql data\n" +
+      "  BEGIN ATOMIC\n" +
+      "    SET o1 = 101;\n" +
+      "    SET o2 = 102;\n" +
+      "    SET o3 = 103;\n" +
+      "  END");
   }
 
   public static void resetDb() throws SQLException {
@@ -130,6 +138,38 @@ public class JDBCPoolStoredProceduresTest extends ClientTestBase {
         should.assertEquals(1, rows.size());
         should.assertTrue(rows.property(JDBCPool.OUTPUT));
         should.assertEquals("Doe", rows.iterator().next().getString(0));
+        test.complete();
+      });
+  }
+
+  @Test
+  public void testStoredProcedureOutParamsOrder(TestContext should) {
+    final Async test = should.async();
+
+    // the OUT parameters are at positions 15, 16 and 17
+    String sql = "{call out_params_order(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+
+    Tuple params = Tuple.tuple();
+    for (int i = 0; i < 14; i++) {
+      params.addInteger(0);
+    }
+    for (int i = 0; i < 3; i++) {
+      params.addValue(SqlOutParam.OUT(JDBCType.BIGINT));
+    }
+
+    client
+      .preparedQuery(sql)
+      .execute(params)
+      .onFailure(should::fail)
+      .onSuccess(rows -> {
+        should.assertNotNull(rows);
+        should.assertEquals(1, rows.size());
+        should.assertTrue(rows.property(JDBCPool.OUTPUT));
+        // the output row must follow the parameter positions
+        Row row = rows.iterator().next();
+        should.assertEquals(101L, row.getLong(0));
+        should.assertEquals(102L, row.getLong(1));
+        should.assertEquals(103L, row.getLong(2));
         test.complete();
       });
   }
