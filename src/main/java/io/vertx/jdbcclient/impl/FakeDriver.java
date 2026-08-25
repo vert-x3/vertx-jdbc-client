@@ -1,6 +1,5 @@
 package io.vertx.jdbcclient.impl;
 
-import io.vertx.core.Completable;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -51,9 +50,10 @@ public class FakeDriver extends DriverBase<FakeSqlConnectOptions> {
       public Future<Connection> connect(Context context, FakeSqlConnectOptions options) {
         return new JDBCPoolImpl.ConnectionFactory((VertxInternal) vertx, options.actual, connectionFactory).connect((ContextInternal) context);
       }
+
       @Override
-      public void close(Completable<Void> completion) {
-        completion.succeed();
+      public Future<Void> close() {
+        return Future.succeededFuture();
       }
     };
   }
