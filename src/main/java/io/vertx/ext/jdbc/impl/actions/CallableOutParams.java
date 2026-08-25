@@ -1,8 +1,8 @@
 package io.vertx.ext.jdbc.impl.actions;
 
 import java.sql.JDBCType;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public interface CallableOutParams extends Map<Integer, JDBCTypeWrapper> {
 
@@ -22,7 +22,7 @@ public interface CallableOutParams extends Map<Integer, JDBCTypeWrapper> {
     return this.put(key, JDBCTypeWrapper.of(jdbcType));
   }
 
-  class CallableOutParamsImpl extends HashMap<Integer, JDBCTypeWrapper> implements CallableOutParams {
-
+  // the positions are kept sorted, the values of the output row follow the order of the OUT parameters
+  class CallableOutParamsImpl extends TreeMap<Integer, JDBCTypeWrapper> implements CallableOutParams {
   }
 }
