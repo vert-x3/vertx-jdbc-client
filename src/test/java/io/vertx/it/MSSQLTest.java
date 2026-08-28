@@ -230,6 +230,24 @@ public class MSSQLTest {
   }
 
   @Test
+  public void testErrorAfterUpdateCount(TestContext should) throws Exception {
+    final Async test = should.async();
+    final Pool client = initJDBCPool();
+
+    // the first result of the statement is an update count, the error comes after the result set
+    String sql = "insert into multi_statement (id) values (?)\n" +
+      "select id from multi_statement\n" +
+      "insert into multi_statement (id) values (?)";
+
+    client
+      .preparedQuery(sql)
+      // the second insert reuses the key of the row created by the init script
+      .execute(Tuple.of(2, 1))
+      .onFailure(t -> test.complete())
+      .onSuccess(v -> should.fail("the primary key violation should be reported to the caller"));
+  }
+
+  @Test
   public void testConditionalStoredProcedure(TestContext should) throws Exception {
     final Pool client = initJDBCPool();
 
