@@ -227,3 +227,14 @@ CREATE TABLE special_datatype
 
 INSERT INTO special_datatype (id, dto)
 VALUES (1, '2020-12-12 19:30:30.12345Z');
+
+-- table for testing that an error raised by a statement other than the first is reported
+DROP TABLE IF EXISTS multi_statement;
+CREATE TABLE multi_statement
+(
+    id integer NOT NULL,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO multi_statement (id)
+VALUES (1);
