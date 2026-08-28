@@ -206,33 +206,30 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
   }
 
   private void decodeReturnedKeys(Statement statement, JDBCResponse<R> response) throws SQLException {
-    ResultSet keysRS;
-    try {
-      keysRS = statement.getGeneratedKeys();
+    try (ResultSet keysRS = statement.getGeneratedKeys()) {
+      if (keysRS != null) {
+        while (keysRS.next()) {
+          // only try to access metadata if there are rows
+          ResultSetMetaData metaData = keysRS.getMetaData();
+          if (metaData != null) {
+            JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
+            int cols = metaData.getColumnCount();
+            Row keys = null;
+            if (cols > 0) {
+              RowDesc keysDesc = new JDBCRowDesc(provider, cols);
+
+              keys = new JDBCRow(keysDesc);
+              for (int i = 1; i <= cols; i++) {
+                keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
+              }
+            }
+            response.returnedKeys(keys);
+          }
+        }
+      }
     } catch (SQLException e) {
       // MS SQL Server may throw an exception after invoking a stored procedure that didn't actually execute any statement
       log.trace("Failed to retrieve generated keys, skipping", e);
-      return;
-    }
-    if (keysRS != null) {
-      if (keysRS.next()) {
-        // only try to access metadata if there are rows
-        ResultSetMetaData metaData = keysRS.getMetaData();
-        if (metaData != null) {
-          JDBCColumnDescriptorProvider provider = JDBCColumnDescriptorProvider.fromResultMetaData(metaData);
-          int cols = metaData.getColumnCount();
-          Row keys = null;
-          if (cols > 0) {
-            RowDesc keysDesc = new JDBCRowDesc(provider, cols);
-
-            keys = new JDBCRow(keysDesc);
-            for (int i = 1; i <= cols; i++) {
-              keys.addValue(helper.getDecoder().parse(keysRS, i, provider));
-            }
-          }
-          response.returnedKeys(keys);
-        }
-      }
     }
   }
 
