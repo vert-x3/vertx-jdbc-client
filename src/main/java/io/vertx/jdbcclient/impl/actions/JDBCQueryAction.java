@@ -80,11 +80,34 @@ public abstract class JDBCQueryAction<C, R> extends AbstractJDBCAction<JDBCRespo
       }
     }
 
+    drainRemainingResults(statement);
+
     if (!outParams.isEmpty()) {
       decodeOutput((CallableStatement) statement, outParams, response);
     }
 
     return response;
+  }
+
+  /**
+   * Reads the rest of the result stream, if any.
+   *
+   * The decoding above relies on {@link Statement#getMoreResults()}, which returns {@code false}
+   * both when there is no more result and when the next result is an update count, so the decoding
+   * stops at the first update count and whatever follows it is left unread. When one of the
+   * remaining statements failed, its {@link SQLException} is never raised and the query completes
+   * successfully although the database did not run it.
+   *
+   * Only the result sets that come before the first update count are returned, so a query that
+   * starts with an update returns no result set at all, whatever the statements that follow it
+   * return. The remaining results are therefore read but not decoded: what the query returns does
+   * not change, only the exception of the failed statement has to reach the caller.
+   */
+  private void drainRemainingResults(Statement statement) throws SQLException {
+    // the stream is over when the next result is not a result set and the update count is -1
+    while (statement.getMoreResults() || statement.getUpdateCount() != -1) {
+      // nothing to do, the results are only walked through to reach the end of the stream
+    }
   }
 
   protected JDBCResponse<R> decode(Statement statement, int[] returnedBatchResult, boolean returnedKeys) throws SQLException {
