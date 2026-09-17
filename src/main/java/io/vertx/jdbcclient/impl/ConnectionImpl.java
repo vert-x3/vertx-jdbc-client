@@ -32,6 +32,8 @@ import io.vertx.sqlclient.spi.connection.ConnectionContext;
 import io.vertx.sqlclient.spi.protocol.*;
 
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLRecoverableException;
 
 public class ConnectionImpl implements Connection {
 
@@ -44,6 +46,9 @@ public class ConnectionImpl implements Connection {
   final SocketAddress server;
   final SqlOptions sqlOptionsBackup;
   SqlOptions sqlOptions;
+  private volatile ConnectionContext holder;
+  private volatile boolean broken;
+  private volatile boolean closing;
 //  final TaskQueue statementsQueue = new TaskQueue();
 
 
@@ -63,7 +68,11 @@ public class ConnectionImpl implements Connection {
     sqlOptions = new SqlOptions(sqlOptionsBackup);
     PromiseInternal<Void> promise = context.owner().promise();
     context.<Void>executeBlocking(() -> {
-      conn.beginRequest();
+      try {
+        conn.beginRequest();
+      } catch (SQLException e) {
+        throw reportException(e);
+      }
       return null;
     }, false).onComplete(promise);
     return promise.future();
@@ -73,10 +82,55 @@ public class ConnectionImpl implements Connection {
     sqlOptions = null;
     PromiseInternal<Void> promise = context.owner().promise();
     context.<Void>executeBlocking(() -> {
-      conn.endRequest();
+      try {
+        conn.endRequest();
+      } catch (SQLException e) {
+        throw reportException(e);
+      }
       return null;
     }, false).onComplete(promise);
     return promise.future();
+  }
+
+  /**
+   * Latches connection-fatal failures and reports them to the connection holder.
+   *
+   * <p>A {@code java.sql.Connection} has no event channel: unlike the socket based clients a dead
+   * JDBC connection cannot notify its {@link ConnectionContext} of the disconnection. Without this
+   * hook a pooled connection that dies while pooled (database restart, server side idle timeout,
+   * a pooling {@code DataSource} invalidating the physical connection) is recycled forever, and
+   * every lease of it fails until the process is restarted. Reporting {@code handleClosed()} lets
+   * the pool remove the connection, exactly as it does when a socket based connection is closed.
+   */
+  private SQLException reportException(SQLException e) {
+    if (!closing && !broken && isFatal(e)) {
+      broken = true;
+      ConnectionContext h = holder;
+      if (h != null) {
+        context.runOnContext(v -> h.handleClosed());
+      }
+    }
+    return e;
+  }
+
+  private boolean isFatal(SQLException e) {
+    int depth = 0;
+    for (Throwable t = e; t != null && depth++ < 16; t = t.getCause()) {
+      if (t instanceof SQLNonTransientConnectionException || t instanceof SQLRecoverableException) {
+        return true;
+      }
+      if (t instanceof SQLException) {
+        String sqlState = ((SQLException) t).getSQLState();
+        if (sqlState != null && sqlState.startsWith("08")) {
+          return true;
+        }
+      }
+    }
+    try {
+      return conn.isClosed();
+    } catch (SQLException ignore) {
+      return true;
+    }
   }
 
   public java.sql.Connection getJDBCConnection() {
@@ -115,7 +169,15 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public boolean isValid() {
-    return true;
+    if (broken) {
+      return false;
+    }
+    try {
+      // Connection#isClosed does not ping the server, it only reflects local state
+      return !conn.isClosed();
+    } catch (SQLException e) {
+      return false;
+    }
   }
 
   @Override
@@ -130,11 +192,12 @@ public class ConnectionImpl implements Connection {
 
   @Override
   public void init(ConnectionContext context) {
-
+    this.holder = context;
   }
 
   @Override
   public void close(ConnectionContext holder, Completable<Void> promise) {
+    closing = true;
     schedule(new JDBCClose(sqlOptions, null, null))
       .andThen(ar -> {
         if (metrics != null) {
@@ -197,10 +260,14 @@ public class ConnectionImpl implements Connection {
 
   public <T> Future<T> schedule(JDBCAction<T> action) {
     return context.executeBlocking(() -> {
-      // apply connection options
-      applyConnectionOptions(conn, sqlOptions);
-      // execute
-      return action.execute(conn);
+      try {
+        // apply connection options
+        applyConnectionOptions(conn, sqlOptions);
+        // execute
+        return action.execute(conn);
+      } catch (SQLException e) {
+        throw reportException(e);
+      }
     }/*, statementsQueue*/);
   }
 
