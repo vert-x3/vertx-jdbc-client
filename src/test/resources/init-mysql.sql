@@ -36,6 +36,14 @@ INSERT INTO animal (IS_PET, NAME) VALUES (TRUE, 'dog');
 INSERT INTO animal (IS_PET, NAME) VALUES (TRUE, 'cat');
 INSERT INTO animal (IS_PET, NAME) VALUES (FALSE, 'cow');
 
+-- mutable for insert,update,delete query testing
+CREATE TABLE mutable
+(
+  id  integer       NOT NULL,
+  val varchar(2048) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE people
 (
   ID   INT          NOT NULL AUTO_INCREMENT,

@@ -17,22 +17,19 @@
 package io.vertx.jdbcclient.impl.actions;
 
 import io.vertx.jdbcclient.SqlOptions;
-import io.vertx.sqlclient.spi.protocol.TxCommand;
+import io.vertx.sqlclient.spi.protocol.SavepointCommand;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Map;
 
-/**
- * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
- */
-public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
+public class JDBCSavepointOp<R> extends AbstractJDBCAction<R> {
 
-  private final TxCommand<R> op;
+  private final SavepointCommand<R> op;
   private final Map<String, Savepoint> savepoints;
 
-  public JDBCTxOp(JDBCStatementHelper helper, TxCommand<R> op, SqlOptions options, Map<String, Savepoint> savepoints) {
+  public JDBCSavepointOp(JDBCStatementHelper helper, SavepointCommand<R> op, SqlOptions options, Map<String, Savepoint> savepoints) {
     super(helper, options);
     this.op = op;
     this.savepoints = savepoints;
@@ -40,21 +37,25 @@ public class JDBCTxOp<R> extends AbstractJDBCAction<R> {
 
   @Override
   public R execute(Connection conn) throws SQLException {
-    if (op.kind() == TxCommand.Kind.BEGIN) {
-      conn.setAutoCommit(false);
-    } else {
-      try {
-        if (op.kind() == TxCommand.Kind.COMMIT) {
-          conn.commit();
-        } else {
-          conn.rollback();
+    switch (op.kind()) {
+      case CREATE:
+        Savepoint sp = conn.setSavepoint(op.name());
+        savepoints.put(op.name(), sp);
+        break;
+      case ROLLBACK_TO:
+        Savepoint rollbackSp = savepoints.get(op.name());
+        if (rollbackSp == null) {
+          throw new SQLException("Unknown savepoint: " + op.name());
         }
-      } finally {
-        if (savepoints != null) {
-          savepoints.clear();
+        conn.rollback(rollbackSp);
+        break;
+      case RELEASE:
+        Savepoint releaseSp = savepoints.remove(op.name());
+        if (releaseSp == null) {
+          throw new SQLException("Unknown savepoint: " + op.name());
         }
-        conn.setAutoCommit(true);
-      }
+        conn.releaseSavepoint(releaseSp);
+        break;
     }
     return op.result();
   }
