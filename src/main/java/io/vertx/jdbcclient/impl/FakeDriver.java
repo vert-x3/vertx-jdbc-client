@@ -69,6 +69,11 @@ public class FakeDriver extends DriverBase<FakeSqlConnectOptions> {
   }
 
   @Override
+  public boolean supportsSavepoints() {
+    return true;
+  }
+
+  @Override
   public SqlConnectionInternal wrapConnection(ContextInternal context, ConnectionFactory<FakeSqlConnectOptions> factory, Connection conn) {
     return new JDBCConnectionImpl(context, factory, conn, this);
   }

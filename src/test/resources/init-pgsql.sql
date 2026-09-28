@@ -78,6 +78,14 @@ INSERT INTO temporal_data_type ("id", "Date", "Time", "TimeTz", "Timestamp", "Ti
 VALUES (1, '2022-05-30', '18:00:00', '06:00:00+02:00', '2022-05-14 07:00:00',
         '2022-05-14 07:00:00-02:00', '10 years 3 months 332 days 20 hours 20 minutes 20.999999 seconds');
 
+-- mutable for insert,update,delete query testing
+CREATE TABLE mutable
+(
+  id  integer       NOT NULL,
+  val varchar(2048) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 -- Array types test table
 CREATE TABLE array_data_type
 (

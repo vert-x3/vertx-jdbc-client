@@ -34,6 +34,9 @@ import io.vertx.sqlclient.spi.protocol.*;
 import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLRecoverableException;
+import java.sql.Savepoint;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConnectionImpl implements Connection {
 
@@ -45,6 +48,7 @@ public class ConnectionImpl implements Connection {
   final String database;
   final SocketAddress server;
   final SqlOptions sqlOptionsBackup;
+  Map<String, Savepoint> savepoints;
   SqlOptions sqlOptions;
   private volatile ConnectionContext holder;
   private volatile boolean broken;
@@ -218,6 +222,8 @@ public class ConnectionImpl implements Connection {
       fut = (Future<R>) handle((ExtendedQueryCommand<?>) cmd);
     } else if (cmd instanceof TxCommand) {
       fut = handle((TxCommand<R>) cmd);
+    } else if (cmd instanceof SavepointCommand) {
+      fut = handle((SavepointCommand<R>) cmd);
     } else if (cmd instanceof JDBCAction) {
       fut = schedule((JDBCAction<R>) cmd);
     } else {
@@ -246,7 +252,15 @@ public class ConnectionImpl implements Connection {
   }
 
   private <R> Future<R> handle(TxCommand<R> command) {
-    JDBCTxOp<R> action = new JDBCTxOp<>(helper, command, sqlOptions);
+    JDBCTxOp<R> action = new JDBCTxOp<>(helper, command, sqlOptions, savepoints);
+    return schedule(action);
+  }
+
+  private <R> Future<R> handle(SavepointCommand<R> command) {
+    if (savepoints == null) {
+      savepoints = new HashMap<>();
+    }
+    JDBCSavepointOp<R> action = new JDBCSavepointOp<>(helper, command, sqlOptions, savepoints);
     return schedule(action);
   }
 
