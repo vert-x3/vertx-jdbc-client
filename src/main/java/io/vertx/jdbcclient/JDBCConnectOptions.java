@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
+ * Copyright (c) 2011-2026 The original author or authors
  * ------------------------------------------------------
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -34,6 +34,7 @@ public class JDBCConnectOptions extends SqlOptions {
   private TracingPolicy tracingPolicy = TracingPolicy.PROPAGATE;
   private JsonObject extraConfig;
   private String metricsName = "";
+  private boolean useVirtualThreads;
 
   public JDBCConnectOptions() {}
 
@@ -52,6 +53,7 @@ public class JDBCConnectOptions extends SqlOptions {
     this.tracingPolicy = other.tracingPolicy;
     this.extraConfig = other.extraConfig != null ? other.extraConfig.copy() : null;
     this.metricsName = other.metricsName;
+    this.useVirtualThreads = other.useVirtualThreads;
   }
 
   public String getJdbcUrl() {
@@ -142,6 +144,30 @@ public class JDBCConnectOptions extends SqlOptions {
    */
   public JDBCConnectOptions setTracingPolicy(TracingPolicy tracingPolicy) {
     this.tracingPolicy = tracingPolicy;
+    return this;
+  }
+
+  /**
+   * @return {@code true} if blocking calls for the JDBC driver should be executed on virtual threads when available, {@code false} otherwise.
+   */
+  public boolean getUseVirtualThreads() {
+    return useVirtualThreads;
+  }
+
+  /**
+   * Set whether blocking calls for the JDBC driver should be executed on virtual threads when available.
+   * <p>
+   * When enabled and the current JVM supports virtual threads (Java 21+), blocking driver operations run on virtual threads
+   * instead of platform worker threads. If virtual threads are not available on the runtime JVM, execution falls back to platform threads.
+   * <p>
+   * This option only applies to pools created with {@link JDBCPool#pool(io.vertx.core.Vertx, JDBCConnectOptions, io.vertx.sqlclient.PoolOptions)},
+   * pools created from a {@link javax.sql.DataSource} always use platform threads.
+   *
+   * @param useVirtualThreads {@code true} to prefer virtual threads, {@code false} otherwise
+   * @return a reference to this, so the API can be used fluently
+   */
+  public JDBCConnectOptions setUseVirtualThreads(boolean useVirtualThreads) {
+    this.useVirtualThreads = useVirtualThreads;
     return this;
   }
 

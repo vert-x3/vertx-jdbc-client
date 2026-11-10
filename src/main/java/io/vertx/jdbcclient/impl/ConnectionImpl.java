@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
+ * Copyright (c) 2011-2026 The original author or authors
  * ------------------------------------------------------
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -48,6 +48,8 @@ public class ConnectionImpl implements Connection {
   final String database;
   final SocketAddress server;
   final SqlOptions sqlOptionsBackup;
+  private final int scheduleFlags;
+  private final int requestFlags;
   Map<String, Savepoint> savepoints;
   SqlOptions sqlOptions;
   private volatile ConnectionContext holder;
@@ -56,7 +58,10 @@ public class ConnectionImpl implements Connection {
 //  final TaskQueue statementsQueue = new TaskQueue();
 
 
-  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?> metrics, String user, String database, SocketAddress server) {
+  public ConnectionImpl(JDBCStatementHelper helper, ContextInternal context, SqlOptions sqlOptions, java.sql.Connection conn, ClientMetrics<?, ?, ?> metrics, String user, String database, SocketAddress server, boolean useVirtualThreads) {
+    int virtualThreadFlag = useVirtualThreads ? ContextInternal.EXECUTE_BLOCKING_PREFER_VIRTUAL_THREAD : 0;
+    this.scheduleFlags = ContextInternal.EXECUTE_BLOCKING_ORDERED | virtualThreadFlag;
+    this.requestFlags = virtualThreadFlag;
     this.conn = conn;
     this.helper = helper;
     this.context = context;
@@ -78,7 +83,7 @@ public class ConnectionImpl implements Connection {
         throw reportException(e);
       }
       return null;
-    }, false).onComplete(promise);
+    }, requestFlags).onComplete(promise);
     return promise.future();
   }
 
@@ -92,7 +97,7 @@ public class ConnectionImpl implements Connection {
         throw reportException(e);
       }
       return null;
-    }, false).onComplete(promise);
+    }, requestFlags).onComplete(promise);
     return promise.future();
   }
 
@@ -282,7 +287,7 @@ public class ConnectionImpl implements Connection {
       } catch (SQLException e) {
         throw reportException(e);
       }
-    }/*, statementsQueue*/);
+    }, scheduleFlags);
   }
 
   public static void applyConnectionOptions(java.sql.Connection conn, SqlOptions sqlOptions) throws SQLException {

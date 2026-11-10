@@ -80,6 +80,37 @@ Of course same is to say that prepared statements are also applicable to this mo
 {@link examples.JDBCSqlClientExamples#examplePreparedQueryManual}
 ----
 
+=== Virtual threads
+
+The JDBC client wraps blocking JDBC drivers, and by default executes blocking driver operations on Vert.x platform worker threads.
+
+You can configure the pool to execute blocking driver operations on virtual threads instead, when running on a JVM supporting virtual threads (Java 21+):
+
+[source,$lang]
+----
+{@link examples.JDBCSqlClientExamples#configureVirtualThreads}
+----
+
+Having virtual threads handle blocking JDBC calls eliminates the need to size the worker pool according to the connection pool, improving overall scalability.
+Besides, this frees worker pool threads from internal driver operations, so they can focus on executing user code tasks.
+
+NOTE: If virtual threads are not available on the runtime JVM, a warning is logged and execution automatically falls back to platform threads.
+
+[NOTE]
+====
+This option only applies to pools created from `JDBCConnectOptions`.
+Pools created from a `javax.sql.DataSource` always use platform threads.
+====
+
+[CAUTION]
+====
+Not every JDBC driver is virtual thread friendly.
+A virtual thread that pins its carrier thread while blocking limits the benefits of this option and can even cause deadlocks.
+On Java 21 to 23, a virtual thread is pinned when it blocks inside a `synchronized` block or method.
+Since Java 24, https://openjdk.org/jeps/491[JEP 491] has removed this limitation, but a virtual thread is still pinned when it blocks in a native frame (JNI) or in `Object.wait`.
+Therefore, you should check the documentation of the driver you use before enabling this option.
+====
+
 === Retrieving the generated keys
 
 Generated keys is a common feature of JDBC drivers. The pool allows you to retrieve the keys using a special property:

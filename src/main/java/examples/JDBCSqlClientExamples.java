@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2011-2026 The original author or authors
+ * ------------------------------------------------------
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Apache License v2.0 which accompanies this distribution.
+ *
+ *     The Eclipse Public License is available at
+ *     http://www.eclipse.org/legal/epl-v10.html
+ *
+ *     The Apache License v2.0 is available at
+ *     http://www.opensource.org/licenses/apache2.0.php
+ *
+ * You may elect to redistribute this code under either of these licenses.
+ */
+
 package examples;
 
 import io.vertx.core.Vertx;
@@ -29,6 +45,16 @@ public class JDBCSqlClientExamples {
     PoolOptions poolOptions = new PoolOptions()
       .setMaxSize(16);
     Pool pool = JDBCPool.pool(vertx, connectOptions, poolOptions);
+  }
+
+  public void configureVirtualThreads(Vertx vertx) {
+    JDBCConnectOptions connectOptions = new JDBCConnectOptions()
+      .setJdbcUrl("jdbc:h2:~/test")
+      .setUser("sa")
+      .setPassword("")
+      // Execute blocking JDBC calls on virtual threads when available (Java 21+)
+      .setUseVirtualThreads(true);
+    Pool pool = JDBCPool.pool(vertx, connectOptions, new PoolOptions().setMaxSize(16));
   }
 
   public void exampleQueryManaged(JDBCPool pool) {
