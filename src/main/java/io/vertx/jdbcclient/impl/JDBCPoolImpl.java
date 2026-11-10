@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
+ * Copyright (c) 2011-2026 The original author or authors
  * ------------------------------------------------------
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -18,12 +18,14 @@ package io.vertx.jdbcclient.impl;
 import io.vertx.core.Future;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.spi.metrics.ClientMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
-import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.impl.actions.JDBCStatementHelper;
 
 import java.sql.Connection;
 import java.util.concurrent.Callable;
@@ -34,6 +36,8 @@ public class JDBCPoolImpl {
 
   public static class ConnectionFactory {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ConnectionFactory.class);
+
     private static final String NET_LOCATION_REGEX = "(?<netloc>[0-9.]+|\\[[a-zA-Z0-9:]+]|[a-zA-Z0-9\\-._~%]+)"; // ip v4/v6 address, host, domain socket address
     private static final String PORT_REGEX = "(:(?<port>\\d+))?"; // port
     private static final Pattern HOST_AND_PORT_PATTERN = Pattern.compile("://" + NET_LOCATION_REGEX + PORT_REGEX);
@@ -41,11 +45,24 @@ public class JDBCPoolImpl {
     private final VertxInternal vertx;
     private final JDBCConnectOptions sqlOptions;
     private final Callable<Connection> connectionFactory;
+    private final boolean useVirtualThreads;
 
     public ConnectionFactory(VertxInternal vertx, JDBCConnectOptions sqlOptions, Callable<Connection> connectionFactory) {
       this.vertx = vertx;
       this.sqlOptions = sqlOptions;
       this.connectionFactory = connectionFactory;
+      this.useVirtualThreads = resolveUseVirtualThreads(vertx, sqlOptions);
+    }
+
+    private static boolean resolveUseVirtualThreads(VertxInternal vertx, JDBCConnectOptions sqlOptions) {
+      if (!sqlOptions.getUseVirtualThreads()) {
+        return false;
+      }
+      if (vertx.isVirtualThreadAvailable()) {
+        return true;
+      }
+      LOG.warn("Virtual threads requested but not available on this JVM, falling back to platform threads");
+      return false;
     }
 
     private SocketAddress getServer(Connection conn) throws Exception {
@@ -85,13 +102,17 @@ public class JDBCPoolImpl {
         cfg = new JsonObject();
       }
       JDBCStatementHelper helper = new JDBCStatementHelper(cfg);
-      return context.executeBlockingInternal(() -> {
+      Callable<io.vertx.sqlclient.spi.connection.Connection> task = () -> {
         Connection conn = connectionFactory.call();
         VertxMetrics vertxMetrics = vertx.metrics();
         SocketAddress server = getServer(conn);
         ClientMetrics metrics = vertxMetrics != null ? vertxMetrics.createClientMetrics(server, "sql", sqlOptions.getMetricsName()) : null;
-        return new ConnectionImpl(helper, context, sqlOptions, conn, metrics, sqlOptions.getUser(), sqlOptions.getDatabase(), server);
-      });
+        return new ConnectionImpl(helper, context, sqlOptions, conn, metrics, sqlOptions.getUser(), sqlOptions.getDatabase(), server, useVirtualThreads);
+      };
+      if (useVirtualThreads) {
+        return context.executeBlocking(task, ContextInternal.EXECUTE_BLOCKING_PREFER_VIRTUAL_THREAD);
+      }
+      return context.executeBlockingInternal(task);
     }
   }
 }

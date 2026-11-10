@@ -112,6 +112,11 @@ public class JDBCConnectOptionsConverter {
             obj.setTracingPolicy(io.vertx.core.tracing.TracingPolicy.valueOf((String)member.getValue()));
           }
           break;
+        case "useVirtualThreads":
+          if (member.getValue() instanceof Boolean) {
+            obj.setUseVirtualThreads((Boolean)member.getValue());
+          }
+          break;
         case "extraConfig":
           if (member.getValue() instanceof JsonObject) {
             obj.setExtraConfig(((JsonObject)member.getValue()).copy());
@@ -172,6 +177,7 @@ public class JDBCConnectOptionsConverter {
     if (obj.getTracingPolicy() != null) {
       json.put("tracingPolicy", obj.getTracingPolicy().name());
     }
+    json.put("useVirtualThreads", obj.getUseVirtualThreads());
     if (obj.getExtraConfig() != null) {
       json.put("extraConfig", obj.getExtraConfig());
     }
